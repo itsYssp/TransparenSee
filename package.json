@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
+  },
+  "scripts": {
+    "dev": "npx @tailwindcss/cli -i ./TransparenSee/static/css/input.css -o ./TransparenSee/static/css/output.css --watch"
+  },
+  "devDependencies": {
+    "daisyui": "^5.5.18"
+  }
+}

@@ -1,0 +1,48 @@
+{% extends "app/base.html" %} {% load static %} {% block content %}
+
+<div class="min-h-screen w-full relative">
+  <div
+    class="absolute inset-0 z-0"
+    style="
+      background: radial-gradient(
+        125% 125% at 50% 10%,
+        #ffffff 40%,
+        #030ac5 100%
+      );
+    "
+  ></div>
+
+  <div
+    class="relative z-10 min-h-screen min-w-full flex flex-col items-center justify-center gap-4"
+  >
+    <div class="w-md flex flex-col gap-2 items-center justify-center">
+      <img
+        src="{% static 'images/TransparenSee_Logo.png' %}"
+        alt=""
+        class="w-30"
+      />
+      <h1 class="text-xl font-bold">TransparenSee</h1>
+    </div>
+    <form
+      class="max-w-full w-md flex flex-col bg-transparent border-base-300 rounded-box p-4 border shadow-sm gap-6"
+    >
+      <div class="inline-block">
+        <h2 class="text-xl font-semibold text-center">Login to your account</h2>
+        <p class="text-center">
+          Enter your username and password below to login to your account
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="label">Email</label>
+        <input type="email" class="input w-full" placeholder="Email" />
+
+        <label class="label">Password</label>
+        <input type="password" class="input w-full" placeholder="Password" />
+      </div>
+      <button class="btn btn-neutral mt-4">Login</button>
+    </form>
+  </div>
+</div>
+
+{% endblock content %}
