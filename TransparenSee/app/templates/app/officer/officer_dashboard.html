@@ -1,0 +1,143 @@
+{% extends "app/base.html" %} {% load static %} {% block content %}
+<div class="drawer lg:drawer-open">
+  <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
+  <div class="drawer-content bg-white py-3 pr-3">
+    <div class="min-w-full min-h-full flex flex-col gap-2 rounded-2xl">
+      <div class="lg:hidden">{% include "app/nav.html" %}</div>
+      <div class="navbar bg-gray-100 rounded-2xl hidden lg:flex py-6">
+        <div class="flex-1 px-4">
+          <a class="text-xl font-bold">{% block title %}{% endblock title %}</a>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex gap-4 items-center px-4">
+            <i
+              data-lucide="mail"
+              class="w-7 h-7 p-1 duration-300 ease-in hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5] rounded-full"
+            ></i>
+            <i
+              data-lucide="bell"
+              class="w-7 h-7 p-1 duration-300 ease-in hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5] rounded-full"
+            ></i>
+          </div>
+          <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+              <div class="w-10 rounded-full">
+                <img
+                  alt="Profile Picture"
+                  src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                />
+              </div>
+            </div>
+            <ul tabindex="-1" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+              <li>
+                <a class="justify-between"> Profile </a>
+              </li>
+              <li><a>Settings</a></li>
+              <li><a>Logout</a></li>
+            </ul>
+          </div>
+          <div class="flex flex-col px-2">
+            <p class="text-xs">{{ user.username }}</p>
+            <p class="text-xs">{{ user.email }}</p>
+          </div>
+        </div>
+      </div>
+      {% block context %} {% endblock context %}
+    </div>
+  </div>
+  <div class="drawer-side">
+    <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"></label>
+    <div class="min-h-screen bg-white flex p-3">
+      <aside class="w-72 rounded-2xl bg-gray-100 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-8">
+          <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="" class="w-10 h-10 rounded-full" />
+          <h1 class="text-lg font-semibold">TransparenSee</h1>
+        </div>
+
+        <p class="text-xs text-gray-400 font-semibold mb-3">MENU</p>
+        <ul class="space-y-2">
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_dashboard'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+              href=" {% url 'officer_dashboard'  %} "
+            >
+              <i data-lucide="layout-dashboard"></i> Dashboard
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_budget'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+            >
+              <i data-lucide="link"></i> Budget
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_report'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+            >
+              <i data-lucide="clipboard"></i> Report
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_analytics'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+            >
+              <i data-lucide="chart-line"></i> Analytics
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_society_fee'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+            >
+              <i data-lucide="banknote-arrow-up"></i> Society Fee
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_community'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+            >
+              <i data-lucide="message-circle-more"></i> Community
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_users'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+            >
+              <i data-lucide="users"></i> Users
+            </a>
+          </li>
+        </ul>
+
+        <p class="text-xs text-gray-400 font-semibold mt-8 mb-3">GENERAL</p>
+
+        <ul class="space-y-2">
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_settings'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+            >
+              <i data-lucide="settings-2"></i> Settings
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center cursor-pointer {% if request.resolver_match.url_name == 'officer_help'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-gray-500 hover:bg-[#030ac5]/20 hover:text-[#030ac5] hover:font-bold {% endif %}"
+            >
+              <i data-lucide="info"></i> Help
+            </a>
+          </li>
+          <li>
+            <form action="{% url 'logout'  %}" method="post">
+              {% csrf_token %}
+              <button
+                class="flex w-full items-center duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg text-gray-500 hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5] hover:font-bold"
+              >
+                <i data-lucide="log-out"></i> Logout
+              </button>
+            </form>
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+</div>
+{% endblock content %}

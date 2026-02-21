@@ -21,7 +21,13 @@
         alt=""
         class="w-30"
       />
+
+      {% if user.is_authenticated %}
       <h1 class="text-xl font-bold">TransparenSee</h1>
+      <p>{{user.username}}</p>
+      {% else %}
+      <p>You are not login</p>
+      {% endif %}
     </div>
     <form
       class="max-w-full w-md flex flex-col bg-transparent border-base-300 rounded-box p-4 border shadow-sm gap-6"
@@ -41,6 +47,10 @@
         <input type="password" class="input w-full" placeholder="Password" />
       </div>
       <button class="btn btn-neutral mt-4">Login</button>
+    </form>
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button class="btn btn-error">Logout</button>
     </form>
   </div>
 </div>
