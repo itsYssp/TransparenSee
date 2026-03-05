@@ -1,0 +1,145 @@
+{% extends "app/officer/president/sidebar.html" %} {% block con %}
+<div class="px-2 py-2 space-y-6 h-full overflow-y-scroll bg-base-200">
+  <div
+    class="card shadow-sm px-4 py-5 text-black"
+    style="background: radial-gradient(150% 125% at 50% 20%, #ffffff 40%, #030ac5 100%)"
+  >
+    <p class="text-sm font-bold text-left text-[#6A7282]">REMAINING FUNDS</p>
+    <div class="card-body">
+      <p class="text-4xl font-bold mt-1 text-center">₱ 100,000.00</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="card bg-[#878CDD] shadow-sm px-4 py-5 text-white">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Collected Funds</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <div class="card-body">
+        <p class="text-3xl font-bold mt-1 text-center">₱ 30,000.45</p>
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm px-4 py-5 text-center text-black">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Total Expenses</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <div class="card-body">
+        <p class="text-3xl font-bold mt-1 text-center">₱ 15,000.23</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Verified Transactions</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">0</p>
+    </div>
+
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Pending Transactions</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">0</p>
+    </div>
+
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Verified Reports</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">0</p>
+    </div>
+
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Pending Reports</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">0</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-white p-4 rounded-lg shadow">
+      <p class="font-semibold mb-2 text-[#6A7282]">Recent Transactions</p>
+      <table class="table w-full rounded-lg overflow-hidden">
+        <thead>
+          <tr class="bg-[#878CDD]/50">
+            <th>Name of Transaction</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="2" class="text-center">No data yet</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow">
+      <p class="font-semibold mb-2 text-[#6A7282]">Reports</p>
+      <table class="table w-full rounded-lg overflow-hidden">
+        <thead>
+          <tr class="bg-[#878CDD]/50">
+            <th>Title</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="2" class="text-center">No data yet</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="flex-1">
+    <div class="h-full grid grid-cols-5 grid-rows-4 gap-4">
+      <div class="col-span-3 row-span-4 bg-white p-4 rounded-lg shadow">
+        <p class="font-semibold mb-2 text-[#6A7282]">Recent Trails</p>
+        <table class="table w-full rounded-lg overflow-hidden">
+          <thead>
+            <tr class="bg-[#878CDD]/50">
+              <th>Date</th>
+              <th>User</th>
+              <th>Role</th>
+              <th>Action</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="5" class="text-center">No data yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col-span-2 row-span-2 col-start-4">
+        <div class="card bg-base-100 h-full shadow-sm px-4 py-5 gap-4">
+          <div class="flex justify-between items-center">
+            <h2 class="text-sm text-left">Flagged Transactions</h2>
+            <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+          </div>
+          <p class="text-4xl font-bold mt-1">0</p>
+        </div>
+      </div>
+      <div class="col-span-2 row-span-2 col-start-4 row-start-3">
+        <div class="card bg-base-100 h-full shadow-sm px-4 py-5 gap-4">
+          <div class="flex justify-between items-center">
+            <h2 class="text-sm text-left">Flagged Reports</h2>
+            <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+          </div>
+          <p class="text-4xl font-bold mt-1">0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock con %}

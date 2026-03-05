@@ -1,0 +1,67 @@
+{% extends "app/superadmin/sidebar.html" %} {% load static %} {% block con %}
+<div class="flex h-full justify-center items-center overflow-y-auto bg-base-200">
+  <div class="card w-full max-w-lg bg-base-100 shadow-xl overflow-y-auto">
+    <div class="card-body">
+      <h2 class="card-title text-2xl font-bold">Register Campus Admin</h2>
+
+      <form method="POST" class="fieldset" action="{% url 'superadmin_create_campus_admin' %}">
+        {% csrf_token %}
+        <label class="label">First Name</label>
+        <input
+          type="text"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="First Name"
+          name="first_name"
+        />
+
+        <label class="label">Last name</label>
+        <input
+          type="text"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Last name"
+          name="last_name"
+        />
+
+        <label class="label">Username</label>
+        <input
+          type="text"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Username"
+          name="username"
+        />
+
+        <label class="label">Email</label>
+        <input
+          type="email"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Email"
+          name="email"
+        />
+
+        <label class="label mt-2">Password</label>
+        <input
+          type="password"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Password"
+          name="password1"
+          autocomplete="off"
+        />
+
+        <label class="label mt-2">Confirm Password</label>
+        <input
+          type="password"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Confirm Password"
+          autocomplete="off"
+          name="password2"
+        />
+        <label class="label mt-2">Role</label>
+        <select name="role" class="select select-bordered w-full">
+          <option value="campus_admin" selected>Campus Admin</option>
+        </select>
+        <button type="submit" class="btn btn-primary w-full mt-2">Create Campus Admin</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock con %}

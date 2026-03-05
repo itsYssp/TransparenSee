@@ -18,13 +18,22 @@
     <div class="min-h-screen min-w-full flex flex-col items-center">
       <div class="min-w-full flex flex-col lg:flex-row items-center justify-center flex-1 gap-16 px-6">
         <div class="text-center min-h-full lg:text-left min-w-2xl">
-          <h1 class="text-4xl lg:text-6xl font-bold">Signup</h1>
+          <h1 class="text-4xl lg:text-6xl font-bold">Create Your Account</h1>
           <p class="py-6">Enter valid credentials for creating an acccount.</p>
         </div>
 
         <div class="w-full max-w-md">
           <div class="card bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl">
             <div class="card-body">
+              {% if form.errors %}
+              <div class="alert alert-error text-sm mb-4">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %} {% for field in form %} {% for error in field.errors %}
+                <p><strong>{{ field.label }}:</strong> {{ error }}</p>
+                {% endfor %} {% endfor %}
+              </div>
+              {% endif %}
               <form class="fieldset" method="post">
                 {% csrf_token %}
 
@@ -79,7 +88,7 @@
                 />
 
                 <label>Organization</label>
-                <div class="select select-bordered w-full">{{ form.organization }}</div>
+                <div class="select select-bordered w-full border border-black/20">{{ form.organization }}</div>
 
                 <label class="label mt-2">Position</label>
                 <input
@@ -89,11 +98,14 @@
                   name="position"
                 />
                 <label class="label mt-2">Role</label>
-                <select name="role" id="" class="select select-bordered w-full">
+                <select name="role" class="select select-bordered w-full">
                   <option disabled selected>-- Select Role --</option>
                   <option value="student">Student</option>
-                  <option value="officer">Officer</option>
-                  <option value="campus admin">Campus Admin</option>
+                  <option value="treasurer">Treasurer</option>
+                  <option value="auditor">Auditor</option>
+                  <option value="president">President</option>
+                  <option value="adviser">Adviser</option>
+                  <option value="campus_admin">Campus Admin</option>
                 </select>
 
                 <button class="btn btn-neutral mt-4" type="submit">Signup</button>

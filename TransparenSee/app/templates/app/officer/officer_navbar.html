@@ -1,0 +1,68 @@
+{% load static %}
+<div class="navbar bg-white shadow-md flex justify-between z-99">
+  <div class="flex">
+    <a class="flex shrink-0 gap-1.5 items-center text-xl px-2 py-1 rounded font-semibold">
+      <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="" class="w-10 rounded-full" />
+      <p class="text-black">TransparenSee</p>
+    </a>
+    <div class="flex-none">
+      <ul class="menu menu-horizontal px-1"></ul>
+      <label for="my-drawer-4" aria-label="open sidebar" class="btn btn-square btn-ghos lg:hidden">
+        <i data-lucide="menu"></i>
+      </label>
+    </div>
+  </div>
+  <div class="w-auto hidden lg:flex gap-5 px-2.5 items-center">
+    <div class="flex gap-2 items-center px3">
+      <i
+        data-lucide="mail"
+        class="w-7 h-7 p-1 duration-300 ease-in hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5] rounded-full"
+      ></i>
+      <i
+        data-lucide="bell"
+        class="w-7 h-7 p-1 duration-300 ease-in hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5] rounded-full"
+      ></i>
+    </div>
+    <div class="w-px h-7 bg-gray-400"></div>
+    <div class="dropdown dropdown-end flex">
+      <div class="flex flex-col items-end px-3">
+        <p class="text-sm">{{ user.first_name }} {{ user.last_name }}</p>
+        <div class="badge badge-primary text-[10px] capitalize">{{ user.get_role_display }}</div>
+      </div>
+
+      <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+        <div class="w-10 rounded-full border border-gray-400 shadow-lg">
+          <img
+            alt="Profile Picture"
+            src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %} "
+          />
+        </div>
+      </div>
+      <ul tabindex="-1" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+        <li>
+          <a> Profile </a>
+        </li>
+        <li><a>Settings</a></li>
+        <form action="{% url 'logout' %}" method="post" class="w-full flex">
+          {% csrf_token %}
+          <li class="w-full">
+            <button class="flex-1 text-left">Logout</button>
+          </li>
+        </form>
+      </ul>
+    </div>
+    <div class="w-px h-7 bg-gray-400"></div>
+
+    <div class="flex px-2.5">
+      {% if user.get_role_display == 'Super Admin' %}
+      <img class="w-10 h-10 rounded-full shadow-lg" alt="Profile Picture" src="{% static 'images/cvsu_logo.jpg' %}" />
+      {% else %}
+      <img
+        class="w-10 h-10 rounded-full border border-gray-400 shadow-lg"
+        alt="Profile Picture"
+        src="{% if user.organization.logo %}{{ user.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+      />
+      {% endif %}
+    </div>
+  </div>
+</div>

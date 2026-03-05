@@ -13,16 +13,20 @@ class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
     def get_success_url(self):
         user = self.request.user
-        print(f"DEBUG: Logged in user: {user.username}, role: {user.role}")  # <-- see the role
-
-        if user.role == 'officer':
-            print("DEBUG: Redirecting to officer dashboard")  # <-- check direction
-            return reverse_lazy('officer_dashboard')
-        elif user.role == 'student':
-            print("DEBUG: Redirecting to student dashboard")  # <-- check direction
+        if user.is_superuser:
+            return reverse_lazy('superadmin_dashboard')
+        if user.role == 'treasurer':
+            return reverse_lazy('treasurer_dashboard')
+        if user.role == 'auditor':
+            return reverse_lazy('auditor_dashboard')
+        elif user.role == 'adviser':
+            return reverse_lazy('adviser_dashboard')
+        elif user.role == 'campus_admin':
+            return reverse_lazy('campus_admin_dashboard') 
+        elif user.role == 'student':  
             return reverse_lazy('student_dashboard')
         else:
-            print("DEBUG: Redirecting to home")  # <-- fallback
+            print("DEBUG: Redirecting to home") 
             return reverse_lazy('home')
     
 class LogoutTemplate(LogoutView):

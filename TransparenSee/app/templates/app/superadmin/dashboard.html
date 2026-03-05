@@ -1,0 +1,74 @@
+{% extends "app/superadmin/sidebar.html" %} {% block con %}
+<div class="px-2 py-2 space-y-6 h-full overflow-y-scroll bg-base-200">
+  <div
+    class="card shadow-sm px-4 py-5 text-black"
+    style="background: radial-gradient(150% 125% at 50% 20%, #ffffff 40%, #030ac5 100%)"
+  >
+    <p class="text-sm font-bold text-left text-[#6A7282]">REMAINING FUNDS</p>
+    <div class="card-body">
+      <p class="text-4xl font-bold mt-1 text-center">₱ 100,000.00</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Blockchain Transactions</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">100</p>
+    </div>
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Registered Organizations</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">14</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Verified Transactions</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">0</p>
+    </div>
+
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Verified Reports</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">0</p>
+    </div>
+
+    <div class="card bg-base-100 h-md shadow-sm px-4 py-5 gap-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm text-left">Total Users</h2>
+        <a href="" class="p-1 border rounded-full"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+      </div>
+      <p class="text-4xl font-bold mt-1">0</p>
+    </div>
+  </div>
+
+  <div class="bg-white p-4 rounded-lg shadow">
+    <p class="font-semibold mb-2 text-[#6A7282]">Recent Transactions</p>
+    <table class="table w-full rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-[#878CDD]/50">
+          <th>Name of Transaction</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="2" class="text-center">No data yet</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock con %}

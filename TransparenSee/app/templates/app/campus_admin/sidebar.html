@@ -1,0 +1,102 @@
+{% extends "app/base.html" %} {% load static %} {% block content %}
+<div class="h-screen flex flex-col">
+  {% include "app/officer/officer_navbar.html" %}
+  <div class="drawer lg:drawer-open flex flex-1 overflow-hidden">
+    <input id="my-drawer-4" type="checkbox" class="drawer-toggle" />
+    <div class="drawer-side h-full z-100 lg:z-98">
+      <label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
+      <aside
+        class="w-72 h-full overflow-auto p-6 border-r border-gray-200/50 shadow-inner overflow-y-auto"
+        style="background: radial-gradient(150% 125% at 50% 20%, #ffffff 40%, #030ac5 100%)"
+      >
+        <p class="text-xs text-gray-400 font-semibold mb-3">MENU</p>
+        <ul class="space-y-1">
+          <li>
+            <a
+              class="duration-300 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_dashboard'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+              href=" "
+            >
+              <i data-lucide="layout-dashboard" class="w-5"></i> Dashboard
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_budget'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+            >
+              <i data-lucide="link" class="w-5"></i> Blockchain Records
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_budget'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+            >
+              <i data-lucide="users" class="w-5"></i> Organizations
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_budget'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+            >
+              <i data-lucide="user-key" class="w-5"></i> User and Roles
+            </a>
+          </li>
+
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_analytics'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+            >
+              <i data-lucide="arrow-right-left" class="w-5"></i> Verified Transactions
+            </a>
+          </li>
+
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_society_fee'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+            >
+              <i data-lucide="clipboard-check" class="w-5"></i> Verified Reports
+            </a>
+          </li>
+
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_community'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+            >
+              <i data-lucide="message-circle-more" class="w-5"></i> Community
+            </a>
+          </li>
+        </ul>
+
+        <p class="text-xs text-gray-400 font-semibold mt-8 mb-3">GENERAL</p>
+        <ul class="space-y-2">
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_settings'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+            >
+              <i data-lucide="circle-user" class="w-5"></i> Profile
+            </a>
+          </li>
+          <li>
+            <a
+              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_help'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+            >
+              <i data-lucide="info" class="w-5"></i> Help
+            </a>
+          </li>
+          <li>
+            <form action="{% url 'logout'  %}" method="post">
+              {% csrf_token %}
+              <button
+                class="flex w-full items-center duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg text-sm text-black hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5]"
+              >
+                <i data-lucide="log-out" class="w-5"></i> Logout
+              </button>
+            </form>
+          </li>
+        </ul>
+      </aside>
+    </div>
+    <div class="drawer-content flex-1">{% block con %} {% endblock con %}</div>
+  </div>
+</div>
+
+{% endblock content %}
