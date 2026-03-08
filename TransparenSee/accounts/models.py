@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from django.contrib.auth.models import AbstractUser,  BaseUserManager
 from app.models import Organization
 # Create your models here.
@@ -54,7 +55,9 @@ class CustomUser(AbstractUser):
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
     profile_image = models.ImageField(upload_to="profile_pictures", blank=True, null=True)
 
-
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
 
     objects = CustomUserManager()
+
+    def get_absolute_url(self):
+        return reverse("campus_admin_user_role" )

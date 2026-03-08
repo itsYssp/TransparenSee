@@ -24,9 +24,8 @@
           <th>Date Joined</th>
         </tr>
       </thead>
- <tbody>
+  <tbody>
     {% if user.role == "student" %}
-     
         {% for user in users %}
         <tr>
           <td>{{ forloop.counter }}</td>
@@ -35,7 +34,6 @@
           <td>{{ user.date_joined }}</td>
         </tr>
         {% endfor %}
-     
     </table>
     {% else %}
     <tr><td colspan='4' class='text-center'>No Student Yet</td></tr>
@@ -44,7 +42,7 @@
 
     {% else %}
 
-    <div class=" ">
+     <div class=" ">
       <table class="table table-xs">
         <thead>
           <tr>
@@ -82,17 +80,17 @@
             <td class="w-full flex gap-2">
               <a class="btn btn-primary btn-xs rounded-full h-sm">
                 <i data-lucide="pencil" class="text-base-100 w-4 h-4"></i>
-              <a/>
+              </a>
               <a class="btn btn-error btn-xs rounded-full h-sm">
                 <i data-lucide="trash-2" class="text-base-100 w-4 h-4"></i>
-              <a/>
+              </a>
               
             </td>
           </tr>
         </tbody>
         {% endfor %}
       </table>
-       <div class="join mt-6 flex justify-center">
+      <div class="join mt-6 flex justify-center">
         {% for num in page_obj.paginator.page_range %}
 
         <a
@@ -104,8 +102,7 @@
 
         {% endfor %}
       </div>
-      {% endif %}
-    </div>
-   
+    {% endif %}
   </div>
+</div>
 {% endblock con %}

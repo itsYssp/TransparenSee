@@ -54,8 +54,9 @@
     <div class="w-px h-7 bg-gray-400"></div>
 
     <div class="flex px-2.5">
-      {% if user.get_role_display == 'Super Admin' %}
+      {% if user.get_role_display == 'Super Admin' or 'Campus Admin'%}
       <img class="w-10 h-10 rounded-full shadow-lg" alt="Profile Picture" src="{% static 'images/cvsu_logo.jpg' %}" />
+
       {% else %}
       <img
         class="w-10 h-10 rounded-full border border-gray-400 shadow-lg"

@@ -1,0 +1,86 @@
+{% extends "app/campus_admin/sidebar.html" %} {% load static %} {% block con %}
+<div class="px-2 py-1 flex flex-col space-y-6 justify-center h-full overflow-y-scroll items-center bg-base-200">
+  <div class="card max-h-sceen w-full max-w-lg bg-base-100 shadow-xl">
+    <div class="card-body h-full">
+      <h2 class="card-title text-2xl font-bold">Register Officer</h2>
+      <form method="POST" class="fieldset" action="{% url 'campus_admin_create_officer' %}">
+        {% csrf_token %}
+        <label class="label">Fullname</label>
+
+        <div class="flex gap-2">
+          <input
+            type="text"
+            class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+            placeholder="First Name"
+            name="first_name"
+            required
+          />
+
+          <input
+            type="text"
+            class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+            placeholder="Last name"
+            name="last_name"
+            required
+          />
+        </div>
+
+        <label class="label">Username</label>
+        <input
+          type="text"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Username"
+          name="username"
+          required
+        />
+
+        <label class="label">Email</label>
+        <input
+          type="email"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Email"
+          name="email"
+          required
+        />
+
+        <label class="label mt-2">Password</label>
+        <input
+          type="password"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Password"
+          name="password1"
+          autocomplete="off"
+          required
+        />
+
+        <label class="label mt-2">Confirm Password</label>
+        <input
+          type="password"
+          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
+          placeholder="Confirm Password"
+          autocomplete="off"
+          name="password2"
+          required
+        />
+        <div class="flex gap-2 w-full">
+          <div class="flex flex-col w-1/2">
+            <label class="label mt-2">Organization</label>
+            <div class="select select-bordered w-full">{{ form.organization }}</div>
+          </div>
+
+          <div class="flex flex-col w-1/2">
+            <label class="label mt-2">Role</label>
+            <select name="role" class="select select-bordered w-full" required>
+              <option value="" selected>-- Select Role --</option>
+              <option value="treasurer">Treasurer</option>
+              <option value="auditor">Auditor</option>
+              <option value="president">President</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-full mt-2">Create Officer</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock con %}

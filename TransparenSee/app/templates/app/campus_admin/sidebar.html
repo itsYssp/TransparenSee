@@ -14,7 +14,7 @@
           <li>
             <a
               class="duration-300 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_dashboard'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-              href=" "
+              href=" {% url 'campus_admin_dashboard' %}"
             >
               <i data-lucide="layout-dashboard" class="w-5"></i> Dashboard
             </a>
@@ -36,6 +36,7 @@
           <li>
             <a
               class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_budget'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
+              href="{% url 'campus_admin_user_role' %}"
             >
               <i data-lucide="user-key" class="w-5"></i> User and Roles
             </a>

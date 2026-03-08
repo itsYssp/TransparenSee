@@ -1,0 +1,151 @@
+{% extends "app/campus_admin/sidebar.html" %} {% load static %} {% block con %}
+    <div class="p-6 bg-base-100 overflow-y-auto flex-1 h-full ">
+    <h1 class="text-2xl font-bold mb-4">User Management</h1>
+
+    <a href="{% url 'campus_admin_create_adviser' %}" class='btn btn-soft btn-primary btn-sm'>+ Add Adviser</a>
+    <a href="{% url 'campus_admin_create_officer' %}" class='btn btn-soft btn-accent btn-sm'>+ Add Officer</a>
+
+    <div role="tablist" class="tabs tabs-border my-4">
+      <a role="tab" class="tab {% if request.GET.type == 'advisers' or not request.GET.type %}tab-active{% endif %}" href="?type=advisers">
+        Advisers
+      </a>
+      <a role="tab" class="tab {% if request.GET.type == 'officers'%}tab-active{% endif %}" href="?type=officers">
+        Officers
+      </a>
+    </div>
+
+    {% if request.GET.type == "officers" %}
+    <div class=" ">
+      <table class="table table-xs">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Organization</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <th>{{ page_obj.start_index|add:forloop.counter0 }}</th>
+            <td>
+              <div class="flex items-center gap-3">
+                <div class="avatar">
+                  <div class="mask mask-squircle h-10 w-10">
+                    <img
+                      src="{% if user.profile_image %} {{ user.profile_image.url }} {% else %} {% static 'images/default_profile_pic.jpg' %} {% endif %}"
+                      alt="Profile Picture"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div class="font-bold">{{ user.first_name }} {{ user.last_name }}</div>
+                  <div class="text-sm opacity-50">{{ user.username }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.get_role_display }}</td>
+            <td><div class="flex gap-2 items-center ">
+              <img src="{% if user.organization.logo %}
+              {{  user.organization.logo.url }} {% else %} {% url 'images/default_profile_pic.jpg'  %} {% endif %}" alt="" class='w-5 h-5'>
+              {{ user.organization.name }}
+            </div></td>
+            <td class="w-full flex gap-2">
+              <a class="btn btn-primary btn-soft btn-xs rounded-full h-sm">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+              <a/>
+              <a class="btn btn-error btn-soft btn-xs rounded-full h-sm ">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </a>
+              
+              
+            </td>
+          </tr>
+        </tbody>
+        {% endfor %}
+      </table>
+      <div class="join mt-6 flex justify-center">
+       {% for num in page_obj.paginator.page_range %}
+        {% if num >= 8 %}
+        <a
+          href="?type={{ request.GET.type }}&page={{ num }}"
+          class="join-item btn btn-square {% if page_obj.number == num %}btn-active{% endif %}"
+        >
+          {{ num }}
+        </a>
+
+        {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+
+    <div class=" ">
+      <table class="table table-xs">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Organization</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <th>{{ page_obj.start_index|add:forloop.counter0 }}</th>
+            <td>
+              <div class="flex items-center gap-3">
+                <div class="avatar">
+                  <div class="mask mask-squircle h-10 w-10">
+                    <img
+                      src="{% if user.profile_image %} {{ user.profile_image.url }} {% else %} {% static 'images/default_profile_pic.jpg' %} {% endif %}"
+                      alt="Profile Picture"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div class="font-bold">{{ user.first_name }} {{ user.last_name }}</div>
+                  <div class="text-sm opacity-50">{{ user.username }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.get_role_display }}</td>
+            <td>{{ user.organization.name }}</td>
+            <td class="w-full flex gap-2">
+              <a class="btn btn-primary btn-soft btn-xs rounded-full h-sm" href="{% url 'campus_admin_update_adviser' user.pk  %}">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+              <a/>
+              <a class="btn btn-error btn-soft btn-xs rounded-full h-sm ">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </a>
+              
+            </td>
+          </tr>
+        </tbody>
+        {% endfor %}
+      </table>
+      <div class="join mt-6 flex justify-center">
+        
+        {% for num in page_obj.paginator.page_range %}
+        {% if num >= 8 %}
+        <a
+          href="?type={{ request.GET.type }}&page={{ num }}"
+          class="join-item btn btn-square {% if page_obj.number == num %}btn-active{% endif %}"
+        >
+          {{ num }}
+        </a>
+
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock con %}
