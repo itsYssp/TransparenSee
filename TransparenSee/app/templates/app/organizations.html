@@ -1,0 +1,159 @@
+{% extends base_template %} {% load static %} {% block con %}
+
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50">
+
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Campus Admin</p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Organizations</h1>
+    </div>
+    <a href="{% url 'head_create_organization' %}"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+      <i data-lucide="plus" class="w-4 h-4"></i>
+      New Organization
+    </a>
+  </div>
+
+  <!-- Search -->
+  <form method="GET" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+    <i data-lucide="search" class="w-4 h-4 text-gray-400 shrink-0"></i>
+    <input
+      type="text"
+      name="search"
+      value="{{ search }}"
+      placeholder="Search organizations..."
+      class="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
+    />
+    <button type="submit" class="flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors">
+      Search
+    </button>
+    {% if search %}
+    <a href="?" class="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+      <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      Clear
+    </a>
+    {% endif %}
+  </form>
+
+  <!-- Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for org in organizations %}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-blue-100 shrink-0 shadow-sm">
+          <img
+            src="{% if org.logo %}{{ org.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+            alt="{{ org.name }}"
+            class="w-full h-full object-cover"
+          />
+        </div>
+        <div class="min-w-0">
+          <p class="font-bold text-gray-900 truncate">{{ org.name }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">{{ org.createdAt|date:"M d, Y" }}</p>
+        </div>
+      </div>
+
+      {% if org.description %}
+      <p class="text-xs text-gray-400 leading-relaxed line-clamp-2">{{ org.description }}</p>
+      {% endif %}
+
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-gray-50 rounded-xl px-3 py-2 text-center">
+          <p class="text-lg font-extrabold text-gray-900">{{ org.officer_count }}</p>
+          <p class="text-xs text-gray-400">Officers</p>
+        </div>
+        <div class="bg-gray-50 rounded-xl px-3 py-2 text-center">
+          <p class="text-lg font-extrabold text-gray-900">{{ org.adviser_count }}</p>
+          <p class="text-xs text-gray-400">Advisers</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-1 border-t border-gray-100">
+        <a href="{% url 'organization_detail' org.pk %}"
+          class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+          View
+        </a>
+        <a href="{% url 'head_update_organization' org.pk %}"
+          class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors">
+          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+          Edit
+        </a>
+        <button
+          onclick="openDeleteModal('{{ org.pk }}', '{{ org.name|escapejs }}')"
+          class="w-8 h-8 flex items-center justify-center rounded-xl text-red-500 bg-red-50 hover:bg-red-100 transition-colors">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="col-span-full flex flex-col items-center justify-center py-20 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+        <i data-lucide="building-2" class="w-6 h-6 text-gray-400"></i>
+      </div>
+      <p class="text-sm font-semibold text-gray-400">No organizations yet</p>
+      <p class="text-xs text-gray-300 mt-1">Create the first one</p>
+      <a href="{% url 'campus_admin_create_organization' %}"
+        class="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        New Organization
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="flex justify-center gap-1.5">
+    {% for num in page_obj.paginator.page_range %}
+    <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}"
+      class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-150
+        {% if page_obj.number == num %}
+          bg-blue-700 text-white shadow-md shadow-blue-700/30
+        {% else %}
+          bg-white text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
+        {% endif %}">
+      {{ num }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Delete Modal -->
+<dialog id="delete_org_modal" class="modal modal-middle">
+  <div class="modal-box rounded-2xl max-w-sm">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+        <i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i>
+      </div>
+      <h3 class="font-extrabold text-gray-900 text-base">Delete Organization</h3>
+    </div>
+    <p class="text-sm text-gray-500 mb-1">Are you sure you want to delete</p>
+    <p class="text-sm font-bold text-gray-900 mb-2" id="delete_org_name"></p>
+    <p class="text-xs text-red-400 mb-5">This will also delete all related officers, advisers and fee records.</p>
+
+    <form method="POST" id="delete_org_form">
+      {% csrf_token %}
+      <div class="modal-action mt-0">
+        <button type="button" onclick="document.getElementById('delete_org_modal').close()"
+          class="btn btn-ghost btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-error btn-sm px-6">Delete</button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script>
+  function openDeleteModal(pk, name) {
+    document.getElementById('delete_org_name').textContent = name;
+    document.getElementById('delete_org_form').action = `/head/organizations/${pk}/delete/`;
+    document.getElementById('delete_org_modal').showModal();
+  }
+</script>
+
+{% endblock con %}

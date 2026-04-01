@@ -1,0 +1,281 @@
+{% extends "app/heads/sidebar.html" %} {% load static %} {% block con %}
+
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 items-center">
+
+  <div class="w-full max-w-2xl">
+    <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">User Management</p>
+    <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Register Officer</h1>
+  </div>
+
+  <div class="w-full max-w-2xl pb-10">
+    <form method="POST" action="{% url 'head_create_officer' %}" class="flex flex-col gap-4">
+      {% csrf_token %}
+
+      <!-- Personal Information -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="user" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Personal Information</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">First Name</span>
+            </label>
+            <input
+              type="text"
+              name="first_name"
+              placeholder="First name"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Last Name</span>
+            </label>
+            <input
+              type="text"
+              name="last_name"
+              placeholder="Last name"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Username</span>
+            </label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Email</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email address"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Account Security -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="lock" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Account Security</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Password</span>
+            </label>
+            <div class="relative">
+              <input
+                id="password1"
+                type="password"
+                name="password1"
+                placeholder="••••••••"
+                autocomplete="off"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors pr-10"
+                required
+              />
+              <button type="button" onclick="togglePassword('password1', 'eye1')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                <i id="eye1" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Confirm Password</span>
+            </label>
+            <div class="relative">
+              <input
+                id="password2"
+                type="password"
+                name="password2"
+                placeholder="••••••••"
+                autocomplete="off"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors pr-10"
+                required
+              />
+              <button type="button" onclick="togglePassword('password2', 'eye2')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                <i id="eye2" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Academic Information -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Academic Information</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Student ID</span>
+            </label>
+            <input
+              type="text"
+              name="student_id"
+              placeholder="e.g. 202100123"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Section</span>
+            </label>
+            <input
+              type="text"
+              name="section"
+              placeholder="e.g. 1-1 "
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Program / Course</span>
+            </label>
+            <select name="program" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+              <option value="" disabled selected>-- Select Program --</option>
+              {% for value, display in form.fields.program.choices %}
+              <option value="{{ value }}">{{ display }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Year Level</span>
+            </label>
+            <select name="year" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
+              <option value="" disabled selected>Select year</option>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Assignment -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="building-2" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Assignment</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Role</span>
+            </label>
+            <select name="role" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
+              <option value="" disabled selected>-- Select Role --</option>
+              <option value="treasurer">Treasurer</option>
+              <option value="auditor">Auditor</option>
+              <option value="president">President</option>
+            </select>
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Organization</span>
+            </label>
+            <div  class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" >
+            {{ form.organization }}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {% if form.errors %}
+      <div class="alert alert-error rounded-xl text-sm">
+        <i data-lucide="circle-alert" class="w-5 h-5 shrink-0"></i>
+        <div>
+          {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+            <p><span class="font-bold capitalize">{{ field }}:</span> {{ error }}</p>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="flex items-center justify-end gap-3">
+        <a href="{% url 'campus_admin_user_role' %}"
+          class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+          Cancel
+        </a>
+        <button type="submit"
+          class="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+          <i data-lucide="shield-plus" class="w-4 h-4"></i>
+          Create Officer
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+  function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+      input.type = 'password';
+      icon.setAttribute('data-lucide', 'eye');
+    }
+    lucide.createIcons();
+  }
+</script>
+
+{% endblock con %}

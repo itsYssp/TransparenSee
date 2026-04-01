@@ -1,0 +1,64 @@
+{% load static %}
+
+<div class="navbar bg-white border-b border-gray-100 shadow-sm flex justify-between z-99 px-4 h-16">
+
+  <!-- LEFT: Logo + Hamburger -->
+  <div class="flex items-center gap-2">
+    <label for="my-drawer-4" aria-label="open sidebar" class="btn btn-ghost btn-sm btn-square lg:hidden">
+      <i data-lucide="menu" class="w-5 h-5"></i>
+    </label>
+    <a class="flex items-center gap-2.5 px-1">
+      <div class="w-8 h-8 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+        <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="TransparenSee" class="w-full h-full object-cover" />
+      </div>
+      <span class="text-base font-extrabold text-gray-900 tracking-tight hidden sm:block">TransparenSee</span>
+    </a>
+  </div>
+
+  <!-- RIGHT: User dropdown -->
+  <div class="hidden lg:flex items-center gap-3">
+
+    <div class="dropdown dropdown-end">
+      <div tabindex="0" role="button" class="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+
+        <div class="flex flex-col items-end">
+          <p class="text-sm font-semibold text-gray-800 leading-tight">{{ user.first_name }} {{ user.last_name }}</p>
+          <span class="text-xs font-bold text-blue-600 capitalize">{{ user.get_role_display }}</span>
+        </div>
+
+        <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-blue-100 shadow-sm shrink-0">
+          <img
+            alt="Profile"
+            src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+            class="w-full h-full object-cover"
+          />
+        </div>
+
+        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400"></i>
+      </div>
+
+      <ul tabindex="0" class="dropdown-content mt-2 bg-white border border-gray-100 rounded-2xl shadow-lg w-52 p-1.5 z-50">
+        <li class="px-3 py-2 mb-1 border-b border-gray-50">
+          <p class="text-xs font-bold text-gray-800 truncate">{{ user.first_name }} {{ user.last_name }}</p>
+          <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
+        </li>
+        <li>
+          <a href="{% url 'student_profile' %}" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <i data-lucide="user" class="w-4 h-4"></i>
+            Profile
+          </a>
+        </li>
+        <li class="mt-1 pt-1 border-t border-gray-50">
+          <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button class="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-colors">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+              Logout
+            </button>
+          </form>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>

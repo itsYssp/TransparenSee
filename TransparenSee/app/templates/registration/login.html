@@ -1,68 +1,241 @@
 {% extends "app/base.html" %} {% load static %} {% block content %}
 
-<div class="min-h-screen w-full relative">
-  <!-- Background -->
-  <div
-    class="absolute inset-0 z-0"
-    style="background: radial-gradient(125% 125% at 50% 10%, #fcf8f8 40%, #030ac5 100%)"
-  ></div>
+<style>
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(3deg); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-14px) rotate(-2deg); }
+  }
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .float-1 { animation: float 7s ease-in-out infinite; }
+  .float-2 { animation: float2 9s ease-in-out infinite; animation-delay: 1s; }
+  .float-3 { animation: float 11s ease-in-out infinite; animation-delay: 2.5s; }
+  .fadein { animation: fadein 0.6s ease both; }
+  .fadein-1 { animation: fadein 0.6s ease 0.1s both; }
+  .fadein-2 { animation: fadein 0.6s ease 0.2s both; }
+  .fadein-3 { animation: fadein 0.6s ease 0.3s both; }
+  .fadein-4 { animation: fadein 0.6s ease 0.4s both; }
+</style>
 
-  <div class="relative z-10 min-h-screen flex flex-col items-center">
-    <div class="absolute top-10 left-10 inline-flex items-center gap-1.5">
-      <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="Logo" class="w-13" />
-      <div class="font-bold">
-        <h2 class="text-xl">TransparenSee</h2>
-        <p class="text-xs text-center">A Blockchain Solution</p>
+<div class="min-h-screen w-full flex relative overflow-hidden bg-gray-50">
+
+  <div class="absolute top-[-10%] left-[-5%] w-125 h-125 rounded-full bg-blue-700/20 blur-3xl pointer-events-none"></div>
+  <div class="absolute bottom-[-10%] right-[-5%] w-100 h-100 rounded-full bg-blue-500/15 blur-3xl pointer-events-none"></div>
+  <div class="absolute top-[40%] left-[30%] w-75 h-75 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none"></div>
+
+
+   <div class="hidden lg:flex flex-col justify-center flex-1 px-16 relative z-10">
+ 
+
+    <div class="absolute top-[12%] left-[60%] -translate-x-[60%] float-1">
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-md px-5 py-4 w-52">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i>
+          </div>
+          <span class="text-xs font-semibold text-gray-400">Blockchain Verified</span>
+        </div>
+        <p class="text-gray-900 font-extrabold text-xl tracking-tight">₱ 2.4M</p>
+        <p class="text-gray-400 text-xs mt-0.5">Total funds tracked</p>
       </div>
     </div>
-    <div class="min-h-screen min-w-full flex flex-col items-center">
-      <div class="min-w-full flex flex-col lg:flex-row items-center justify-center flex-1 gap-16 px-6">
-        <div class="text-center min-h-full lg:text-left min-w-2xl">
-          <h1 class="text-4xl lg:text-6xl font-bold">Welcome Back!</h1>
-          <p class="py-6">Enter your username and password to accces your account.</p>
-        </div>
 
-        <div class="w-full max-w-md">
-          <div class="card bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl">
-            <div class="card-body">
-              <div class="text-red-600 mt-2 flex">
-                {% if form.errors %} {{ form.non_field_errors }} {% for field in form %} {% for error in field.errors %}
-                <p>{{ field.label }} {{ errors }}</p>
-
-                {% endfor %} {% endfor %} {% endif %}
-              </div>
-              <form class="fieldset" method="post" action="{% url 'login'  %}?next={{ request.GET.next }}">
-                {% csrf_token %}
-                <label class="label">Username</label>
-                <input
-                  type="text"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="Username"
-                  name="username"
-                  required
-                />
-
-                <label class="label mt-2">Password</label>
-                <input
-                  type="password"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="Password"
-                  name="password"
-                  required
-                />
-
-                <div class="mt-2">
-                  <a class="link link-hover">Forgot password?</a>
-                </div>
-
-                <button class="btn btn-neutral mt-4" type="submit">Login</button>
-              </form>
-            </div>
+    <div class="absolute bottom-[18%] left-[60%] -translate-x-[25%] float-2">
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-md px-5 py-4 w-48">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center">
+            <i data-lucide="building-2" class="w-3.5 h-3.5 text-green-600"></i>
           </div>
+          <span class="text-xs font-semibold text-gray-400">Organizations</span>
+        </div>
+        <p class="text-gray-900 font-extrabold text-xl tracking-tight">{{ organization_count }}</p>
+        <p class="text-gray-400 text-xs mt-0.5">Registered orgs</p>
+      </div>
+    </div>
+
+    <div class="absolute top-[40%] left-[60%] -translate-x-[75%] float-3">
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-md px-5 py-4 w-44">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+            <i data-lucide="link" class="w-3.5 h-3.5 text-amber-500"></i>
+          </div>
+          <span class="text-xs font-semibold text-gray-400">On-chain</span>
+        </div>
+        <p class="text-gray-900 font-extrabold text-xl tracking-tight">100%</p>
+        <p class="text-gray-400 text-xs mt-0.5">Transparent</p>
+      </div>
+    </div>
+
+  
+    <div class="fadein mb-10">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+          <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="Logo" class="w-full h-full object-cover" />
+        </div>
+        <div class="max-w-30 ">
+          <p class="text-gray-900 font-extrabold text-base tracking-tight">TransparenSee</p>
+          <p class="text-gray-400 text-[6px] text-justify leading-tight">A Blockchain Solution for Academic and Non-Academic School Organization Funds</p>
         </div>
       </div>
+    </div>
+
+    <div class="fadein-1">
+      <h1 class="text-5xl xl:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight mb-5">
+        Financial<br>
+        <span class="text-blue-700">Transparency</span><br>
+        Starts Here.
+      </h1>
+    </div>
+
+    <div class="fadein-2">
+      <p class="text-gray-400 text-base leading-relaxed max-w-sm">
+        A blockchain-powered platform for transparent management of student organization funds.
+      </p>
+    </div>
+
+    <div class="fadein-3 mt-10 flex items-center gap-6">
+      <div class="text-center">
+        <p class="text-gray-900 font-extrabold text-2xl">100%</p>
+        <p class="text-gray-400 text-xs mt-0.5">Transparent</p>
+      </div>
+      <div class="w-px h-10 bg-gray-200"></div>
+      <div class="text-center">
+        <p class="text-gray-900 font-extrabold text-2xl">14+</p>
+        <p class="text-gray-400 text-xs mt-0.5">Organizations</p>
+      </div>
+      <div class="w-px h-10 bg-gray-200"></div>
+      <div class="text-center">
+        <p class="text-gray-900 font-extrabold text-2xl">{{ user_count }}+</p>
+        <p class="text-gray-400 text-xs mt-0.5">Users</p>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- Right login panel -->
+<div class="w-full lg:w-120 flex flex-col justify-center items-center px-8 py-12 relative z-10 bg-white border-l border-gray-100 shadow-xl">
+
+    <!-- Mobile logo -->
+    <div class="flex lg:hidden items-center gap-3 mb-8">
+      <div class="w-10 h-10 rounded-xl overflow-hidden border border-gray-200">
+        <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="Logo" class="w-full h-full object-cover" />
+      </div>
+      <div class="max-w-30 ">
+          <p class="text-gray-900 font-extrabold text-base tracking-tight">TransparenSee</p>
+          <p class="text-gray-400 text-[6px] text-justify leading-tight">A Blockchain Solution for Academic and Non-Academic School Organization Funds</p>
+        </div>
+    </div>
+
+    <div class="w-full max-w-sm">
+
+      <div class="fadein mb-8"> 
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Account</p>
+        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Welcome back</h2>
+        <p class="text-gray-400 text-sm mt-1">Sign in to your account to continue</p>
+      </div>
+
+      {% if form.errors %}
+      <div class="fadein mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+        <i data-lucide="circle-alert" class="w-4 h-4 text-red-500 mt-0.5 shrink-0"></i>
+        <div class="text-sm text-red-600">
+          {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+          {% endfor %}
+          {% for field in form %}
+            {% for error in field.errors %}
+            <p>{{ field.label }}: {{ error }}</p>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}?next={{ request.GET.next }}" class="flex flex-col gap-4">
+        {% csrf_token %}
+
+        <div class="fadein-1 form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Username</span>
+          </label>
+          <input
+            type="text"
+            name="username"
+            placeholder="Enter your username"
+            class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+            
+          />
+        </div>
+
+        <div class="fadein-2 form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Password</span>
+          </label>
+          <div class="relative">
+                <input
+                  id="password"
+                  type="password"
+                  name="password"
+                  placeholder="••••••••"
+                  autocomplete="off"
+                  class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors pr-10"
+                  
+                />
+                <button type="button" onclick="togglePassword('password', 'eye1')"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  <i id="eye1" data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+        </div>
+
+        <div class="fadein-2 flex justify-end -mt-2">
+          <a class="text-xs text-blue-600 hover:text-blue-800 transition-colors font-semibold">Forgot password?</a>
+        </div>
+
+        <div class="fadein-3">
+          <button
+            type="submit"
+            class="w-full py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold text-sm transition-all duration-200 shadow-md shadow-blue-700/20 hover:-translate-y-0.5"
+          >
+            Sign In
+          </button>
+        </div>
+
+         <div class="fadein-4 text-center">
+          <p class="text-xs text-gray-400">Don't have an account?
+            <a href="{% url 'signup' %}" class="text-blue-600 font-semibold hover:text-blue-800 transition-colors">Sign up</a>
+          </p>
+        </div>
+      </form>
+
+      <div class="fadein-4 mt-8 pt-6 border-t border-gray-100 flex items-center justify-center gap-2">
+        <i data-lucide="shield" class="w-3.5 h-3.5 text-gray-300"></i>
+        <p class="text-xs text-gray-400">Secured with blockchain technology</p>
+      </div>
+
     </div>
   </div>
 </div>
+
+<script>
+  function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+      input.type = 'password';
+      icon.setAttribute('data-lucide', 'eye');
+    }
+    lucide.createIcons();
+  }
+</script>
 
 {% endblock content %}

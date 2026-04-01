@@ -50,14 +50,11 @@ class CustomUser(AbstractUser):
         ('auditor', 'Auditor'),
         ('president', 'President'),
         ('student', 'Student'),
+        ('head', 'Head')
     ]
     role = models.CharField( max_length=20, choices=ROLE_CHOICES)
-    organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
     profile_image = models.ImageField(upload_to="profile_pictures", blank=True, null=True)
-
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
-
     objects = CustomUserManager()
 
-    def get_absolute_url(self):
-        return reverse("campus_admin_user_role" )
+    

@@ -1,0 +1,540 @@
+{% extends "app/officer/treasurer/sidebar.html" %} {% load static %} {% block con %}
+
+<div class="px-6 py-6 flex flex-col gap-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-0.5">Treasurer</p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Society Fee</h1>
+    </div>
+    <button onclick="document.getElementById('add_fee_modal').showModal()"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+      <i data-lucide="plus" class="w-4 h-4"></i>
+      Add Fee Record
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+        <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">
+        {% if request.GET.search or request.GET.status or request.GET.academic_year %}
+          Filtered Results
+        {% else %}
+          Total Records
+        {% endif %}
+      </span>
+    </div>
+    <p class="text-3xl font-extrabold text-gray-900">{{ total_students }}</p>
+    <p class="text-xs text-gray-400">
+      {% if request.GET.search or request.GET.status or request.GET.academic_year %}
+        Filtered Fee Records 
+      {% else %}
+        All fee records
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
+        <i data-lucide="circle-check" class="w-4 h-4 text-green-600"></i>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">Paid</span>
+    </div>
+    <p class="text-3xl font-extrabold text-gray-900">{{ paid_count }}</p>
+    <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-full bg-green-500 rounded-full transition-all duration-500"
+        style="width: {{ paid_percent }}%">
+      </div>
+    </div>
+    <p class="text-xs text-gray-400">{{ paid_percent }}% of records</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+        <i data-lucide="clock" class="w-4 h-4 text-red-500"></i>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">Unpaid</span>
+    </div>
+    <p class="text-3xl font-extrabold text-gray-900">{{ unpaid_count }}</p>
+    <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-full bg-red-400 rounded-full transition-all duration-500"
+        style="width: {{ unpaid_percent }}%">
+      </div>
+    </div>
+    <p class="text-xs text-gray-400">{{ unpaid_percent }}% of records</p>
+  </div>
+
+</div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-center gap-3">
+    <form method="GET" class="flex flex-wrap items-center gap-3 w-full">
+
+      <div class="flex items-center gap-2 flex-1 min-w-48">
+        <i data-lucide="search" class="w-4 h-4 text-gray-400 shrink-0"></i>
+        <input
+          type="text"
+          name="search"
+          value="{{ request.GET.search }}"
+          placeholder="Search student..."
+          class="input input-sm bg-transparent border-none outline-none w-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+        />
+      </div>
+
+      <div class="w-px h-6 bg-gray-200"></div>
+
+      
+      <select name="semester" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
+        <option value="">All Semester</option>
+        <option value="1stSem" {% if request.GET.semester == '1stSem' %}selected{% endif %}>1st Semester</option>
+        <option value="2ndSem" {% if request.GET.semester == '2ndSem' %}selected{% endif %}>2nd Semester</option>
+        <option value="midYear" {% if request.GET.semester == 'midYear' %}selected{% endif %}>Mid Year</option>
+      </select>
+
+      <select name="academic_year" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
+        <option value="">All Years</option>
+        {% for ay in academic_years %}
+            <option value="{{ ay.id }}" 
+                {% if request.GET.academic_year == ay.id|stringformat:"s" %}selected{% endif %}>
+                {{ ay.academic_year }} - {{ ay.get_semester_display }}
+            </option>
+        {% endfor %}
+      </select>
+
+
+      <button type="submit" class="flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors">
+        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+        Filter
+      </button>
+
+      {% if request.GET.search or request.GET.semester or request.GET.academic_year %}
+      <a href="?" class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        Clear
+      </a>
+      {% endif %}
+
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl border  border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+          <i data-lucide="banknote-arrow-up" class="w-3.5 h-3.5 text-blue-600"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-800">Fee Records</p>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">{{ society_fees|length }} record{{ society_fees|length|pluralize }}</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm h-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">#</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Student</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Academic Year</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Semester</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Amount</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Paid</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for fee in society_fees %}
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+            <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl overflow-hidden border-2 border-gray-100 shrink-0">
+                  <img
+                    src="{% if fee.student.profile_image %}{{ fee.student.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                    alt="avatar"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900 text-sm leading-tight">{{ fee.student.get_full_name }}</p>
+                  <p class="text-xs text-gray-400">{{ fee.student.student.student_id }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-xs text-gray-600 font-mono">{{ fee.academic_year.academic_year }} </td>
+            <td class="px-5 py-3.5 text-xs text-gray-600 font-mono">{{ fee.get_semester_display }}</td>
+            <td class="px-5 py-3.5 font-semibold text-gray-900">₱{{ fee.amount }}</td>
+            <td class="px-5 py-3.5 text-green-600 font-semibold">₱{{ fee.amount_paid }}</td>
+            <td class="px-5 py-3.5">
+              {% if fee.status == 'paid' %}
+              <span class="bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-lg">Paid</span>
+              {% elif fee.status == 'partial' %}
+              <span class="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-lg">Partial</span>
+              {% else %}
+              <span class="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-lg">Unpaid</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-1.5">
+                <button
+                onclick="openUpdateModal('{{ fee.pk }}', '{{ fee.amount }}', '{{ fee.amount_paid }}', '{{ fee.status }}', '{{ fee.academic_year.id }}')"
+                  class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+                <button
+                  onclick="openDeleteModal('{{ fee.pk }}', '{{ fee.student.get_full_name }}')"
+                  class="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 italic">No fee records yet</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="px-5 py-4 border-t border-gray-100 flex justify-center gap-1.5">
+      {% for num in page_obj.paginator.page_range %}
+      {% if num >= 8 %}
+      <a href="?page={{ num }}"
+        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-150
+          {% if page_obj.number == num %}
+            bg-blue-700 text-white shadow-md shadow-blue-700/30
+          {% else %}
+            bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
+          {% endif %}">
+        {{ num }}
+      </a>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Fee Modal -->
+<dialog id="add_fee_modal" class="modal modal-middle">
+  <div class="modal-box rounded-2xl max-w-md">
+    <h3 class="font-extrabold text-lg text-gray-900 tracking-tight mb-1">Add Fee Record</h3>
+    <p class="text-xs text-gray-400 mb-5">Create a new society fee record for a student.</p>
+
+    <form method="POST" action="{% url 'treasurer_society_fee_create' %}" class="flex flex-col gap-3">
+      {% csrf_token %}
+
+      <div class="form-control relative">
+  <label class="label pb-1">
+    <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Student</span>
+  </label>
+  <input
+    type="text"
+    id="student_search"
+    placeholder="Type student name or Student ID..."
+    class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+    autocomplete="off"
+    oninput="searchStudent(this.value)"
+  />
+  <input type="hidden" name="student" id="student_id_input" required />
+
+  <!-- Search results dropdown -->
+  <div id="student_results"
+    class="hidden absolute z-50 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto w-full">
+  </div>
+</div>
+
+      <div class="form-control relative">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Academic Year</span>
+        </label>
+        <select name="academic_year" class="select select-bordered select-sm w-full" required>
+          <option value="" disabled selected>-- Select Academic Year --</option>
+          {% for ay in academic_years %}
+            <option value="{{ ay.id }}" 
+                {% if request.GET.academic_year == ay.id|stringformat:"s" %}selected{% endif %}>
+                {{ ay.academic_year }} - {{ ay.get_semester_display }}
+            </option>
+        {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-control relative">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Semester</span>
+        </label>
+        <select name="semester" class="select select-bordered select-sm w-full" required>
+          <option value="" disabled selected>-- Select Semester --</option>
+          <option value="1stSem">1st Semester</option>
+          <option value="2ndSem">2nd Semester</option>
+          <option value="midYear">Mid Year</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Amount Due</span>
+          </label>
+          <input
+            type="number"
+            name="amount"
+            placeholder="0.00"
+            step="0.01"
+            class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+            required
+          />
+        </div>
+
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Amount Paid</span>
+          </label>
+          <input
+            type="number"
+            name="amount_paid"
+            placeholder="0.00"
+            step="0.01"
+            value="0"
+            class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+          />
+        </div>
+      </div>
+
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Status</span>
+        </label>
+        <select name="status" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
+          <option value="unpaid" selected>Unpaid</option>
+          <option value="partial">Partial</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
+
+      <div class="modal-action mt-2">
+        <form method="dialog">
+        <button type="button" onclick="document.getElementById('add_fee_modal').close()"  class="btn btn-ghost btn-sm">Cancel</button>
+        </form>
+        <button type="submit" class="btn btn-primary btn-sm px-6">Add Record</button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- Update Fee Modal -->
+<dialog id="update_fee_modal" class="modal modal-middle">
+  <div class="modal-box rounded-2xl max-w-md">
+    <h3 class="font-extrabold text-lg text-gray-900 tracking-tight mb-1">Update Fee Record</h3>
+    <p class="text-xs text-gray-400 mb-5">Update the payment details for this student.</p>
+
+    <form method="POST" id="update_fee_form" class="flex flex-col gap-3">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="update">
+      <input type="hidden" name="fee_id" id="update_fee_id">
+
+      <!-- Replace the text input in Update Fee Modal -->
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Academic Year</span>
+        </label>
+
+        <select name="academic_year" id="update_academic_year" 
+          class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
+          {% for ay in academic_years %}
+            <option value="{{ ay.id }}" 
+                {% if request.GET.academic_year == ay.id|stringformat:"s" %}selected{% endif %}>
+                {{ ay.academic_year }} - {{ ay.get_semester_display }}
+            </option>
+        {% endfor %}
+        </select>
+      </div>
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Semester</span>
+        </label>
+        
+        <select name="semester" id="update_semester" 
+        class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
+    {% for value, display in semester %}
+        <option value="{{ value }}" {% if semester == value %}selected{% endif %}>
+            {{ display }}
+        </option>
+    {% endfor %}
+</select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Amount Due</span>
+          </label>
+          <input
+            type="number"
+            name="amount"
+            id="update_amount"
+            step="0.01"
+            class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+            required
+          />
+        </div>
+
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Amount Paid</span>
+          </label>
+          <input
+            type="number"
+            name="amount_paid"
+            id="update_amount_paid"
+            step="0.01"
+            class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+          />
+        </div>
+      </div>
+
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Status</span>
+        </label>
+        <select name="status" id="update_status" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
+          <option value="unpaid">Unpaid</option>
+          <option value="partial">Partial</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
+
+      <div class="modal-action mt-2">
+        <form method="dialog">
+            <button type="button" onclick="document.getElementById('update_fee_modal').close()" 
+    class="btn btn-ghost btn-sm">Cancel</button>
+        </form>
+        <button type="submit" class="btn btn-primary btn-sm px-6">Save Changes</button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- Delete Confirmation Modal -->
+<dialog id="delete_fee_modal" class="modal modal-middle">
+  <div class="modal-box rounded-2xl max-w-sm">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+        <i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i>
+      </div>
+      <h3 class="font-extrabold text-gray-900 text-base">Delete Record</h3>
+    </div>
+    <p class="text-sm text-gray-500 mb-1">Are you sure you want to delete the fee record for</p>
+    <p class="text-sm font-bold text-gray-900 mb-5" id="delete_student_name"></p>
+
+    <form method="POST" id="delete_fee_form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete">
+      <input type="hidden" name="fee_id" id="delete_fee_id">
+      <div class="modal-action mt-0">
+        <form method="dialog">
+          <button type="button" onclick="document.getElementById('delete_fee_modal').close()"  class="btn btn-ghost btn-sm">Cancel</button>
+        </form>
+        <button type="submit" class="btn btn-error btn-sm px-6">Delete</button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+
+<script>
+
+  const students = [
+    {% for student in students %}
+    {
+      id: "{{ student.pk }}",
+      name: "{{ student.get_full_name|escapejs }}",
+      student_id: "{% if student.student %}{{ student.student.student_id|default:''|escapejs }}{% else %}{% endif %}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  function searchStudent(query) {
+    const resultsBox = document.getElementById('student_results');
+    const hiddenInput = document.getElementById('student_id_input');
+
+    if (!query.trim()) {
+      resultsBox.classList.add('hidden');
+      hiddenInput.value = '';
+      return;
+    }
+
+
+    const filtered = students.filter(s =>
+    s.name.toLowerCase().includes(query.toLowerCase()) ||
+    s.student_id.toLowerCase().includes(query.toLowerCase())
+  );
+
+    resultsBox.innerHTML = filtered.map(s => `
+      <div
+        onclick="selectStudent('${s.id}', '${s.name}', '${s.student_id}')"
+        class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+      >
+        <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+          <span class="text-xs font-bold text-blue-700">${s.name.charAt(0)}</span>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-800">${s.name}</p>
+          <p class="text-xs text-gray-400">${s.student_id}</p>
+        </div>
+      </div>
+    `).join('');
+
+    resultsBox.classList.remove('hidden');
+  }
+
+  function selectStudent(id, name, studentId) {
+    document.getElementById('student_search').value = `${name} — ${studentId}`;
+    document.getElementById('student_id_input').value = id;
+    document.getElementById('student_results').classList.add('hidden');
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const search = document.getElementById('student_search');
+    const results = document.getElementById('student_results');
+    if (search && results && !search.contains(e.target) && !results.contains(e.target)) {
+      results.classList.add('hidden');
+    }
+  });
+
+  function openUpdateModal(feeId, amount, amountPaid, status, academicYearId) {
+    document.getElementById('update_fee_id').value = feeId;
+    document.getElementById('update_amount').value = amount;
+    document.getElementById('update_amount_paid').value = amountPaid;
+    document.getElementById('update_academic_year').value = academicYearId; // now sets by ID
+    document.getElementById('update_status').value = status;
+    document.getElementById('update_fee_modal').showModal();
+  }
+ 
+  function openDeleteModal(feeId, studentName) {
+    document.getElementById('delete_fee_id').value = feeId;
+    document.getElementById('delete_student_name').textContent = studentName;
+    document.getElementById('delete_fee_modal').showModal();
+  }
+
+  
+</script>
+
+{% endblock con %}

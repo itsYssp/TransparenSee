@@ -1,69 +1,118 @@
 {% load static %}
-<div class="navbar bg-white shadow-md flex justify-between z-99">
-  <div class="flex">
-    <a class="flex shrink-0 gap-1.5 items-center text-xl px-2 py-1 rounded font-semibold">
-      <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="" class="w-10 rounded-full" />
-      <p class="text-black">TransparenSee</p>
-    </a>
-    <div class="flex-none">
-      <ul class="menu menu-horizontal px-1"></ul>
-      <label for="my-drawer-4" aria-label="open sidebar" class="btn btn-square btn-ghos lg:hidden">
-        <i data-lucide="menu"></i>
-      </label>
-    </div>
-  </div>
-  <div class="w-auto hidden lg:flex gap-5 px-2.5 items-center">
-    <div class="flex gap-2 items-center px3">
-      <i
-        data-lucide="mail"
-        class="w-7 h-7 p-1 duration-300 ease-in hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5] rounded-full"
-      ></i>
-      <i
-        data-lucide="bell"
-        class="w-7 h-7 p-1 duration-300 ease-in hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5] rounded-full"
-      ></i>
-    </div>
-    <div class="w-px h-7 bg-gray-400"></div>
-    <div class="dropdown dropdown-end flex">
-      <div class="flex flex-col items-end px-3">
-        <p class="text-sm">{{ user.first_name }} {{ user.last_name }}</p>
-        <div class="badge badge-primary text-[10px] capitalize">{{ user.get_role_display }}</div>
-      </div>
 
-      <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-        <div class="w-10 rounded-full border border-gray-400 shadow-lg">
+<div class="navbar bg-white border-b border-gray-100 shadow-sm flex justify-between z-99 px-4 h-16">
+
+
+  <div class="flex items-center gap-2">
+
+    <label for="my-drawer-4" aria-label="open sidebar" class="btn btn-ghost btn-sm btn-square lg:hidden">
+      <i data-lucide="menu" class="w-5 h-5"></i>
+    </label>
+
+
+    <a class="flex items-center gap-2.5 px-1">
+      <div class="w-8 h-8 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+        <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="TransparenSee" class="w-full h-full object-cover" />
+      </div>
+      <span class="text-base font-extrabold text-gray-900 tracking-tight hidden sm:block">TransparenSee</span>
+    </a>
+  </div>
+
+
+  <div class="hidden lg:flex items-center gap-3">
+
+    
+    <div class="flex items-center gap-1">
+      <button class="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200 relative">
+        <i data-lucide="mail" class="w-4 h-4"></i>
+        <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+      </button>
+      <button class="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200 relative">
+        <i data-lucide="bell" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <div class="w-px h-6 bg-gray-200"></div>
+
+  
+    <div class="dropdown dropdown-end">
+      <div tabindex="0" role="button" class="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+
+        <div class="flex flex-col items-end">
+          <p class="text-sm font-semibold text-gray-800 leading-tight">{{ user.first_name }} {{ user.last_name }}</p>
+          <span class="text-xs font-bold text-blue-600 capitalize">{{ user.get_role_display }}</span>
+        </div>
+
+
+        <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-blue-100 shadow-sm shrink-0">
           <img
-            alt="Profile Picture"
-            src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %} "
+            alt="Profile"
+            src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+            class="w-full h-full object-cover"
           />
         </div>
+
+        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400"></i>
       </div>
-      <ul tabindex="-1" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-        <li>
-          <a> Profile </a>
+
+
+      <ul tabindex="0" class="dropdown-content mt-2 bg-white border border-gray-100 rounded-2xl shadow-lg w-52 p-1.5 z-50">
+      
+        <li class="px-3 py-2 mb-1 border-b border-gray-50">
+          <p class="text-xs font-bold text-gray-800 truncate">{{ user.first_name }} {{ user.last_name }}</p>
+          <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
         </li>
-        <li><a>Settings</a></li>
-        <form action="{% url 'logout' %}" method="post" class="w-full flex">
-          {% csrf_token %}
-          <li class="w-full">
-            <button class="flex-1 text-left">Logout</button>
-          </li>
-        </form>
+        <li>
+          <a class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <i data-lucide="user" class="w-4 h-4"></i>
+            Profile
+          </a>
+        </li>
+        <li>
+          <a class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            Settings
+          </a>
+        </li>
+        <li class="mt-1 pt-1 border-t border-gray-50">
+          <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button class="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-colors">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+              Logout
+            </button>
+          </form>
+        </li>
       </ul>
     </div>
-    <div class="w-px h-7 bg-gray-400"></div>
 
-    <div class="flex px-2.5">
-      {% if user.get_role_display == 'Super Admin' or 'Campus Admin'%}
-      <img class="w-10 h-10 rounded-full shadow-lg" alt="Profile Picture" src="{% static 'images/cvsu_logo.jpg' %}" />
 
-      {% else %}
-      <img
-        class="w-10 h-10 rounded-full border border-gray-400 shadow-lg"
-        alt="Profile Picture"
-        src="{% if user.organization.logo %}{{ user.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
-      />
+    <div class="w-px h-6 bg-gray-200"></div>
+
+
+    <div class="flex items-center px-1">
+      {% if user.role == 'super_admin' or user.role == 'campus_admin' %}
+      <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-gray-100 shadow-sm">
+        <img src="{% static 'images/cvsu_logo.jpg' %}" alt="CvSU" class="w-full h-full object-cover" />
+      </div>
+      {% elif user.role == 'treasurer' or user.role == 'auditor' or user.role == 'president'%}
+      <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-blue-100 shadow-sm">
+        <img
+          src="{% if user.officer.organization.logo %}{{ user.officer.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+          alt="Organization"
+          class="w-full h-full object-cover"
+        />
+      </div>
+      {% elif  user.role == 'adviser'  %}
+      <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-blue-100 shadow-sm">
+        <img
+          src="{% if user.adviser.organization.logo %}{{ user.adviser.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+          alt="Organization"
+          class="w-full h-full object-cover"
+        />
+      </div>
       {% endif %}
     </div>
+
   </div>
 </div>

@@ -1,151 +1,311 @@
 {% extends "app/campus_admin/sidebar.html" %} {% load static %} {% block con %}
-    <div class="p-6 bg-base-100 overflow-y-auto flex-1 h-full ">
-    <h1 class="text-2xl font-bold mb-4">User Management</h1>
 
-    <a href="{% url 'campus_admin_create_adviser' %}" class='btn btn-soft btn-primary btn-sm'>+ Add Adviser</a>
-    <a href="{% url 'campus_admin_create_officer' %}" class='btn btn-soft btn-accent btn-sm'>+ Add Officer</a>
+<div class="px-6 py-6 flex flex-col gap-6">
 
-    <div role="tablist" class="tabs tabs-border my-4">
-      <a role="tab" class="tab {% if request.GET.type == 'advisers' or not request.GET.type %}tab-active{% endif %}" href="?type=advisers">
-        Advisers
-      </a>
-      <a role="tab" class="tab {% if request.GET.type == 'officers'%}tab-active{% endif %}" href="?type=officers">
-        Officers
-      </a>
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Campus Admin</p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">User Management</h1>
+    </div>
+    <a href="{% url 'campus_admin_create_head' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        Add Campus Head
+    </a>
+  </div>
+
+  <div class="flex bg-white border border-gray-200 rounded-xl p-1 gap-1 shadow-sm w-fit">
+    <a href="?type=heads"
+      class="text-sm font-semibold py-2 px-5 rounded-lg transition-all duration-200
+        {% if request.GET.type == 'heads' or not request.GET.type %}
+          bg-blue-700 text-white shadow-md shadow-blue-700/20
+        {% else %}
+          text-gray-500 hover:bg-blue-50 hover:text-blue-700
+        {% endif %}">
+      Heads
+    </a>
+    <a href="?type=advisers"
+      class="text-sm font-semibold py-2 px-5 rounded-lg transition-all duration-200
+        {% if request.GET.type == 'advisers'  %}
+          bg-blue-700 text-white shadow-md shadow-blue-700/20
+        {% else %}
+          text-gray-500 hover:bg-blue-50 hover:text-blue-700
+        {% endif %}">
+      Advisers
+    </a>
+    <a href="?type=officers"
+      class="text-sm font-semibold py-2 px-5 rounded-lg transition-all duration-200
+        {% if request.GET.type == 'officers' %}
+          bg-blue-700 text-white shadow-md shadow-blue-700/20
+        {% else %}
+          text-gray-500 hover:bg-blue-50 hover:text-blue-700
+        {% endif %}">
+      Officers
+    </a>
+  </div>
+
+  {% if request.GET.type == "officers" %}
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+          <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-600"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-800">Officers</p>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">{{ users|length }} record{{ users|length|pluralize }}</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">#</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Name</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Organization</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for user in users %}
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+            <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-gray-100 shrink-0">
+                  <img
+                    src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                    alt="Profile"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900 text-sm leading-tight">{{ user.first_name }} {{ user.last_name }}</p>
+                  <p class="text-xs text-gray-400">{{ user.username }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.email }}</td>
+            <td class="px-5 py-3.5">
+              <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg">{{ user.get_role_display }}</span>
+            </td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg overflow-hidden border border-gray-100 shrink-0">
+                  <img
+                    src="{% if user.officer.organization.logo %}{{ user.officer.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                    alt="org"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <span class="text-xs text-gray-600 font-medium">{{ user.officer.organization.name }}</span>
+              </div>
+            </td>
+            
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400 italic">No officers found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    {% if request.GET.type == "officers" %}
-    <div class=" ">
-      <table class="table table-xs">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Organization</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for user in users %}
-          <tr>
-            <th>{{ page_obj.start_index|add:forloop.counter0 }}</th>
-            <td>
-              <div class="flex items-center gap-3">
-                <div class="avatar">
-                  <div class="mask mask-squircle h-10 w-10">
-                    <img
-                      src="{% if user.profile_image %} {{ user.profile_image.url }} {% else %} {% static 'images/default_profile_pic.jpg' %} {% endif %}"
-                      alt="Profile Picture"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div class="font-bold">{{ user.first_name }} {{ user.last_name }}</div>
-                  <div class="text-sm opacity-50">{{ user.username }}</div>
-                </div>
-              </div>
-            </td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.get_role_display }}</td>
-            <td><div class="flex gap-2 items-center ">
-              <img src="{% if user.organization.logo %}
-              {{  user.organization.logo.url }} {% else %} {% url 'images/default_profile_pic.jpg'  %} {% endif %}" alt="" class='w-5 h-5'>
-              {{ user.organization.name }}
-            </div></td>
-            <td class="w-full flex gap-2">
-              <a class="btn btn-primary btn-soft btn-xs rounded-full h-sm">
-                <i data-lucide="pencil" class="w-4 h-4"></i>
-              <a/>
-              <a class="btn btn-error btn-soft btn-xs rounded-full h-sm ">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </a>
-              
-              
-            </td>
-          </tr>
-        </tbody>
-        {% endfor %}
-      </table>
-      <div class="join mt-6 flex justify-center">
-       {% for num in page_obj.paginator.page_range %}
-        {% if num >= 8 %}
-        <a
-          href="?type={{ request.GET.type }}&page={{ num }}"
-          class="join-item btn btn-square {% if page_obj.number == num %}btn-active{% endif %}"
-        >
-          {{ num }}
-        </a>
-
-        {% endif %}
-        {% endfor %}
-      </div>
-    {% else %}
-
-    <div class=" ">
-      <table class="table table-xs">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Organization</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for user in users %}
-          <tr>
-            <th>{{ page_obj.start_index|add:forloop.counter0 }}</th>
-            <td>
-              <div class="flex items-center gap-3">
-                <div class="avatar">
-                  <div class="mask mask-squircle h-10 w-10">
-                    <img
-                      src="{% if user.profile_image %} {{ user.profile_image.url }} {% else %} {% static 'images/default_profile_pic.jpg' %} {% endif %}"
-                      alt="Profile Picture"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div class="font-bold">{{ user.first_name }} {{ user.last_name }}</div>
-                  <div class="text-sm opacity-50">{{ user.username }}</div>
-                </div>
-              </div>
-            </td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.get_role_display }}</td>
-            <td>{{ user.organization.name }}</td>
-            <td class="w-full flex gap-2">
-              <a class="btn btn-primary btn-soft btn-xs rounded-full h-sm" href="{% url 'campus_admin_update_adviser' user.pk  %}">
-                <i data-lucide="pencil" class="w-4 h-4"></i>
-              <a/>
-              <a class="btn btn-error btn-soft btn-xs rounded-full h-sm ">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </a>
-              
-            </td>
-          </tr>
-        </tbody>
-        {% endfor %}
-      </table>
-      <div class="join mt-6 flex justify-center">
-        
-        {% for num in page_obj.paginator.page_range %}
-        {% if num >= 8 %}
-        <a
-          href="?type={{ request.GET.type }}&page={{ num }}"
-          class="join-item btn btn-square {% if page_obj.number == num %}btn-active{% endif %}"
-        >
-          {{ num }}
-        </a>
-
-        {% endif %}
-        {% endfor %}
-      </div>
+    <div class="px-5 py-4 border-t border-gray-100 flex justify-center gap-1.5">
+      {% for num in page_obj.paginator.page_range %}
+      {% if num >= 8 %}
+      <a href="?type={{ request.GET.type }}&page={{ num }}"
+        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-150
+          {% if page_obj.number == num %}
+            bg-blue-700 text-white shadow-md shadow-blue-700/30
+          {% else %}
+            bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
+          {% endif %}">
+        {{ num }}
+      </a>
       {% endif %}
+      {% endfor %}
     </div>
   </div>
+
+  {% elif request.GET.type == 'advisers' %}
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+          <i data-lucide="user-check" class="w-3.5 h-3.5 text-blue-600"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-800">Advisers</p>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">{{ users|length }} record{{ users|length|pluralize }}</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">#</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Employee ID</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Name</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Department</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role </th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Organization</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for user in users %}
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+            <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td class="px-5 py-3.5 text-gray-500 text-xs font-semibold">{{ user.adviser.employee_id }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-gray-100 shrink-0">
+                  <img
+                    src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                    alt="Profile"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900 text-sm leading-tight">{{ user.first_name }} {{ user.last_name }}</p>
+                  <p class="text-xs text-gray-400">{{ user.username }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.email }}</td>
+            
+            <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.adviser.department }}</td>
+            <td class="px-5 py-3.5">
+              <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg">{{ user.get_role_display }}</span>
+            </td>
+            <td class="px-5 py-3.5 text-xs text-gray-600 font-medium">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg overflow-hidden border border-gray-100 shrink-0">
+                  <img
+                    src="{% if user.adviser.organization.logo %}{{ user.adviser.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                    alt="org"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <span class="text-xs text-gray-600 font-medium">{{ user.adviser.organization.name }}</span>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400 italic">No system users found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="px-5 py-4 border-t border-gray-100 flex justify-center gap-1.5">
+      {% for num in page_obj.paginator.page_range %}
+      {% if num >= 8 %}
+      <a href="?type={{ request.GET.type }}&page={{ num }}"
+        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-150
+          {% if page_obj.number == num %}
+            bg-blue-700 text-white shadow-md shadow-blue-700/30
+          {% else %}
+            bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
+          {% endif %}">
+        {{ num }}
+      </a>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+{% else %}
+<div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+          <i data-lucide="user-check" class="w-3.5 h-3.5 text-blue-600"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-800">Head</p>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">{{ users|length }} record{{ users|length|pluralize }}</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">#</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Employee ID</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Name</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role </th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Department</th>
+            <th class="px-5 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for user in users %}
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+            <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td class="px-5 py-3.5 text-gray-500 text-xs font-semibold">{{ user.heads.employee_id }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-gray-100 shrink-0">
+                  <img
+                    src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                    alt="Profile"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900 text-sm leading-tight">{{ user.first_name }} {{ user.last_name }}</p>
+                  <p class="text-xs text-gray-400">{{ user.username }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.email }}</td>
+            
+
+            <td class="px-5 py-3.5">
+              <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg">{{ user.get_role_display }}</span>
+            </td>
+            <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.heads.get_department_display }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center justify-center">
+                <a href="" class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400 italic">No system users found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+
+    <div class="px-5 py-4 border-t border-gray-100 flex justify-center gap-1.5">
+      {% for num in page_obj.paginator.page_range %}
+      {% if num >= 8 %}
+      <a href="?type={{ request.GET.type }}&page={{ num }}"
+        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-150
+          {% if page_obj.number == num %}
+            bg-blue-700 text-white shadow-md shadow-blue-700/30
+          {% else %}
+            bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
+          {% endif %}">
+        {{ num }}
+      </a>
+      {% endif %}
+      {% endfor %}
+  
+
+  {% endif %}
+
+</div>
+
 {% endblock con %}

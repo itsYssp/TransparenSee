@@ -1,0 +1,244 @@
+{% extends base_template %} {% load static %} {% block con %}
+
+<div class="flex flex-col flex-1 min-h-0 ">
+
+
+  <div class="px-6 pt-6 pb-3 bg-white border-b border-gray-100 shrink-0">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Community</p>
+        <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Chat</h1>
+      </div>
+
+      <div class="flex items-center gap-2 bg-green-50 border border-green-100 text-green-600 text-xs font-semibold px-3 py-1.5 rounded-full">
+        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+        Live
+      </div>
+    </div>
+
+
+    <div class="flex bg-gray-100 rounded-xl p-1 gap-1">
+      <a
+        href="?type=global_chat"
+        class="flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-all duration-200
+          {% if request.GET.type == 'global_chat' or not request.GET.type %}
+            bg-white text-blue-700 shadow-sm
+          {% else %}
+            text-gray-500 hover:text-gray-700
+          {% endif %}"
+      >
+        <i data-lucide="globe" class="w-4 h-4"></i>
+        Global Chat
+      </a>
+      <a
+        href="?type=organization_announcement"
+        class="flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-all duration-200
+          {% if request.GET.type == 'organization_announcement' %}
+            bg-white text-blue-700 shadow-sm
+          {% else %}
+            text-gray-500 hover:text-gray-700
+          {% endif %}"
+      >
+        <i data-lucide="megaphone" class="w-4 h-4"></i>
+        Announcements
+      </a>
+    </div>
+  </div>
+
+  {% if request.GET.type == "organization_announcement" %}
+
+
+  <div class="flex flex-col flex-1 min-h-0">
+
+
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+      {% for a in announcements %}
+
+      <div class="flex gap-3 items-start">
+
+        <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-blue-100 shrink-0 shadow-sm">
+          <img
+            src="{% if a.author.organization.logo %}{{ a.author.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+            alt="org logo"
+            class="w-full h-full object-cover"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1 max-w-xl">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-gray-700">{{ a.author.organization.name }}</span>
+            <span class="text-xs text-gray-400">{{ a.createdAt|time:"H:i" }}</span>
+            <span class="bg-amber-100 text-amber-600 text-xs font-bold px-2 py-0.5 rounded-full">📣 Announcement</span>
+          </div>
+          <div class="bg-white border border-amber-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+            <p class="text-sm text-gray-800 leading-relaxed">{{ a.message }}</p>
+          </div>
+        </div>
+      </div>
+
+      {% empty %}
+      <div class="flex flex-col items-center justify-center h-full py-20 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+          <i data-lucide="megaphone" class="w-6 h-6 text-gray-400"></i>
+        </div>
+        <p class="text-sm font-semibold text-gray-400">No announcements yet</p>
+        <p class="text-xs text-gray-300 mt-1">Post the first one below</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="shrink-0 bg-white border-t border-gray-100 px-6 py-4">
+      <form method="post" class="flex gap-3 items-end">
+        <input type="hidden" name="type" value="organization_announcement" />
+        {% csrf_token %}
+        <div class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:border-blue-400 focus-within:bg-white transition-all">
+          <textarea
+            name="message"
+            placeholder="Write an announcement..."
+            rows="1"
+            class="w-full bg-transparent text-sm text-gray-800 placeholder-gray-400 resize-none outline-none"
+            onInput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+          ></textarea>
+        </div>
+        <button
+        type="submit"
+          name="send_announcement"
+          class="btn btn-warning btn-sm h-10 px-5 gap-2 rounded-xl shadow-sm shrink-0"
+        >
+          <i data-lucide="megaphone" class="w-4 h-4"></i>
+          Announce
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {% else %}
+
+
+  <div class="flex flex-col flex-1 min-h-0">
+
+
+    <div id="messages" class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+      {% for msg in global_messages %}
+
+      {% if msg.user == user %}
+
+      <div class="flex gap-3 items-end justify-end">
+        <div class="flex flex-col items-end gap-1 max-w-sm">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-400">{{ msg.createdAt|time:"H:i" }}</span>
+            <span class="text-xs font-bold text-gray-700">You</span>
+          </div>
+          <div class="bg-blue-700 text-white rounded-2xl rounded-br-sm px-4 py-2.5 shadow-sm">
+            <p class="text-sm leading-relaxed">{{ msg.message }}</p>
+          </div>
+        </div>
+        <div class="w-8 h-8 rounded-xl overflow-hidden border-2 border-blue-200 shrink-0 shadow-sm">
+          <img
+            src="{% if msg.user.profile_image %}{{ msg.user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+            alt="avatar"
+            class="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+
+      {% else %}
+
+      <div class="flex gap-3 items-end">
+        <div class="w-8 h-8 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm">
+          <img
+            src="{% if msg.user.profile_image %}{{ msg.user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+            alt="avatar"
+            class="w-full h-full object-cover"
+          />
+        </div>
+        <div class="flex flex-col gap-1 max-w-sm">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-gray-700">{{ msg.user.first_name }} {{ msg.user.last_name }}</span>
+            <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ msg.user.get_role_display }}</span>
+            <span class="text-xs text-gray-400">{{ msg.createdAt|time:"H:i" }}</span>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm">
+            <p class="text-sm text-gray-800 leading-relaxed">{{ msg.message }}</p>
+          </div>
+          {% if msg.user.role == 'treasurer' or msg.user.role == 'auditor' or msg.user.role == 'president' %} 
+          {% if msg.user.officer %}
+  <span class="text-xs text-gray-400 ml-1">{{ msg.user.officer.organization.name }}</span>
+  {% endif %}
+{% elif msg.user.role == 'adviser' %}
+  {% if msg.user.adviser %}
+  <span class="text-xs text-gray-400 ml-1">{{ msg.user.adviser.organization.name }}</span>
+  {% endif %}
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% empty %}
+      <div class="flex flex-col items-center justify-center h-full py-20 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+          <i data-lucide="message-circle" class="w-6 h-6 text-gray-400"></i>
+        </div>
+        <p class="text-sm font-semibold text-gray-400">No messages yet</p>
+        <p class="text-xs text-gray-300 mt-1">Be the first to say something</p>
+      </div>
+      {% endfor %}
+    </div>
+
+
+    <div class="shrink-0 bg-white border-t border-gray-100 px-6 py-4">
+      <form method="post" class="flex gap-3 items-end">
+        <input type="hidden" name="type" value="global_chat" />
+        {% csrf_token %}
+
+      
+        <div class="w-8 h-8 rounded-xl overflow-hidden border-2 border-blue-100 shrink-0 shadow-sm mb-0.5">
+          <img
+            src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+            alt="you"
+            class="w-full h-full object-cover"
+          />
+        </div>
+
+        <div class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:border-blue-400 focus-within:bg-white transition-all">
+          <textarea
+            name="message"
+            placeholder="Write a message..."
+            rows="1"
+            class="w-full bg-transparent text-sm text-gray-800 placeholder-gray-400 resize-none outline-none"
+            onInput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+            onKeydown="submitOnEnter(event)"
+          ></textarea>
+        </div>
+
+        <button
+          name="send_global"
+          class="btn btn-primary btn-sm h-10 w-10 p-0 rounded-xl shadow-sm shrink-0"
+        >
+          <i data-lucide="send" class="w-4 h-4"></i>
+
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const chatBox = document.getElementById("messages");
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+  });
+
+
+  function submitOnEnter(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      e.target.closest("form").submit();
+    }
+  }
+</script>
+
+{% endblock con %}

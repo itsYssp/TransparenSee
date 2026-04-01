@@ -1,0 +1,26 @@
+{% extends "app/base.html" %}{% block content %}
+<h2>Blockchain Transactions</h2>
+<p>Total transactions: {{ tx_count }}</p>
+
+<table border="1" class="table">
+  <tr>
+    <th>Organization</th>
+    <th>Amount</th>
+    <th>Sender</th>
+    <th>Timestamp</th>
+  </tr>
+  {% for tx in transactions %}
+  <tr>
+    <td>{{ tx.organization }}</td>
+    <td>{{ tx.amount }}</td>
+    <td>{{ tx.sender }}</td>
+    <td>{{ tx.timestamp }}</td>
+  </tr>
+
+  <tr>
+    {% empty %}
+    <td colspan="4">No transactions found</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock content %}

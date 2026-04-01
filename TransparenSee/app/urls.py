@@ -2,23 +2,39 @@ from django.urls import path
 from .views import *
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
+from app import views
 
 urlpatterns = [
     path('home', HomeTemplateView.as_view(), name='home'),
     path('student/', StudentDashboardView.as_view(), name='student_dashboard'),
+    path('student/list/', StudentView.as_view(), name='student_dashboard_list'),
+    path('student/profile/', StudentProfileView.as_view(), name='student_profile'),
+    path('password-change/', auth_views.PasswordChangeView.as_view(template_name='app/student/student_profile.html',success_url='/profile/'), name='password_change'),
+    path('officer/chat', ChatView.as_view(), name='chat'),
     path('officer/treasurer/', TreasurerDashboardView.as_view(), name='treasurer_dashboard'),
+    path('treasurer/society-fee/',SocietyFeeView.as_view(),name='treasurer_society_fee'),
+    path('treasurer/society-fee/',SocietyFeeView.as_view(),name='treasurer_society_fee_create'),
     path('officer/auditor/', AuditorDashboardView.as_view(), name='auditor_dashboard'),
     path('officer/president/', PresidentDashboardView.as_view(), name='president_dashboard'),
     path('adviser/', AdviserDashboardView.as_view(), name='adviser_dashboard'),
     path('campus-admin/', CampusAdminDashboardView.as_view(), name='campus_admin_dashboard'),
     path('campus-admin/user-role/', CampusAdminUserRolesView.as_view(), name='campus_admin_user_role'),
-    path('campus-admin/create-adviser', CreateAdviserView.as_view(), name='campus_admin_create_adviser'),
-    path('campus-admin/create-officer', CreateOfficerView.as_view(), name='campus_admin_create_officer'),
-    path('campus-admin/update-adviser/<int:pk>/', UpdateAdviserView.as_view(), name='campus_admin_update_adviser'),
+    path("campus-admin/create-head/", CreateHeadView.as_view(), name="campus_admin_create_head"),
+    path('organizations/', OrganizationListView.as_view(), name='organizations'),
+    path('organizations/<int:pk>/', views.OrganizationDetailView.as_view(), name='organization_detail'),
+    path('head/organizations/create/', CreateOrganizationView.as_view(), name='head_create_organization'),
+    path('head/organizations/<int:pk>/update/', UpdateOrganizationView.as_view(), name='head_update_organization'),
+    path('head/organizations/<int:pk>/delete/', DeleteOrganizationView.as_view(), name='head_delete_organization'),
+    path("head/", HeadDashBoardView.as_view(), name="head_dashboard"),
+    path("head/user-role", HeadUserRoleView.as_view(), name="head_user_role"),
+    path('head/create-adviser', CreateAdviserView.as_view(), name='head_create_adviser'),
+    path('head/create-officer', CreateOfficerView.as_view(), name='head_create_officer'),
+    path('head/update-adviser/<int:pk>/', UpdateAdviserView.as_view(), name='head_update_adviser'),
     path('superadmin/', SuperAdminView.as_view(), name='superadmin_dashboard'),
     path('superadmin/user-role', UserRolesView.as_view(), name='superadmin_user_role'),
     path('superadmin/create-campus-admin', CreateCampusAdminView.as_view(), name='superadmin_create_campus_admin'),
-    
+    path('', LandingPage.as_view(), name='landing_page'),
 
     
 ]

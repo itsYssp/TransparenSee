@@ -1,0 +1,230 @@
+{% extends "app/campus_admin/sidebar.html" %} {% load static %} {% block con %}
+
+<div class="px-6 py-6 flex flex-col gap-6 items-center">
+
+  <div class="w-full max-w-2xl">
+    <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-0.5">User Management</p>
+    <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Update Adviser</h1>
+  </div>
+
+  <div class="max-w-2xl w-full">
+    <form method="POST" class="w-full flex flex-col gap-4">
+      {% csrf_token %}
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="user" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Personal Information</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">First Name</span>
+            </label>
+            <input
+              type="text"
+              name="first_name"
+              placeholder="First name"
+              value="{{ adviser.user.first_name }}"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Last Name</span>
+            </label>
+            <input
+              type="text"
+              name="last_name"
+              placeholder="Last name"
+              value="{{ adviser.user.last_name }}"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Username</span>
+            </label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value="{{ adviser.user.username }}"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Email</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email address"
+              value="{{ adviser.user.email }}"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Adviser Details</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Employee ID</span>
+            </label>
+            <input
+              type="text"
+              name="employee_id"
+              placeholder="e.g. EMP-00123"
+              value="{{ adviser.employee_id|default:'' }}"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Department</span>
+            </label>
+            <input
+              type="text"
+              name="department"
+              placeholder="e.g. College of Engineering"
+              value="{{ adviser.department|default:'' }}"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+        </div>
+      </div>
+
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="building-2" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Assignment</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Role</span>
+            </label>
+            <select name="role" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+              <option value="adviser" selected>Adviser</option>
+            </select>
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Organization</span>
+            </label>
+            <select name="organization" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+              <option value="" disabled>-- Select Organization --</option>
+              {% for org in form.organization.field.queryset %}
+              <option value="{{ org.pk }}" {% if adviser.organization == org %}selected{% endif %}>{{ org.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      {% if form.errors %}
+      <div class="alert alert-error rounded-xl text-sm">
+        <i data-lucide="circle-alert" class="w-5 h-5 shrink-0"></i>
+        <div>
+          {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+            <p><span class="font-bold capitalize">{{ field }}:</span> {{ error }}</p>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% if show_modal %}
+<dialog id="message_modal" class="modal modal-middle flex items-center justify-center">
+  <div class="modal-box rounded-2xl max-w-sm">
+    <div class="flex items-center  gap-3 mb-3">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center
+        {% if modal_type == 'error' %}bg-red-100{% else %}bg-green-100{% endif %}">
+        <i data-lucide="{% if modal_type == 'error' %}circle-alert{% else %}circle-check{% endif %}"
+          class="w-5 h-5 {% if modal_type == 'error' %}text-red-500{% else %}text-green-600{% endif %}">
+        </i>
+      </div>
+      <h3 class="font-extrabold text-gray-900 text-base">
+        {% if modal_type == 'error' %}Something went wrong{% else %}Success{% endif %}
+      </h3>
+    </div>
+
+    <p class="text-sm text-gray-500 mb-5">{{ modal_message }}</p>
+
+    <div class="modal-action mt-0">
+      {% if modal_type == 'success' %}
+     
+      <a href="{% url 'campus_admin_user_role' %}"
+        class="btn btn-sm px-6 rounded-xl btn-primary">
+        OK
+      </a>
+      {% else %}
+      <form method="dialog">
+        <button class="btn btn-sm px-6 rounded-xl btn-error">OK</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('message_modal').showModal();
+  });
+</script>
+{% endif %}
+
+      
+      <div class="flex items-center justify-end gap-3">
+        <a href="{% url 'campus_admin_user_role' %}"
+          class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+          Cancel
+        </a>
+        <button type="submit"
+          class="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          Save Changes
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+{% endblock con %}

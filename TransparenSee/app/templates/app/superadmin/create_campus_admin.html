@@ -1,67 +1,257 @@
 {% extends "app/superadmin/sidebar.html" %} {% load static %} {% block con %}
-<div class="flex h-full justify-center items-center overflow-y-auto bg-base-200">
-  <div class="card w-full max-w-lg bg-base-100 shadow-xl overflow-y-auto">
-    <div class="card-body">
-      <h2 class="card-title text-2xl font-bold">Register Campus Admin</h2>
 
-      <form method="POST" class="fieldset" action="{% url 'superadmin_create_campus_admin' %}">
-        {% csrf_token %}
-        <label class="label">First Name</label>
-        <input
-          type="text"
-          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-          placeholder="First Name"
-          name="first_name"
-        />
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 items-center">
 
-        <label class="label">Last name</label>
-        <input
-          type="text"
-          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-          placeholder="Last name"
-          name="last_name"
-        />
-
-        <label class="label">Username</label>
-        <input
-          type="text"
-          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-          placeholder="Username"
-          name="username"
-        />
-
-        <label class="label">Email</label>
-        <input
-          type="email"
-          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-          placeholder="Email"
-          name="email"
-        />
-
-        <label class="label mt-2">Password</label>
-        <input
-          type="password"
-          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-          placeholder="Password"
-          name="password1"
-          autocomplete="off"
-        />
-
-        <label class="label mt-2">Confirm Password</label>
-        <input
-          type="password"
-          class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-          placeholder="Confirm Password"
-          autocomplete="off"
-          name="password2"
-        />
-        <label class="label mt-2">Role</label>
-        <select name="role" class="select select-bordered w-full">
-          <option value="campus_admin" selected>Campus Admin</option>
-        </select>
-        <button type="submit" class="btn btn-primary w-full mt-2">Create Campus Admin</button>
-      </form>
-    </div>
+  <div class="w-full max-w-2xl">
+    <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">User Management</p>
+    <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Register Campus Admin</h1>
   </div>
+
+  <div class="w-full max-w-2xl pb-10">
+    <form method="POST" action="{% url 'superadmin_create_campus_admin' %}" class="flex flex-col gap-4">
+      {% csrf_token %}
+
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="user" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Personal Information</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">First Name</span>
+            </label>
+            <input
+              type="text"
+              name="first_name"
+              placeholder="First name"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Last Name</span>
+            </label>
+            <input
+              type="text"
+              name="last_name"
+              placeholder="Last name"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Username</span>
+            </label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Email</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email address"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="lock" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Account Security</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Password</span>
+            </label>
+            <div class="relative">
+              <input
+                id="password1"
+                type="password"
+                name="password1"
+                placeholder="••••••••"
+                autocomplete="off"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors pr-10"
+                required
+              />
+              <button type="button" onclick="togglePassword('password1', 'eye1')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                <i id="eye1" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Confirm Password</span>
+            </label>
+            <div class="relative">
+              <input
+                id="password2"
+                type="password"
+                name="password2"
+                placeholder="••••••••"
+                autocomplete="off"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors pr-10"
+                required
+              />
+              <button type="button" onclick="togglePassword('password2', 'eye2')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                <i id="eye2" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="building-2" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Campus Admin Details</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Employee ID</span>
+            </label>
+            <input
+              type="text"
+              name="employee_id"
+              placeholder="e.g. EMP-00123"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Campus</span>
+            </label>
+            <input
+              type="text"
+              name="campus"
+              placeholder="e.g. Main Campus"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              value="Bacoor City Campus"
+              readonly
+              />
+          </div>
+
+          <div class="form-control sm:col-span-2">
+            <label class="label pb-1">
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Department</span>
+            </label>
+            <input
+              type="text"
+              name="department"
+              placeholder="e.g. Office of Student Affairs"
+              class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Role Assignment -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Role Assignment</p>
+        </div>
+
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Role</span>
+          </label>
+          <select name="role" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+            <option value="campus_admin" selected>Campus Admin</option>
+          </select>
+        </div>
+
+        <div class="mt-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-3">
+          <i data-lucide="info" class="w-4 h-4 text-blue-500 mt-0.5 shrink-0"></i>
+          <p class="text-xs text-blue-600 leading-relaxed">
+            Campus Admins have access to monitor organizations, students, heads, and advisers, within the campus. 
+          </p>
+        </div>
+      </div>
+
+      {% if form.errors %}
+      <div class="alert alert-error rounded-xl text-sm">
+        <i data-lucide="circle-alert" class="w-5 h-5 shrink-0"></i>
+        <div>
+          {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+            <p><span class="font-bold capitalize">{{ field }}:</span> {{ error }}</p>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="flex items-center justify-end gap-3">
+        <a href="{% url 'superadmin_user_role' %}"
+          class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+          Cancel
+        </a>
+        <button type="submit"
+          class="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+          <i data-lucide="shield-plus" class="w-4 h-4"></i>
+          Create Campus Admin
+        </button>
+      </div>
+
+    </form>
+  </div>
+
 </div>
+
+<script>
+  function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+      input.type = 'password';
+      icon.setAttribute('data-lucide', 'eye');
+    }
+    lucide.createIcons();
+  }
+</script>
+
 {% endblock con %}

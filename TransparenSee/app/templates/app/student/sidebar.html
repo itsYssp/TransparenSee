@@ -1,0 +1,75 @@
+{% extends "app/base.html" %} {% load static %} {% block content %}
+
+<div class="h-screen flex flex-col">
+  {% include "app/student/student_navbar.html" %}
+
+  <div class="drawer lg:drawer-open flex flex-1 overflow-hidden">
+    <input id="my-drawer-4" type="checkbox" class="drawer-toggle" />
+
+    <div class="drawer-side h-full z-100 lg:z-98">
+      <label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
+
+      <aside class="w-16 h-full flex flex-col items-center bg-white border-r border-gray-100 py-4 gap-1 ">
+
+
+        <div class="tooltip tooltip-bottom" data-tip="Dashboard">
+          <a href="{% url 'student_dashboard' %}"
+            class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200
+              {% if request.resolver_match.url_name == 'student_dashboard' %}
+                bg-blue-50 text-blue-700
+              {% else %}
+                text-gray-400 hover:bg-gray-50 hover:text-gray-700
+              {% endif %}">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          </a>
+        </div>
+
+
+        <div class="tooltip tooltip-bottom " data-tip="Community">
+          <a href="{% url 'chat' %}"
+            class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200
+              {% if request.resolver_match.url_name == 'chat' %}
+                bg-blue-50 text-blue-700
+              {% else %}
+                text-gray-400 hover:bg-gray-50 hover:text-gray-700
+              {% endif %}">
+            <i data-lucide="message-circle-more" class="w-5 h-5"></i>
+          </a>
+        </div>
+
+
+        <div class="tooltip tooltip-bottom text-xs" data-tip="Profile">
+          <a href="{% url 'student_profile' %}"
+            class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200
+              {% if request.resolver_match.url_name == 'student_profile' %}
+                bg-blue-50 text-blue-700
+              {% else %}
+                text-gray-400 hover:bg-gray-50 hover:text-gray-700
+              {% endif %}">
+            <i data-lucide="circle-user-round" class="w-5 h-5"></i>
+          </a>
+        </div>
+
+
+        <div class="flex-1"></div>
+
+
+          <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit"
+              class="w-10 h-10 flex items-center justify-center rounded-xl text-red-400 hover:bg-red-50 hover:text-red-600 transition-all duration-200">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+          </form>
+      
+
+      </aside>
+    </div>
+
+    <div class="drawer-content flex-1 overflow-y-auto h-full">
+      {% block con %}{% endblock con %}
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

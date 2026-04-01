@@ -1,102 +1,201 @@
 {% extends "app/base.html" %} {% load static %} {% block content %}
+
 <div class="h-screen flex flex-col">
   {% include "app/officer/officer_navbar.html" %}
+
   <div class="drawer lg:drawer-open flex flex-1 overflow-hidden">
     <input id="my-drawer-4" type="checkbox" class="drawer-toggle" />
+
     <div class="drawer-side h-full z-100 lg:z-98">
       <label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
-      <aside
-        class="w-72 h-full overflow-auto p-6 border-r border-gray-200/50 shadow-inner overflow-y-auto"
-        style="background: radial-gradient(150% 125% at 50% 20%, #ffffff 40%, #030ac5 100%)"
-      >
-        <p class="text-xs text-gray-400 font-semibold mb-3">MENU</p>
-        <ul class="space-y-1">
-          <li>
-            <a
-              class="duration-300 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_dashboard'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-              href=" {% url 'campus_admin_dashboard' %}"
-            >
-              <i data-lucide="layout-dashboard" class="w-5"></i> Dashboard
-            </a>
-          </li>
-          <li>
-            <a
-              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_budget'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-            >
-              <i data-lucide="link" class="w-5"></i> Blockchain Records
-            </a>
-          </li>
-          <li>
-            <a
-              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_budget'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-            >
-              <i data-lucide="users" class="w-5"></i> Organizations
-            </a>
-          </li>
-          <li>
-            <a
-              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm text-black cursor-pointer {% if request.resolver_match.url_name == 'officer_budget'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-              href="{% url 'campus_admin_user_role' %}"
-            >
-              <i data-lucide="user-key" class="w-5"></i> User and Roles
-            </a>
-          </li>
 
-          <li>
-            <a
-              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_analytics'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-            >
-              <i data-lucide="arrow-right-left" class="w-5"></i> Verified Transactions
-            </a>
-          </li>
+      <aside class="w-64 h-full flex flex-col bg-white border-r border-gray-100 overflow-y-auto">
 
-          <li>
-            <a
-              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_society_fee'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-            >
-              <i data-lucide="clipboard-check" class="w-5"></i> Verified Reports
-            </a>
-          </li>
+        <!-- Admin header -->
+        <div class="px-5 pt-6 pb-4 border-b border-gray-100">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-blue-100 shrink-0">
+              <img src="{% static 'images/cvsu_logo.jpg' %}" alt="campus" class="w-full h-full object-cover" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-gray-900 truncate leading-tight">{{ user.campus_admin.campus }}</p>
+              <p class="text-xs text-blue-600 font-semibold capitalize">{{ user.get_role_display }}</p>
+            </div>
+          </div>
+        </div>
 
-          <li>
-            <a
-              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_community'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-            >
-              <i data-lucide="message-circle-more" class="w-5"></i> Community
-            </a>
-          </li>
-        </ul>
+        <nav class="flex-1 px-3 py-4 space-y-6">
 
-        <p class="text-xs text-gray-400 font-semibold mt-8 mb-3">GENERAL</p>
-        <ul class="space-y-2">
-          <li>
-            <a
-              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_settings'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-            >
-              <i data-lucide="circle-user" class="w-5"></i> Profile
-            </a>
-          </li>
-          <li>
-            <a
-              class="duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer {% if request.resolver_match.url_name == 'officer_help'%} bg-[#030ac5]/20 font-bold text-blue-700 border-l-4 border-blue-700 {% else %} text-black hover:bg-[#030ac5]/20 hover:text-[#030ac5] {% endif %}"
-            >
-              <i data-lucide="info" class="w-5"></i> Help
-            </a>
-          </li>
-          <li>
-            <form action="{% url 'logout'  %}" method="post">
-              {% csrf_token %}
-              <button
-                class="flex w-full items-center duration-200 ease-in-out gap-3 px-4 py-2 rounded-lg text-sm text-black hover:bg-[#030ac5]/20 cursor-pointer hover:text-[#030ac5]"
-              >
-                <i data-lucide="log-out" class="w-5"></i> Logout
-              </button>
-            </form>
-          </li>
-        </ul>
+          <div>
+            <p class="text-xs font-bold tracking-widest text-gray-400 uppercase px-3 mb-2">Menu</p>
+            <ul class="space-y-0.5">
+
+              <li>
+                <a href="{% url 'campus_admin_dashboard' %}"
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_dashboard' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
+                  Dashboard
+                </a>
+              </li>
+
+              <li>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_blockchain' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="link" class="w-4 h-4 shrink-0"></i>
+                  Blockchain Records
+                </a>
+              </li>
+
+              <li>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_organizations' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}"
+                    href="{% url 'organizations' %} ">
+                  <i data-lucide="building-2" class="w-4 h-4 shrink-0"></i>
+                  Organizations
+                </a>
+              </li>
+
+              <li>
+                <a href="{% url 'campus_admin_user_role' %}"
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_user_role' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="user-key" class="w-4 h-4 shrink-0"></i>
+                  Heads 
+                </a>
+              </li>
+
+              <li>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_transactions' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="arrow-right-left" class="w-4 h-4 shrink-0"></i>
+                  Verified Transactions
+                </a>
+              </li>
+
+              <li>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_reports' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="clipboard-check" class="w-4 h-4 shrink-0"></i>
+                  Verified Reports
+                </a>
+              </li>
+
+              <li>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_announcements' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="megaphone" class="w-4 h-4 shrink-0"></i>
+                  Announcements
+                </a>
+              </li>
+
+              <li>
+                <a href="{% url 'chat' %}"
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'chat' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="message-circle-more" class="w-4 h-4 shrink-0"></i>
+                  Community
+                </a>
+              </li>
+
+              <li>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_audit_logs' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="history" class="w-4 h-4 shrink-0"></i>
+                  Audit Logs
+                </a>
+              </li>
+
+            </ul>
+          </div>
+
+          <div>
+            <p class="text-xs font-bold tracking-widest text-gray-400 uppercase px-3 mb-2">General</p>
+            <ul class="space-y-0.5">
+
+              <li>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_profile' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="circle-user" class="w-4 h-4 shrink-0"></i>
+                  Profile
+                </a>
+              </li>
+
+              
+
+              <li>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'campus_admin_help' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+                  Help
+                </a>
+              </li>
+
+            </ul>
+          </div>
+        </nav>
+
+        <!-- Logout pinned at bottom -->
+        <div class="px-3 py-4 border-t border-gray-100">
+          <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button class="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200">
+              <i data-lucide="log-out" class="w-4 h-4 shrink-0"></i>
+              Logout
+            </button>
+          </form>
+        </div>
+
       </aside>
     </div>
-    <div class="drawer-content flex-1">{% block con %} {% endblock con %}</div>
+
+    <div class="drawer-content flex-1 flex flex-col min-h-0 overflow-y-auto bg-gray-50">
+      {% block con %}{% endblock con %}
+    </div>
   </div>
 </div>
 

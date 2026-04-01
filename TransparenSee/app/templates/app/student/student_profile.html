@@ -1,0 +1,354 @@
+{% extends "app/student/sidebar.html" %} {% load static %} {% block con %}
+
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50">
+
+  <div>
+    <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Account</p>
+    <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">My Profile</h1>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" >
+    {% csrf_token %}
+  <input type="hidden" name="action" value="update_profile">
+    <div class="flex flex-col lg:flex-row gap-6">
+   
+      <div class="flex flex-col gap-4 lg:w-72 shrink-0">
+      
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center gap-4">
+          <div class="relative group">
+            <div class="w-28 h-28 rounded-2xl overflow-hidden border-4 border-blue-100 shadow-md">
+              <img
+                id="avatar-preview"
+                src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                alt="Profile"
+                class="w-full h-full object-cover"             
+              />
+            </div>
+       
+            <label
+              for="profile-pic-input"
+              class="absolute inset-0 flex items-center justify-center bg-blue-700/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+            >
+              <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+            </label>
+            <input
+              id="profile-pic-input"
+              type="file"
+              name="profile_image"
+              accept="image/*"
+              class="hidden"
+              onchange="previewAvatar(event)"
+            />
+          </div>
+
+          <div class="text-center">
+            <p class="font-bold text-gray-900 text-lg tracking-tight">{{ user.get_full_name }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ user.email }}</p>
+          </div>
+
+
+          <div class="badge badge-soft badge-primary text-xs font-bold tracking-wider uppercase px-3 py-1">Student</div>
+
+
+          {% if user.organization %}
+          <div class="w-full bg-blue-50 rounded-xl px-4 py-3 text-center">
+            <p class="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-0.5">Organization</p>
+            <p class="text-sm font-bold text-blue-700">{{ user.organization.name }}</p>
+          </div>
+          {% endif %}
+   
+          <div class="w-full border-t border-gray-100 pt-3 flex justify-between text-xs text-gray-400">
+            <span>Member since</span>
+            <span class="font-semibold text-gray-600">{{ user.date_joined|date:"M Y" }}</span>
+          </div>
+        </div>
+
+
+        <div class="bg-white rounded-2xl border border-red-100 shadow-sm p-5">
+          <p class="text-xs font-bold tracking-widest text-red-400 uppercase mb-3">Danger Zone</p>
+          <button
+            type="button"
+            onclick="document.getElementById('change_password_modal').showModal()"
+            class="btn btn-outline btn-error btn-sm w-full gap-2"
+          >
+          <i data-lucide="key-round" class="w-4 h-4"></i>
+            Change Password
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4 flex-1">
+   
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <div class="flex items-center gap-2 mb-5">
+            <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+              <i data-lucide="user" class="w-4 h-4 text-blue-700"></i>
+            </div>
+            <p class="font-bold text-gray-800 text-sm">Personal Information</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">First Name</span>
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                value="{{ user.first_name }}"
+                placeholder="First name"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Last Name</span>
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                value="{{ user.last_name }}"
+                placeholder="Last name"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Username</span>
+              </label>
+              <input
+                type="text"
+                name="username"
+                value="{{ user.username }}"
+                placeholder="Username"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Email</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                value="{{ user.email }}"
+                placeholder="Email address"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Phone Number</span>
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value="{{ user.phone|default:'' }}"
+                placeholder="+63 9XX XXX XXXX"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Birthday</span>
+              </label>
+              <input
+                type="date"
+                name="birthday"
+                value="{{ user.birthday|date:'Y-m-d'|default:'' }}"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div class="form-control sm:col-span-2">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Address</span>
+              </label>
+              <input
+                type="text"
+                name="address"
+                value="{{ user.address|default:'' }}"
+                placeholder="Home address"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <div class="flex items-center gap-2 mb-5">
+            <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+              <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-700"></i>
+            </div>
+            <p class="font-bold text-gray-800 text-sm">Academic Information</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Student ID</span>
+              </label>
+              <input
+                type="text"
+                name="student_id"
+                value="{{ user.student.student_id|default:'' }}"
+                placeholder="e.g. 2021-00123"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Program / Course</span>
+              </label>
+              <select name="program" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+                <option value="" disabled {% if not student.program %}selected{% endif %}>-- Select Program --</option>
+                {% for value, display in user.student.COURSE_CHOICE %}
+                <option value="{{ value }}" {% if user.student.program ==  value %}selected{% endif %}>{{ display }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Year Level</span>
+              </label>
+
+              <select name="year" class="select select-bordered select-sm w-full bg-gray-50">
+                <option value="" disabled {% if not student.year %}selected{% endif %}>Select year</option>
+                <option value="1" {% if user.student.year == 1 %}selected{% endif %}>1st Year</option>
+                <option value="2" {% if user.student.year == 2 %}selected{% endif %}>2nd Year</option>
+                <option value="3" {% if user.student.year == 3 %}selected{% endif %}>3rd Year</option>
+                <option value="4" {% if user.student.year == 4 %}selected{% endif %}>4th Year</option>
+              </select>
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Section</span>
+              </label>
+              <input
+                type="text"
+                name="section"
+                value="{{ user.student.section|default:'' }}"
+                placeholder="e.g. A"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+
+
+        <div class="flex justify-end gap-3">
+          <button type="reset" class="btn btn-ghost btn-sm gap-2">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            Reset
+          </button>
+          <button type="submit" class="btn btn-primary btn-sm gap-2 shadow-md shadow-blue-700/20 px-6">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            Save Changes
+          </button>
+        </div>
+          {% if form.errors %}
+          <div class="alert alert-error rounded-xl text-sm">
+            <i data-lucide="circle-alert" class="w-5 h-5 shrink-0"></i>
+            <div>
+              {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                <p><span class="font-bold capitalize">{{ field }}:</span> {{ error }}</p>
+                {% endfor %}
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% else %}alert-warning{% endif %} rounded-xl text-sm">
+            <i data-lucide="{% if message.tags == 'error' %}circle-alert{% elif message.tags == 'success' %}circle-check{% else %}triangle-alert{% endif %}" class="w-5 h-5 shrink-0"></i>
+            <span>{{ message }}</span>
+          </div>
+          {% endfor %}
+      </div>
+    </div>
+  </form>
+</div>
+
+
+<dialog id="change_password_modal" class="modal">
+  <div class="modal-box rounded-2xl max-w-sm">
+    <h3 class="font-extrabold text-lg text-gray-900 tracking-tight mb-1">Change Password</h3>
+    <p class="text-xs text-gray-400 mb-5">Enter your current password to confirm changes.</p>
+
+    <form method="POST" class="flex flex-col gap-3">
+      {% csrf_token %}
+    <input type="hidden" name="action" value="change_password">
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Current Password</span>
+        </label>
+        <input
+          type="password"
+          name="old_password"
+          placeholder="••••••••"
+          class="input input-bordered input-sm w-full"
+        />
+      </div>
+
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">New Password</span>
+        </label>
+        <input
+          type="password"
+          name="new_password1"
+          placeholder="••••••••"
+          class="input input-bordered input-sm w-full"
+        />
+      </div>
+
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Confirm New Password</span>
+        </label>
+        <input
+          type="password"
+          name="new_password2"
+          placeholder="••••••••"
+          class="input input-bordered input-sm w-full"
+        />
+      </div>
+
+      <div class="modal-action mt-2">
+        <form method="dialog">
+          <button class="btn btn-ghost btn-sm">Cancel</button>
+        </form>
+        <button type="submit" class="btn btn-error btn-sm px-6">Update Password</button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
+
+<script>
+  function previewAvatar(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById("avatar-preview").src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+</script>
+
+{% endblock con %}

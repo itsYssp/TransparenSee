@@ -1,0 +1,237 @@
+{% extends base_template %} {% load static %} {% block con %}
+
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="{% url 'organizations' %}"
+        class="w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-blue-700 hover:border-blue-200 transition-colors">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      </a>
+      <div>
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Organizations</p>
+        <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">{{ org.name }}</h1>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'head_update_organization' org.pk %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+        <i data-lucide="pencil" class="w-4 h-4"></i>
+        Edit
+      </a>
+    </div>
+  </div>
+
+  <!-- Org Info Card -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+    <div class="flex items-center gap-5">
+      <div class="w-20 h-20 rounded-2xl overflow-hidden border-4 border-blue-100 shadow-md shrink-0">
+        <img
+          src="{% if org.logo %}{{ org.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+          alt="{{ org.name }}"
+          class="w-full h-full object-cover "
+        />
+      </div>
+      <div class="flex-1">
+        <h2 class="text-xl font-extrabold text-gray-900 tracking-tight">{{ org.name }}</h2>
+        {% if org.description %}
+        <p class="text-sm text-gray-400 mt-1 leading-relaxed">{{ org.description }}</p>
+        {% endif %}
+        <div class="flex items-center gap-2 mt-2">
+          <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg">Active</span>
+          <span class="text-xs text-gray-400">Created {{ org.createdAt|date:"M d, Y" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 flex flex-col gap-2">
+      <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+        <i data-lucide="shield" class="w-4 h-4 text-blue-600"></i>
+      </div>
+      <p class="text-2xl font-extrabold text-gray-900">{{ total_officers }}</p>
+      <p class="text-xs text-gray-400 font-medium">Officers</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 flex flex-col gap-2">
+      <div class="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+        <i data-lucide="graduation-cap" class="w-4 h-4 text-indigo-600"></i>
+      </div>
+      <p class="text-2xl font-extrabold text-gray-900">{{ total_advisers }}</p>
+      <p class="text-xs text-gray-400 font-medium">Advisers</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 flex flex-col gap-2">
+      <div class="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
+        <i data-lucide="circle-check" class="w-4 h-4 text-green-600"></i>
+      </div>
+      <p class="text-2xl font-extrabold text-gray-900">{{ paid_fees }}</p>
+      <p class="text-xs text-gray-400 font-medium">Paid Fees</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 flex flex-col gap-2">
+      <div class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+        <i data-lucide="clock" class="w-4 h-4 text-red-500"></i>
+      </div>
+      <p class="text-2xl font-extrabold text-gray-900">{{ unpaid_fees }}</p>
+      <p class="text-xs text-gray-400 font-medium">Unpaid Fees</p>
+    </div>
+
+  </div>
+
+  <!-- Officers Table -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+          <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-600"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-800">Officers</p>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">{{ total_officers }} officer{{ total_officers|pluralize }}</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Name</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Student ID</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for officer in officers %}
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl overflow-hidden border-2 border-gray-100 shrink-0">
+                  <img
+                    src="{% if officer.user.profile_image %}{{ officer.user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                    alt="avatar"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <p class="font-semibold text-gray-900 text-sm">{{ officer.user.get_full_name }}</p>
+              </div>
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg">{{ officer.user.get_role_display }}</span>
+            </td>
+            <td class="px-5 py-3.5 text-xs text-gray-500">{{ officer.user.email }}</td>
+            <td class="px-5 py-3.5 text-xs text-gray-500 font-mono">{{ officer.student_id|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="px-5 py-10 text-center text-sm text-gray-400 italic">No officers yet</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Advisers Table -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
+          <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-indigo-600"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-800">Advisers</p>
+      </div>
+      <span class="text-xs text-gray-400 font-medium">{{ total_advisers }} adviser{{ total_advisers|pluralize }}</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Name</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Employee ID</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Department</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for adviser in advisers %}
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl overflow-hidden border-2 border-gray-100 shrink-0">
+                  <img
+                    src="{% if adviser.user.profile_image %}{{ adviser.user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                    alt="avatar"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <p class="font-semibold text-gray-900 text-sm">{{ adviser.user.get_full_name }}</p>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-xs text-gray-500">{{ adviser.user.email }}</td>
+            <td class="px-5 py-3.5 text-xs text-gray-500 font-mono">{{ adviser.employee_id|default:"—" }}</td>
+            <td class="px-5 py-3.5 text-xs text-gray-500">{{ adviser.department|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="px-5 py-10 text-center text-sm text-gray-400 italic">No advisers yet</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Society Fees Table -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+          <i data-lucide="banknote-arrow-up" class="w-3.5 h-3.5 text-blue-600"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-800">Society Fees</p>
+      </div>
+      <a href="" class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">View all</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Student</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Academic Year</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Amount</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for fee in society_fees|slice:":5" %}
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+            <td class="px-5 py-3.5 font-semibold text-gray-900 text-sm">{{ fee.student.get_full_name }}</td>
+            <td class="px-5 py-3.5 text-xs text-gray-500 font-mono">{{ fee.academic_year }}</td>
+            <td class="px-5 py-3.5 font-semibold text-gray-900">₱{{ fee.amount }}</td>
+            <td class="px-5 py-3.5">
+              {% if fee.status == 'paid' %}
+              <span class="bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-lg">Paid</span>
+              {% elif fee.status == 'partial' %}
+              <span class="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-lg">Partial</span>
+              {% else %}
+              <span class="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-lg">Unpaid</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="px-5 py-10 text-center text-sm text-gray-400 italic">No fee records yet</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{% endblock con %}

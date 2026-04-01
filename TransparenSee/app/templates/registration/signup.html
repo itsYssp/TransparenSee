@@ -1,121 +1,347 @@
 {% extends "app/base.html" %} {% load static %} {% block content %}
 
-<div class="min-h-screen w-full relative">
-  <!-- Background -->
-  <div
-    class="absolute inset-0 z-0"
-    style="background: radial-gradient(125% 125% at 50% 10%, #fcf8f8 40%, #030ac5 100%)"
-  ></div>
+<style>
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fadein   { animation: fadein 0.5s ease both; }
+  .fadein-1 { animation: fadein 0.5s ease 0.1s both; }
+  .fadein-2 { animation: fadein 0.5s ease 0.2s both; }
+  .fadein-3 { animation: fadein 0.5s ease 0.3s both; }
+  .fadein-4 { animation: fadein 0.5s ease 0.4s both; }
+  .fadein-5 { animation: fadein 0.5s ease 0.5s both; }
+</style>
 
-  <div class="relative z-10 min-h-screen flex flex-col items-center">
-    <div class="absolute top-10 left-10 inline-flex items-center gap-1.5">
-      <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="Logo" class="w-13" />
-      <div class="font-bold">
-        <h2 class="text-xl">TransparenSee</h2>
-        <p class="text-xs text-center">A Blockchain Solution</p>
+<div class="min-h-screen w-full flex relative overflow-hidden bg-gray-50 ">
+
+  <!-- Subtle background blobs -->
+  <div class="absolute top-[10%] right-[5%] border w-125 h-125 rounded-full bg-blue-700/20 blur-3xl pointer-events-none"></div>
+  <div class="absolute bottom-[10%] left-[5%] w-100 h-100 rounded-full bg-blue-500/20 blur-3xl pointer-events-none"></div>
+
+  <!-- Left branding panel -->
+  <div class="hidden lg:flex flex-col justify-center flex-1 px-16 relative z-10">
+
+    <div class="fadein mb-10">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+          <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="Logo" class="w-full h-full object-cover" />
+        </div>
+        <div class="max-w-30 ">
+          <p class="text-gray-900 font-extrabold text-base tracking-tight">TransparenSee</p>
+          <p class="text-gray-400 text-[6px] leading-tight">A Blockchain Solution for Academic and Non-Academic School Organization Funds</p>
+        </div>
       </div>
     </div>
-    <div class="min-h-screen min-w-full flex flex-col items-center">
-      <div class="min-w-full flex flex-col lg:flex-row items-center justify-center flex-1 gap-16 px-6">
-        <div class="text-center min-h-full lg:text-left min-w-2xl">
-          <h1 class="text-4xl lg:text-6xl font-bold">Create Your Account</h1>
-          <p class="py-6">Enter valid credentials for creating an acccount.</p>
+
+    <div class="fadein-1">
+      <h1 class="text-5xl xl:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight mb-5">
+        Join the<br>
+        <span class="text-blue-700">Transparent</span><br>
+        Community.
+      </h1>
+    </div>
+
+    <div class="fadein-2">
+      <p class="text-gray-400 text-base leading-relaxed max-w-sm">
+        Create your account to access your organization's financial records, transactions, and reports — all secured on the blockchain.
+      </p>
+    </div>
+
+    <div class="fadein-3 mt-10 flex items-center gap-6">
+      <div class="text-center">
+        <p class="text-gray-900 font-extrabold text-2xl">100%</p>
+        <p class="text-gray-400 text-xs mt-0.5">Transparent</p>
+      </div>
+      <div class="w-px h-10 bg-gray-200"></div>
+      <div class="text-center">
+        <p class="text-gray-900 font-extrabold text-2xl">14+</p>
+        <p class="text-gray-400 text-xs mt-0.5">Organizations</p>
+      </div>
+      <div class="w-px h-10 bg-gray-200"></div>
+      <div class="text-center">
+        <p class="text-gray-900 font-extrabold text-2xl">200+</p>
+        <p class="text-gray-400 text-xs mt-0.5">Users</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right signup panel -->
+  <div class="w-full  lg:w-140 flex flex-col justify-center items-center px-8 py-12 relative z-10 bg-white border-l border-gray-100 shadow-xl overflow-y-auto">
+
+    <!-- Mobile logo -->
+    <div class="flex lg:hidden items-center gap-3 mb-8">
+      <div class="w-10 h-10 rounded-xl overflow-hidden border border-gray-200">
+        <img src="{% static 'images/TransparenSee_Logo.png' %}" alt="Logo" class="w-full h-full object-cover" />
+      </div>
+      <div class="max-w-30 ">
+        <p class="text-gray-900 font-extrabold text-base tracking-tight">TransparenSee</p>
+        <p class="text-gray-400 text-[6px] leading-tight">A Blockchain Solution for Academic and Non-Academic School Organization Funds</p>
+      </div>
+    </div>
+
+    <div class="w-full max-w-sm">
+
+      <div class="fadein mb-6">
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Account</p>
+        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Create Account</h2>
+        <p class="text-gray-400 text-sm mt-1">Fill in your details to get started</p>
+      </div>
+
+      {% if form.errors %}
+      <div class="fadein mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+        <i data-lucide="circle-alert" class="w-4 h-4 text-red-500 mt-0.5 shrink-0"></i>
+        <div class="text-sm text-red-600">
+          {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+          {% endfor %}
+          {% for field in form %}
+            {% for error in field.errors %}
+            <p>{{ field.label }}: {{ error }}</p>
+            {% endfor %}
+          {% endfor %}
         </div>
+      </div>
+      {% endif %}
 
-        <div class="w-full max-w-md">
-          <div class="card bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl">
-            <div class="card-body">
-              {% if form.errors %}
-              <div class="alert alert-error text-sm mb-4">
-                {% for error in form.non_field_errors %}
-                <p>{{ error }}</p>
-                {% endfor %} {% for field in form %} {% for error in field.errors %}
-                <p><strong>{{ field.label }}:</strong> {{ error }}</p>
-                {% endfor %} {% endfor %}
-              </div>
-              {% endif %}
-              <form class="fieldset" method="post">
-                {% csrf_token %}
+      <form method="post" class="flex flex-col gap-4">
+        {% csrf_token %}
 
-                <label class="label">First Name</label>
-                <input
-                  type="text"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="First Name"
-                  name="first_name"
-                />
-
-                <label class="label">Last name</label>
-                <input
-                  type="text"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="Last name"
-                  name="last_name"
-                />
-
-                <label class="label">Username</label>
-                <input
-                  type="text"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="Username"
-                  name="username"
-                />
-
-                <label class="label">Email</label>
-                <input
-                  type="email"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="Email"
-                  name="email"
-                />
-
-                <label class="label mt-2">Password</label>
-                <input
-                  type="password"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="Password"
-                  name="password1"
-                  autocomplete="off"
-                />
-
-                <label class="label mt-2">Confirm Password</label>
-                <input
-                  type="password"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="Confirm Password"
-                  autocomplete="off"
-                  name="password2"
-                />
-
-                <label>Organization</label>
-                <div class="select select-bordered w-full border border-black/20">{{ form.organization }}</div>
-
-                <label class="label mt-2">Position</label>
-                <input
-                  type="text"
-                  class="input w-full bg-white/10 backdrop-blur-lg border border-black/20"
-                  placeholder="Position"
-                  name="position"
-                />
-                <label class="label mt-2">Role</label>
-                <select name="role" class="select select-bordered w-full">
-                  <option disabled selected>-- Select Role --</option>
-                  <option value="student">Student</option>
-                  <option value="treasurer">Treasurer</option>
-                  <option value="auditor">Auditor</option>
-                  <option value="president">President</option>
-                  <option value="adviser">Adviser</option>
-                  <option value="campus_admin">Campus Admin</option>
-                </select>
-
-                <button class="btn btn-neutral mt-4" type="submit">Signup</button>
-              </form>
+        <!-- Personal Info -->
+        <div class="fadein-1">
+          <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">Personal Information</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">First Name</span>
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                placeholder="First name"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+                
+              />
+            </div>
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Last Name</span>
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                placeholder="Last name"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+                
+              />
+            </div>
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Username</span>
+              </label>
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+                
+              />
+            </div>
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Email</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email address"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+                
+              />
             </div>
           </div>
         </div>
+
+        <!-- Academic Info -->
+        <div class="fadein-2">
+          <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">Academic Information</p>
+          <div class="flex flex-col gap-3">
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Student ID</span>
+              </label>
+              <input
+                type="text"
+                name="student_id"
+                placeholder="e.g. 202320004"
+                class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+                
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Program / Course</span>
+              </label>
+              <select name="program" id="id_program" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" >
+                <option value="" disabled selected>-- Select Program --</option>
+                {% for value, display in form.fields.program.choices %}
+                <option value="{{ value }}">{{ display }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Organization / Society</span>
+              </label>
+                <select name="organization" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+                  <option value="" disabled selected>-- Select Organization --</option>
+                  {% for org in form.fields.organization.queryset %}
+                    <option value="{{ org.id }}" {% if form.organization.value == org.id|stringformat:"s" %}selected{% endif %}>
+                      {{ org.name }}
+                    </option>
+                  {% endfor %}
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="form-control">
+                <label class="label pb-1">
+                  <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Year</span>
+                </label>
+                <select name="year" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" >
+                  <option value="" disabled selected>Year</option>
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
+                </select>
+              </div>
+              <div class="form-control">
+                <label class="label pb-1">
+                  <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Section</span>
+                </label>
+                <input
+                  type="text"
+                  name="section"
+                  placeholder="e.g. BSIT 3-1"
+                  class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+                  
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="fadein-3">
+          <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">Security</p>
+          <div class="flex flex-col gap-3">
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Password</span>
+              </label>
+              <div class="relative">
+                <input
+                  id="password1"
+                  type="password"
+                  name="password1"
+                  placeholder="••••••••"
+                  autocomplete="off"
+                  class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors pr-10"
+                  
+                />
+                <button type="button" onclick="togglePassword('password1', 'eye1')"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  <i id="eye1" data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Confirm Password</span>
+              </label>
+              <div class="relative">
+                <input
+                  id="password2"
+                  type="password"
+                  name="password2"
+                  placeholder="••••••••"
+                  autocomplete="off"
+                  class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors pr-10"
+                  
+                />
+                <button type="button" onclick="togglePassword('password2', 'eye2')"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  <i id="eye2" data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="fadein-4">
+          <button
+            type="submit"
+            class="w-full py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold text-sm transition-all duration-200 shadow-md shadow-blue-700/20 hover:-translate-y-0.5"
+          >
+            Create Account
+          </button>
+        </div>
+
+        <div class="fadein-5 text-center">
+          <p class="text-xs text-gray-400">Already have an account?
+            <a href="{% url 'login' %}" class="text-blue-600 font-semibold hover:text-blue-800 transition-colors">Sign in</a>
+          </p>
+        </div>
+
+      </form>
+
+      <div class="mt-6 pt-6 border-t border-gray-100 flex items-center justify-center gap-2">
+        <i data-lucide="shield" class="w-3.5 h-3.5 text-gray-300"></i>
+        <p class="text-xs text-gray-400">Secured with blockchain technology</p>
       </div>
+
     </div>
   </div>
+
 </div>
+
+<script>
+  function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+      input.type = 'password';
+      icon.setAttribute('data-lucide', 'eye');
+    }
+    lucide.createIcons();
+  }
+  document.getElementById('id_program').addEventListener('change', function() {
+    const program = this.value;
+    fetch(`/get_organizations_by_program/?program=${program}`)
+        .then(res => res.json())
+        .then(data => {
+            const orgSelect = document.querySelector('select[name="organization"]');
+            orgSelect.innerHTML = '<option value="" disabled selected>-- Select Organization --</option>';
+            data.forEach(org => {
+                const opt = document.createElement('option');
+                opt.value = org.id;
+                opt.textContent = org.name;
+                orgSelect.appendChild(opt);
+            });
+        });
+});
+</script>
 
 {% endblock content %}
