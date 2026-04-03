@@ -79,8 +79,8 @@
         </a>
       </div>
       <div>
-        <p class="text-3xl font-extrabold text-gray-900">0</p>
-        <p class="text-xs text-gray-400 mt-0.5 font-medium">Verified Transactions</p>
+        <p class="text-3xl font-extrabold text-gray-900">{{ approved_financial_reports }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 font-medium">Verified Financial Reports</p>
       </div>
     </div>
 
@@ -94,109 +94,145 @@
         </a>
       </div>
       <div>
-        <p class="text-3xl font-extrabold text-gray-900">0</p>
-        <p class="text-xs text-gray-400 mt-0.5 font-medium">Pending Transactions</p>
+        <p class="text-3xl font-extrabold text-gray-900">{{ pending_financial_reports }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 font-medium">Pending Financial Reports</p>
       </div>
     </div>
 
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+      <div class="flex items-center justify-between">
+        <div class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+          <i data-lucide="clock" class="w-4 h-4 text-red-500"></i>
+        </div>
+        <a href="" class="w-6 h-6 flex items-center justify-center rounded-lg border border-gray-100 text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+          <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+        </a>
+      </div>
+      <div>
+        <p class="text-3xl font-extrabold text-gray-900">{{ flagged_financial_reports }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 font-medium">Flagged Fincial Reports</p>
+      </div>
+    </div>
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
       <div class="flex items-center justify-between">
         <div class="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
-          <i data-lucide="clipboard-check" class="w-4 h-4 text-green-600"></i>
+          <i data-lucide="banknote" class="w-4 h-4 text-green-500"></i>
         </div>
         <a href="" class="w-6 h-6 flex items-center justify-center rounded-lg border border-gray-100 text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
           <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
         </a>
       </div>
       <div>
-        <p class="text-3xl font-extrabold text-gray-900">0</p>
-        <p class="text-xs text-gray-400 mt-0.5 font-medium">Verified Reports</p>
+        <p class="text-3xl font-extrabold text-gray-900">
+          <span class="text-lg font-semibold text-gray-400 mr-0.5">₱</span>{{ society_fee_amount }}
+        </p>
+        <p class="text-xs text-gray-400 mt-0.5 font-medium">Society Fee Amount</p>
       </div>
     </div>
-
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-      <div class="flex items-center justify-between">
-        <div class="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
-          <i data-lucide="clipboard" class="w-4 h-4 text-orange-500"></i>
-        </div>
-        <a href="" class="w-6 h-6 flex items-center justify-center rounded-lg border border-gray-100 text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
-          <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
-        </a>
-      </div>
-      <div>
-        <p class="text-3xl font-extrabold text-gray-900">0</p>
-        <p class="text-xs text-gray-400 mt-0.5 font-medium">Pending Reports</p>
-      </div>
-    </div>
-
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-    <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
-            <i data-lucide="history" class="w-3.5 h-3.5 text-blue-600"></i>
+            <i data-lucide="arrow-right-left" class="w-3.5 h-3.5 text-blue-600"></i>
           </div>
-          <p class="text-sm font-bold text-gray-800">Recent Trails</p>
+          <p class="text-sm font-bold text-gray-800">Recent Finalcial Report</p>
         </div>
         <a href="" class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">View all</a>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">User</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Action</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Transaction</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tbody class="divide-y divide-gray-50">
+          {% for recent_fr in recent_financial_reports %}
+            <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+                <td class="px-5 py-3 text-xs font-semibold ">{{ recent_fr.title }}</td>
+                <td class="px-5 py-3 text-sm font-mono">
+                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
+                {% if recent_fr.status == 'approved' %}bg-green-100 text-green-700
+                {% elif recent_fr.status == 'rejected' %}bg-red-100 text-red-700
+                {% elif recent_fr.status == 'pending_auditor' %}bg-amber-100 text-amber-700
+                {% elif recent_fr.status == 'pending_president' %}bg-lime-100 text-lime-700
+                {% elif recent_fr.status == 'pending_adviser' %}bg-blue-100 text-blue-700
+                {% elif recent_log.action == 'on_blockchain' %}bg-purple-100 text-purple-700
+                {% else %}bg-gray-100 text-gray-600
+                {% endif %}"> 
+                {{ recent_fr.get_status_display }}
+                </span>
+              </td>
+          
             </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="5" class="px-5 py-10 text-center text-sm text-gray-400 italic">No trails yet</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+            {% empty %}
+              <tr>
+                <td colspan="2" class="px-5 py-10 text-center text-sm text-gray-400 italic">No reports yet</td>
+              </tr>
+            
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    <div class="lg:col-span-2 flex flex-col gap-4">
-
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 flex-1 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
-              <i data-lucide="flag" class="w-4 h-4 text-red-500"></i>
-            </div>
-            <p class="text-sm font-semibold text-gray-600">Flagged Transactions</p>
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+            <i data-lucide="clipboard" class="w-3.5 h-3.5 text-blue-600"></i>
           </div>
-          <a href="" class="w-6 h-6 flex items-center justify-center rounded-lg border border-gray-100 text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
-            <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
-          </a>
+          <p class="text-sm font-bold text-gray-800">Recent Logs</p>
         </div>
-        <p class="text-4xl font-extrabold text-gray-900">0</p>
-        <p class="text-xs text-gray-400">No flagged transactions</p>
+        <a href="" class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">View all</a>
       </div>
-
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 flex-1 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
-              <i data-lucide="flag" class="w-4 h-4 text-orange-500"></i>
-            </div>
-            <p class="text-sm font-semibold text-gray-600">Flagged Reports</p>
-          </div>
-          <a href="" class="w-6 h-6 flex items-center justify-center rounded-lg border border-gray-100 text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
-            <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
-          </a>
-        </div>
-        <p class="text-4xl font-extrabold text-gray-900">0</p>
-        <p class="text-xs text-gray-400">No flagged reports</p>
-      </div>
-
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Action By</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for recent_log in recent_approval_logs %}
+             <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+                <td class="px-5 py-3 text-xs font-semibold ">{{ recent_log.report }}</td>
+                <td class="px-5 py-3 text-sm font-mono">
+                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
+                {% if recent_log.action == 'approved' %}bg-green-100 text-green-700
+                {% elif recent_log.action == 'rejected' %}bg-red-100 text-red-700
+                {% elif 'pending' in recent_log.action %}bg-amber-100 text-amber-700
+                {% elif recent_log.action == 'on_blockchain' %}bg-purple-100 text-purple-700
+                {% else %}bg-gray-100 text-gray-600
+                {% endif %}"> 
+                {{ recent_log.action }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-sm font-mono">
+                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
+                {% if recent_log.action_by.role == 'treasurer' %}bg-blue-100 text-blue-700
+                {% elif recent_log.action_by.role == 'auditor' %}bg-green-100 text-green-700
+                {% elif recent_log.action_by.role == 'president' %}bg-amber-100 text-amber-700
+                {% elif recent_log.action_by.role == 'adviser' %}bg-purple-100 text-purple-700
+                {% else %}bg-gray-100 text-gray-600
+                {% endif %}"> 
+                {{ recent_log.action_by.get_role_display}}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+              <tr>
+                <td colspan="2" class="px-5 py-10 text-center text-sm text-gray-400 italic">No reports yet</td>
+              </tr>
+            
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
   </div>

@@ -1,0 +1,290 @@
+{% extends "app/officer/treasurer/sidebar.html" %} {% load static %} {% block con %}
+
+<style>
+  @media print {
+    body * { visibility: hidden !important; }
+    #receipt-printable, #receipt-printable * { visibility: visible !important; }
+    #receipt-printable {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      z-index: 9999 !important;
+      background: white !important;
+    }
+    .no-print { display: none !important; }
+  }
+</style>
+
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 min-h-full">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between no-print">
+    <div>
+      <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-0.5">Society Fee</p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Receipt Generator</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="window.print()"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+        <i data-lucide="printer" class="w-4 h-4"></i>
+        Print Receipt
+      </button>
+      <button onclick="downloadReceipt()"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+        <i data-lucide="download" class="w-4 h-4"></i>
+        Download PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- Left: Fee Details (read only from context) -->
+    <div class="lg:w-80 shrink-0 flex flex-col gap-4 no-print">
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+        <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-4">Fee Information</p>
+
+        <div class="flex flex-col gap-3">
+          <div>
+            <p class="text-xs text-gray-400 mb-0.5">Student</p>
+            <p class="text-sm font-bold text-gray-900">{{ fee.student.get_full_name }}</p>
+            <p class="text-xs text-gray-400 font-mono">
+              {% if fee.student.student %}{{ fee.student.student.student_id }}{% endif %}
+            </p>
+          </div>
+          <div class="h-px bg-gray-100"></div>
+          <div>
+            <p class="text-xs text-gray-400 mb-0.5">Organization</p>
+            <p class="text-sm font-bold text-gray-900">{{ fee.organization.name }}</p>
+          </div>
+          <div class="h-px bg-gray-100"></div>
+          <div>
+            <p class="text-xs text-gray-400 mb-0.5">Academic Year</p>
+            <p class="text-sm font-bold text-gray-900">{{ fee.academic_year }}</p>
+          </div>
+          <div class="h-px bg-gray-100"></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <p class="text-xs text-gray-400 mb-0.5">Amount Due</p>
+              <p class="text-sm font-bold text-gray-900">₱{{ fee.amount|floatformat:2 }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400 mb-0.5">Amount Paid</p>
+              <p class="text-sm font-bold text-green-600">₱{{ fee.amount_paid|floatformat:2 }}</p>
+            </div>
+          </div>
+          <div class="h-px bg-gray-100"></div>
+          <div>
+            <p class="text-xs text-gray-400 mb-1">Status</p>
+            {% if fee.status == 'paid' %}
+            <span class="bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-lg">Paid</span>
+            {% elif fee.status == 'partial' %}
+            <span class="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-lg">Partial</span>
+            {% else %}
+            <span class="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-lg">Unpaid</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Issued by -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+        <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-4">Issued By</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-100">
+            <img
+              src="{% if request.user.profile_image %}{{ request.user.profile_image.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-900">{{ request.user.get_full_name }}</p>
+            <p class="text-xs text-gray-400">{{ request.user.get_role_display }}</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right: Receipt Preview -->
+    <div class="flex-1">
+      <div id="receipt-printable" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+
+        <!-- Receipt top accent -->
+        <div class="h-2 bg-blue-700 w-full"></div>
+
+        <div class="p-8">
+
+          <!-- Receipt Header -->
+          <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-blue-100">
+                <img
+                  src="{% if fee.organization.logo %}{{ fee.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+                  alt="org logo"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <p class="font-extrabold text-gray-900 text-lg tracking-tight leading-tight">{{ fee.organization.name }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">Society Fee Receipt</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-400 font-mono uppercase tracking-widests">Receipt No.</p>
+              <p class="text-base font-extrabold text-gray-900 font-mono">#{{ fee.pk|stringformat:"06d" }}</p>
+              <p class="text-xs text-gray-400 mt-1 font-mono">{{ fee.created_at|date:"F d, Y" }}</p>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="border-t-2 border-dashed border-gray-200 my-5"></div>
+
+          <!-- Student Info -->
+          <div class="grid grid-cols-2 gap-6 mb-6">
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-widests font-bold mb-1">Received From</p>
+              <p class="text-base font-extrabold text-gray-900">{{ fee.student.get_full_name }}</p>
+              <p class="text-xs text-gray-500 font-mono mt-0.5">
+                ID: {% if fee.student.student %}{{ fee.student.student.student_id|default:"—" }}{% else %}—{% endif %}
+              </p>
+              {% if fee.student.student %}
+              <p class="text-xs text-gray-500 mt-0.5">{{ fee.student.student.get_program_display }}</p>
+              <p class="text-xs text-gray-500">{{ fee.student.student.year|default:"" }}{% if fee.student.student.year %} Year{% endif %} - {{ fee.student.student.section|default:"" }}</p>
+              {% endif %}
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-400 uppercase tracking-widests font-bold mb-1">Academic Year</p>
+              <p class="text-base font-bold text-gray-900">{{ fee.academic_year }}</p>
+            </div>
+          </div>
+
+          <!-- Fee Table -->
+          <div class="bg-gray-50 rounded-xl overflow-hidden mb-6">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-blue-700 text-white">
+                  <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-widests">Description</th>
+                  <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-widests">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-gray-200">
+                  <td class="px-4 py-3 text-gray-700">Society Fee — {{ fee.academic_year }}</td>
+                  <td class="px-4 py-3 text-right font-semibold text-gray-900">₱{{ fee.amount|floatformat:2 }}</td>
+                </tr>
+                {% if fee.status == 'partial' %}
+                <tr class="border-b border-gray-200">
+                  <td class="px-4 py-3 text-gray-500 text-xs italic">Remaining Balance</td>
+                  <td class="px-4 py-3 text-right text-xs text-red-500 font-semibold">
+                    ₱{% widthratio fee.amount_paid 1 1 as paid %}{{ fee.amount|floatformat:2 }}
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+              <tfoot>
+                <tr class="bg-blue-50">
+                  <td class="px-4 py-3 font-extrabold text-gray-900 text-sm uppercase tracking-wide">Total Paid</td>
+                  <td class="px-4 py-3 text-right font-extrabold text-blue-700 text-base">₱{{ fee.amount_paid|floatformat:2 }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Status stamp -->
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-widests font-bold mb-1">Payment Status</p>
+              {% if fee.status == 'paid' %}
+              <div class="inline-flex items-center gap-2 bg-green-50 border-2 border-green-500 text-green-700 font-extrabold px-4 py-2 rounded-xl text-sm uppercase tracking-wide">
+                <i data-lucide="circle-check" class="w-4 h-4"></i>
+                PAID IN FULL
+              </div>
+              {% elif fee.status == 'partial' %}
+              <div class="inline-flex items-center gap-2 bg-amber-50 border-2 border-amber-500 text-amber-700 font-extrabold px-4 py-2 rounded-xl text-sm uppercase tracking-wide">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+                PARTIAL PAYMENT
+              </div>
+              {% else %}
+              <div class="inline-flex items-center gap-2 bg-red-50 border-2 border-red-500 text-red-700 font-extrabold px-4 py-2 rounded-xl text-sm uppercase tracking-wide">
+                <i data-lucide="x-circle" class="w-4 h-4"></i>
+                UNPAID
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Signature area -->
+            <div class="text-center">
+              <div class="w-32 border-b border-gray-400 mb-1 mx-auto"></div>
+              <p class="text-xs text-gray-500 font-semibold">{{ request.user.get_full_name }}</p>
+              <p class="text-xs text-gray-400">{{ request.user.get_role_display }}</p>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="border-t-2 border-dashed border-gray-200 my-5"></div>
+
+          <!-- Footer -->
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-400">Issued on {{ fee.updated_at|date:"F d, Y" }}</p>
+              <p class="text-xs text-gray-300 font-mono mt-0.5">TransparenSee — Blockchain-Verified</p>
+            </div>
+            <div class="flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-xl">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i>
+              <span class="text-xs font-bold text-blue-700">Verified</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Receipt bottom accent -->
+        <div class="h-2 bg-blue-700 w-full"></div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+  async function downloadReceipt() {
+    const btn = document.querySelector('[onclick="downloadReceipt()"]');
+    btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Generating...';
+    btn.disabled = true;
+
+    const receipt = document.getElementById('receipt-printable');
+
+    try {
+      const canvas = await html2canvas(receipt, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`receipt-{{ fee.pk|stringformat:"06d" }}-{{ fee.student.get_full_name|slugify }}.pdf`);
+    } catch (err) {
+      console.error(err);
+    }
+
+    btn.innerHTML = '<i data-lucide="download" class="w-4 h-4"></i> Download PDF';
+    btn.disabled = false;
+    lucide.createIcons();
+  }
+</script>
+
+{% endblock con %}

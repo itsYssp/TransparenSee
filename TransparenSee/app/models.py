@@ -201,3 +201,118 @@ class SocietyFee(models.Model):
 
     def __str__(self):
         return f'{self.student.get_full_name()} - {self.academic_year}'
+    
+class FinancialReport(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('pending_auditor', 'Pending Auditor'),
+        ('pending_president', 'Pending President'),
+        ('pending_adviser', 'Pending Adviser'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('on_blockchain', 'On Blockchain'),
+    ]
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='financial_reports'
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_reports'
+    )
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='financial_reports'
+    )
+    title = models.CharField(max_length=200)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='draft')
+
+    # Approval chain
+    auditor_approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='auditor_approved_reports'
+    )
+    auditor_approved_at = models.DateTimeField(null=True, blank=True)
+    auditor_remarks = models.TextField(blank=True, null=True)
+
+    president_approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='president_approved_reports'
+    )
+    president_approved_at = models.DateTimeField(null=True, blank=True)
+    president_remarks = models.TextField(blank=True, null=True)
+
+    adviser_approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='adviser_approved_reports'
+    )
+    adviser_approved_at = models.DateTimeField(null=True, blank=True)
+    adviser_remarks = models.TextField(blank=True, null=True)
+
+    blockchain_hash = models.CharField(max_length=255, blank=True, null=True)
+    blockchain_recorded_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.title} - {self.organization}'
+
+    @property
+    def total_amount(self):
+        return self.entries.aggregate(
+            total=models.Sum('amount')
+        )['total'] or 0
+
+
+class FinancialReportEntry(models.Model):
+    report = models.ForeignKey(
+        FinancialReport,
+        on_delete=models.CASCADE,
+        related_name='entries'
+    )
+    date = models.DateField()
+    category = models.CharField(max_length=200)
+    description = models.CharField(max_length=200)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['date', 'order']
+
+    def __str__(self):
+        return f'{self.date} - {self.category} - {self.amount}'
+
+
+class ReportApprovalLog(models.Model):
+    ACTION_CHOICES = [
+        ('submitted', 'Submitted'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('blockchain', 'Recorded on Blockchain'),
+    ]
+    report = models.ForeignKey(
+        FinancialReport,
+        on_delete=models.CASCADE,
+        related_name='approval_logs'
+    )
+    action_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']

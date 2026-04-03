@@ -1,0 +1,203 @@
+{% extends "app/officer/treasurer/sidebar.html" %} {% load static %} {% block con %}
+
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 ">
+
+  <div class="flex items-center gap-3">
+    <a href="{% url 'reports' %}"
+      class="w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-blue-700 hover:border-blue-200 transition-colors">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i>
+    </a>
+    <div>
+      <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Reports</p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Create Financial Report</h1>
+    </div>
+  </div>
+
+  <form method="POST" class="flex flex-col gap-4">
+    {% csrf_token %}
+
+    <!-- Report Info -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <div class="flex items-center gap-2 mb-5">
+        <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+          <i data-lucide="file-text" class="w-4 h-4 text-blue-700"></i>
+        </div>
+        <p class="font-bold text-gray-800 text-sm">Report Information</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="form-control sm:col-span-2">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Report Title</span>
+          </label>
+          <input
+            type="text"
+            name="title"
+            placeholder="e.g. Financial Statement - August 2025"
+            class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+            required
+          />
+        </div>
+
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Academic Year</span>
+          </label>
+          <select name="academic_year" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+            <option value="">-- Select Academic Year --</option>
+            {% for ay in academic_years %}
+            <option value="{{ ay.pk }}">{{ ay }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Entries -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="list" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Financial Entries</p>
+        </div>
+        <button type="button" onclick="addRow()"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          Add Row
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" id="entries-table">
+          <thead class="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-36">Date</th>
+              <th class="px-4 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Category</th>
+              <th class="px-4 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Description</th>
+              <th class="px-4 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase w-32">Amount (₱)</th>
+              <th class="px-4 py-3 w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="entries-body">
+            <tr class="entry-row border-b border-gray-50">
+              <td class="px-2 py-2">
+                <input type="date" name="date[]"
+                  class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
+              </td>
+              <td class="px-2 py-2">
+                <input type="text" name="category[]" placeholder="e.g. Office Supplies"
+                  class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
+              </td>
+              <td class="px-2 py-2">
+                <input type="text" name="description[]" placeholder="e.g. 1 Ream Bond Paper A4"
+                  class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
+              </td>
+              <td class="px-2 py-2">
+                <input type="number" name="amount[]" placeholder="0.00" step="0.01" min="0"
+                  class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 amount-input"
+                  oninput="updateTotal()" required />
+              </td>
+              <td class="px-2 py-2">
+                <button type="button" onclick="removeRow(this)"
+                  class="w-6 h-6 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-gray-200 bg-gray-50">
+              <td colspan="3" class="px-4 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Total</td>
+              <td class="px-4 py-3">
+                <span id="grand-total" class="text-sm font-extrabold text-gray-900">₱ 0.00</span>
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="mt-4 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-2">
+        <i data-lucide="info" class="w-4 h-4 text-amber-500 mt-0.5 shrink-0"></i>
+        <p class="text-xs text-amber-600 leading-relaxed">
+          After submission, this report will go through <strong>Auditor → President → Adviser</strong> approval before being recorded on the blockchain.
+        </p>
+      </div>
+    </div>
+
+    
+
+    <div class="flex items-center justify-end gap-3">
+      <a href="{% url 'reports' %}"
+        class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+        Cancel
+      </a>
+      <button type="submit"
+        class="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+        <i data-lucide="send" class="w-4 h-4"></i>
+        Submit for Approval
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  function addRow() {
+    const tbody = document.getElementById('entries-body');
+    const row = document.createElement('tr');
+    row.className = 'entry-row border-b border-gray-50';
+    row.innerHTML = `
+      <td class="px-2 py-2">
+        <input type="date" name="date[]"
+          class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
+      </td>
+      <td class="px-2 py-2">
+        <input type="text" name="category[]" placeholder="e.g. Office Supplies"
+          class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
+      </td>
+      <td class="px-2 py-2">
+        <input type="text" name="description[]" placeholder="e.g. 1 Ream Bond Paper A4"
+          class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
+      </td>
+      <td class="px-2 py-2">
+        <input type="number" name="amount[]" placeholder="0.00" step="0.01" min="0"
+          class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 amount-input"
+          oninput="updateTotal()" required />
+      </td>
+      <td class="px-2 py-2">
+        <button type="button" onclick="removeRow(this)"
+          class="w-6 h-6 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(row);
+    lucide.createIcons();
+    updateTotal();
+  }
+
+  function removeRow(btn) {
+    const rows = document.querySelectorAll('.entry-row');
+    if (rows.length === 1) return; // keep at least one row
+    btn.closest('tr').remove();
+    updateTotal();
+  }
+
+  function updateTotal() {
+    const inputs = document.querySelectorAll('.amount-input');
+    let total = 0;
+    inputs.forEach(input => {
+      total += parseFloat(input.value) || 0;
+    });
+    document.getElementById('grand-total').textContent = '₱ ' + total.toLocaleString('en-PH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+</script>
+
+{% endblock con %}
