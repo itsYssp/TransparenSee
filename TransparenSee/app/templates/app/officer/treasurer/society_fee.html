@@ -616,7 +616,7 @@
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 
@@ -751,7 +751,7 @@
     document.getElementById('receipt_modal').showModal();
   }
 
-   function printReceipt() {
+  function printReceipt() {
     const content = document.getElementById('receipt-content').outerHTML;
     const win = window.open('', '_blank');
     win.document.write(`
@@ -768,35 +768,61 @@
   }
 
   async function downloadReceiptPDF() {
-    const btn = document.querySelector('[onclick="downloadReceiptPDF()"]');
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = 'Generating...';
-    btn.disabled = true;
+  const btn = document.querySelector('[onclick="downloadReceiptPDF()"]');
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = 'Generating...';
+  btn.disabled = true;
+
+  const receipt = document.getElementById('receipt-content');
+
+  try {
 
     const receipt = document.getElementById('receipt-content');
-    try {
-      const canvas = await html2canvas(receipt, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-      });
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      const name = document.getElementById('receipt-student-name').textContent
-        .toLowerCase().replace(/\s+/g, '-');
-      pdf.save(`receipt-${document.getElementById('receipt-no').textContent.replace('#','')}-${name}.pdf`);
-    } catch (err) {
-      console.error(err);
-    }
+    const receiptWidth = receipt.offsetWidth;
+    const receiptHeight = receipt.offsetHeight;
 
-    btn.innerHTML = originalHTML;
-    btn.disabled = false;
-    lucide.createIcons();
+    const dataUrl = await htmlToImage.toPng(receipt, {
+      backgroundColor: '#ffffff',
+      pixelRatio: 2,
+      width: receiptWidth,
+      height: receiptHeight,
+      style: {
+        transform: 'scale(1)',
+        transformOrigin: 'top left',
+        width: receiptWidth + 'px',
+        height: receiptHeight + 'px',
+      }
+    });
+
+    const { jsPDF } = window.jspdf;
+
+    // Match PDF page size exactly to receipt dimensions (in mm)
+    const pxToMm = px => px * 0.264583;
+    const pdfWidth = pxToMm(receiptWidth);
+    const pdfHeight = pxToMm(receiptHeight);
+
+    const pdf = new jsPDF({
+      orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+      unit: 'mm',
+      format: [pdfWidth, pdfHeight]  // custom page size = exact receipt size
+    });
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+
+    const name = document.getElementById('receipt-student-name').textContent
+      .toLowerCase().replace(/\s+/g, '-');
+    pdf.save(`receipt-${document.getElementById('receipt-no').textContent.replace('#', '')}-${name}.pdf`);
+
+  } catch (err) {
+    console.error('PDF generation failed:', err);
+    alert('PDF generation failed. See console for details.');
   }
+
+  btn.innerHTML = originalHTML;
+  btn.disabled = false;
+  lucide.createIcons();
+}
 </script>
 
 {% endblock con %}

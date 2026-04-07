@@ -1,10 +1,12 @@
 from django.utils import timezone 
-
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from ...forms import *
 from ..mixins import *
+from django.db.models import Sum, Q, Count 
+from ...blockchain import verify_report_hash
+
 
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
@@ -47,6 +49,16 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
                 report.adviser_remarks = remarks
                 report.status = 'approved'
                 report.save()
+                
+                entities = report.organization
+                total_income = entities.filter(entity_type='income').aggregate(t=Sum('amount'))['t'] or 0
+                total_expense = entities.filter(entity_type='expense').aggregate(t=Sum('amount'   ))['t'] or 0
+                net = total_income - total_expense
+
+                org = report.organization
+                org.balance = (org.balance or 0) + net
+                org.save(update_field=['balance'])
+
                 ReportApprovalLog.objects.create(
                     report=report, action_by=user,
                     action='approved', remarks=remarks
@@ -67,7 +79,6 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
 class ReportListView(ListView):
     model = FinancialReport
     template_name = 'app/officer/treasurer/report_list.html'
-
     paginate_by = 10
 
     def get_queryset(self):
@@ -85,13 +96,13 @@ class ReportListView(ListView):
             qs = qs  
 
 
-        search = self.request.GET.get('search')
+        search = self.request.GET.get('search', '').strip()
         if search:
             qs = qs.filter(title__icontains=search)
 
 
         status = self.request.GET.get('status')
-        if status:
+        if status   :
             qs = qs.filter(status=status)
 
         return qs
@@ -117,9 +128,86 @@ class ReportListView(ListView):
         }
  
         context['base_template'] = role_templates.get(user.role, "app/base.html")
-        context['reports'] = FinancialReport.objects.filter(organization=org).exclude(status='rejected')
-        context['rejected_reports'] = FinancialReport.objects.filter(organization=org, status='rejected')
+        context['reports'] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').annotate(
+            total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
+            total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
+            income_count=Count('entries', filter=Q(entries__entry_type='income')),
+            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
+        )
+        context['rejected_reports'] = FinancialReport.objects.filter(organization=org, status='rejected').annotate(
+            total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
+            total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
+            income_count=Count('entries', filter=Q(entries__entry_type='income')),
+            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
+        )
         context['status_choices'] = FinancialReport.STATUS_CHOICES
+        return context
+    
+class ReportListView(ListView):
+    model = FinancialReport
+    template_name = 'app/officer/treasurer/report_list.html'
+    paginate_by = 10
+
+    def get_organization(self):
+        user = self.request.user
+        if hasattr(user, 'officer'):
+            return user.officer.organization
+        elif hasattr(user, 'adviser'):
+            return user.adviser.organization
+        elif hasattr(user, 'campus_admin'):
+            return getattr(user.campus_admin, 'organization', None)
+        return None
+
+
+
+    def get_annotated_reports(self, org):
+        """Reusable annotation query to avoid repetition."""
+        return FinancialReport.objects.filter(organization=org).annotate(
+            total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
+            total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
+            income_count=Count('entries', filter=Q(entries__entry_type='income')),
+            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = self.get_organization()
+
+        
+
+        role_templates = {
+            "treasurer": "app/officer/treasurer/sidebar.html",
+            "auditor":   "app/officer/auditor/sidebar.html",
+            "president": "app/officer/president/sidebar.html",
+            "adviser":   "app/adviser/sidebar.html",
+        }
+
+        context['base_template'] = role_templates.get(user.role, "app/base.html")
+        context['status_choices'] = FinancialReport.STATUS_CHOICES
+
+        search = self.request.GET.get('search', '').strip()
+        status = self.request.GET.get('status', '').strip()
+
+        if org:
+            base_qs = self.get_annotated_reports(org)
+
+            reports = base_qs.exclude(status='rejected')
+            if search:
+                reports = reports.filter(title__icontains=search)
+            if status:
+                reports = reports.filter(status=status)
+
+            rejected = base_qs.filter(status='rejected')
+            if search:
+                rejected = rejected.filter(title__icontains=search)
+
+            context['reports'] = reports
+            context['rejected_reports'] = rejected
+        else:
+            context['reports'] = FinancialReport.objects.none()
+            context['rejected_reports'] = FinancialReport.objects.none()
+
         return context
     
 class ReportDetailView(RoleRequireMixin, DetailView):
@@ -164,6 +252,16 @@ class ReportDetailView(RoleRequireMixin, DetailView):
         context['grouped_entries'] = grouped_entries
         context['approval_logs'] = report.approval_logs.all()
         context['total_amount'] = sum(entry.amount for entry in entries)
+        entries = report.entries.all()
+        context['total_income']  = entries.filter(entry_type='income').aggregate(t=Sum('amount'))['t'] or 0
+        context['total_expense'] = entries.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
+        context['net_total']     = context['total_income'] - context['total_expense']
+
+        if report.blockchain_hash:
+            context['blockchain_verified'] = verify_report_hash(report)
+        else:
+            context['blockchain_verified'] = None  # None = not yet on blockchain
+
         return context
 
 

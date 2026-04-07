@@ -13,7 +13,7 @@
     </div>
   </div>
 
-  <form method="POST" class="flex flex-col gap-4">
+  <form method="POST" class="flex flex-col gap-4" id="report-form">
     {% csrf_token %}
 
     <!-- Report Info -->
@@ -50,7 +50,6 @@
             {% endfor %}
           </select>
         </div>
-
       </div>
     </div>
 
@@ -63,54 +62,61 @@
           </div>
           <p class="font-bold text-gray-800 text-sm">Financial Entries</p>
         </div>
-        <button type="button" onclick="addRow()"
-          class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-          Add Row
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="addRow('expense')"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 transition-colors">
+            <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
+            Add Expense
+          </button>
+          <button type="button" onclick="addRow('income')"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+            Add Income
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-sm" id="entries-table">
           <thead class="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-36">Date</th>
-              <th class="px-4 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Category</th>
-              <th class="px-4 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Description</th>
-              <th class="px-4 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase w-32">Amount (₱)</th>
-              <th class="px-4 py-3 w-10"></th>
+              <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-24">Type</th>
+              <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-36">Date</th>
+              <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Category</th>
+              <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
+              <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-32">Amount (₱)</th>
+              <th class="px-3 py-3 w-10"></th>
             </tr>
           </thead>
           <tbody id="entries-body">
-            <tr class="entry-row border-b border-gray-50">
-              <td class="px-2 py-2">
-                <input type="date" name="date[]"
-                  class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
-              </td>
-              <td class="px-2 py-2">
-                <input type="text" name="category[]" placeholder="e.g. Office Supplies"
-                  class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
-              </td>
-              <td class="px-2 py-2">
-                <input type="text" name="description[]" placeholder="e.g. 1 Ream Bond Paper A4"
-                  class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
-              </td>
-              <td class="px-2 py-2">
-                <input type="number" name="amount[]" placeholder="0.00" step="0.01" min="0"
-                  class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 amount-input"
-                  oninput="updateTotal()" required />
-              </td>
-              <td class="px-2 py-2">
-                <button type="button" onclick="removeRow(this)"
-                  class="w-6 h-6 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
-                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                </button>
-              </td>
-            </tr>
+            <tbody id="entries-body">
+              <tr id="empty-row">
+                <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400">
+                  <div class="flex flex-col items-center gap-2">
+                    <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
+                    <span>No entries yet. Add an income or expense row to get started.</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>  
           </tbody>
           <tfoot>
+            <tr class="border-t border-gray-100 bg-gray-50">
+              <td colspan="4" class="px-4 py-2 text-right text-xs font-bold text-green-600 uppercase tracking-wide">Total Income</td>
+              <td class="px-4 py-2">
+                <span id="income-total" class="text-xs font-extrabold text-green-700">₱ 0.00</span>
+              </td>
+              <td></td>
+            </tr>
+            <tr class="bg-gray-50">
+              <td colspan="4" class="px-4 py-2 text-right text-xs font-bold text-red-600 uppercase tracking-wide">Total Expenses</td>
+              <td class="px-4 py-2">
+                <span id="expense-total" class="text-xs font-extrabold text-red-700">₱ 0.00</span>
+              </td>
+              <td></td>
+            </tr>
             <tr class="border-t-2 border-gray-200 bg-gray-50">
-              <td colspan="3" class="px-4 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Total</td>
+              <td colspan="4" class="px-4 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Net Total</td>
               <td class="px-4 py-3">
                 <span id="grand-total" class="text-sm font-extrabold text-gray-900">₱ 0.00</span>
               </td>
@@ -128,8 +134,6 @@
       </div>
     </div>
 
-    
-
     <div class="flex items-center justify-end gap-3">
       <a href="{% url 'reports' %}"
         class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
@@ -145,28 +149,152 @@
   </form>
 </div>
 
+<!-- Society Fee Preview Modal -->
+<dialog id="society-modal" class="modal">
+  <div class="modal-box rounded-2xl border border-gray-200 shadow-xl max-w-md p-0 overflow-hidden">
+    <div class="bg-blue-700 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i data-lucide="users" class="w-4 h-4 text-blue-200"></i>
+        <h3 class="font-bold text-white text-sm">Society Fee Income</h3>
+      </div>
+      <button onclick="document.getElementById('society-modal').close()" class="text-blue-200 hover:text-white">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <div class="p-6 flex flex-col gap-4">
+      <p class="text-xs text-gray-500">Select the academic year and semester to auto-calculate the society fee income based on paid fees.</p>
+
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Academic Year</span>
+        </label>
+        <select id="modal-ay" class="select select-bordered select-sm w-full bg-gray-50">
+          <option value="">-- Select Academic Year --</option>
+          {% for ay in academic_years %}
+          <option value="{{ ay.pk }}">{{ ay }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="button" onclick="previewSocietyFee()"
+        class="btn btn-sm bg-blue-700 text-white border-none hover:bg-blue-800 rounded-xl">
+        <i data-lucide="search" class="w-3.5 h-3.5 mr-1"></i>
+        Preview
+      </button>
+
+      <!-- Preview Result -->
+      <div id="society-preview" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 flex-col gap-2">
+        <div class="flex items-center justify-between text-xs text-gray-600">
+          <span class="font-semibold">Students (paid)</span>
+          <span id="preview-count" class="font-bold text-gray-900">—</span>
+        </div>
+        <div class="flex items-center justify-between text-xs text-gray-600">
+          <span class="font-semibold">Fee per Student</span>
+          <span id="preview-fee" class="font-bold text-gray-900">—</span>
+        </div>
+        <div class="border-t border-blue-200 pt-2 flex items-center justify-between text-sm">
+          <span class="font-bold text-blue-800">Total Income</span>
+          <span id="preview-total" class="font-extrabold text-blue-900">—</span>
+        </div>
+      </div>
+
+      <div id="society-error" class="hidden bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-xs text-red-600"></div>
+    </div>
+
+    <div class="px-6 pb-6 flex justify-end gap-2">
+      <button type="button" onclick="document.getElementById('society-modal').close()"
+        class="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50">
+        Cancel
+      </button>
+      <button type="button" id="society-confirm-btn" onclick="confirmSocietyFee()" disabled
+        class="px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed">
+        Add to Report
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
 <script>
-  function addRow() {
+  //  State 
+  let pendingSocietyRowTarget = null;   // the row that triggered the modal
+  let societyPreviewData = null;        // last successful preview result
+
+  // Academic year options for dynamic selects 
+  const academicYears = [
+    {% for ay in academic_years %}
+    { id: "{{ ay.pk }}", label: "{{ ay }}" },
+    {% endfor %}
+  ];
+
+  // Row Builder 
+  function addRow(type = 'expense') {
+    document.getElementById('empty-row')?.remove(); 
     const tbody = document.getElementById('entries-body');
     const row = document.createElement('tr');
-    row.className = 'entry-row border-b border-gray-50';
-    row.innerHTML = `
+    row.className = 'entry-row border-b border-gray-50 align-top';
+    row.dataset.type = type;
+    row.innerHTML = buildRowHTML(type);
+    tbody.appendChild(row);
+    lucide.createIcons();
+    updateTotals();
+}
+
+
+
+  function buildRowHTML(type) {
+    const isIncome  = type === 'income';
+    const typeBadge = isIncome
+      ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">
+          <i data-lucide="trending-up" class="w-3 h-3"></i> Income
+        </span>`
+      : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">
+          <i data-lucide="trending-down" class="w-3 h-3"></i> Expense
+        </span>`;
+
+    const incomeSourceField = isIncome ? `
+      <div class="mt-1.5">
+        <select name="income_source[]"
+          class="select select-bordered select-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 income-source-select"
+          onchange="handleIncomeSourceChange(this)">
+          <option value="other">Other Income</option>
+          <option value="society">Society Fee</option>
+        </select>
+      </div>
+      <!-- Society meta (hidden by default) -->
+      <input type="hidden" name="society_academic_year[]" class="society-ay-input" value="" />
+      <input type="hidden" name="society_semester[]" class="society-sem-input" value="" />
+      <div class="society-info hidden mt-1.5 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1.5 text-xs text-blue-700 flex items-start gap-1.5">
+        <i data-lucide="info" class="w-3 h-3 mt-0.5 shrink-0"></i>
+        <span class="society-info-text"></span>
+      </div>
+    ` : `<input type="hidden" name="income_source[]" value="" />
+        <input type="hidden" name="society_academic_year[]" value="" />
+        <input type="hidden" name="society_semester[]" value="" />`;
+
+    return `
+      <td class="px-2 py-2 w-28">
+        ${typeBadge}
+        <input type="hidden" name="entry_type[]" value="${type}" />
+        ${incomeSourceField}
+      </td>
       <td class="px-2 py-2">
         <input type="date" name="date[]"
           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
       </td>
       <td class="px-2 py-2">
-        <input type="text" name="category[]" placeholder="e.g. Office Supplies"
+        <input type="text" name="category[]" placeholder="e.g. ${isIncome ? 'Society Shirt' : 'Office Supplies'}"
           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
       </td>
       <td class="px-2 py-2">
-        <input type="text" name="description[]" placeholder="e.g. 1 Ream Bond Paper A4"
+        <input type="text" name="description[]" placeholder="e.g. ${isIncome ? 'Society collection 1st Sem' : '1 Ream Bond Paper A4'}"
           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
       </td>
       <td class="px-2 py-2">
         <input type="number" name="amount[]" placeholder="0.00" step="0.01" min="0"
           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 amount-input"
-          oninput="updateTotal()" required />
+          oninput="updateTotals()" required />
       </td>
       <td class="px-2 py-2">
         <button type="button" onclick="removeRow(this)"
@@ -175,29 +303,177 @@
         </button>
       </td>
     `;
-    tbody.appendChild(row);
-    lucide.createIcons();
-    updateTotal();
   }
 
+
+  function handleIncomeSourceChange(select) {
+    const row = select.closest('tr');
+    if (select.value === 'society') {
+      openSocietyModal(row);
+    } else {
+      clearSocietyData(row);
+    }
+  }
+
+  function openSocietyModal(row) {
+    pendingSocietyRowTarget = row;
+    societyPreviewData = null;
+
+    // Reset modal UI
+    document.getElementById('modal-ay').value = '';
+    document.getElementById('society-preview').classList.add('hidden');
+    document.getElementById('society-error').classList.add('hidden');
+    document.getElementById('society-confirm-btn').disabled = true;
+
+    document.getElementById('society-modal').showModal();
+  }
+
+  function clearSocietyData(row) {
+    row.querySelector('.society-ay-input').value  = '';
+    const info = row.querySelector('.society-info');
+    if (info) {
+      info.classList.add('hidden');
+      info.querySelector('.society-info-text').textContent = '';
+    }
+
+    const amountInput = row.querySelector('.amount-input');
+    if (amountInput) amountInput.value = '';
+    updateTotals();
+  }
+
+  //  Society Fee Preview 
+  async function previewSocietyFee() {
+    const ay       = document.getElementById('modal-ay').value;
+    const previewEl = document.getElementById('society-preview');
+    const errorEl   = document.getElementById('society-error');
+    const confirmBtn = document.getElementById('society-confirm-btn');
+
+    previewEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    confirmBtn.disabled = true;
+    societyPreviewData = null;
+
+    if (!ay) {
+      errorEl.textContent = 'Please select both academic year and semester.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const url = `{% url 'society_fee_preview' %}?academic_year=${ay}`;
+      const res  = await fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong.');
+      }
+
+      societyPreviewData = data;
+
+      document.getElementById('preview-count').textContent = data.student_count;
+      document.getElementById('preview-fee').textContent   = '₱ ' + fmt(data.fee_per_student);
+      document.getElementById('preview-total').textContent = '₱ ' + fmt(data.total);
+
+      previewEl.classList.remove('hidden');
+      confirmBtn.disabled = false;
+
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.classList.remove('hidden');
+    }
+  }
+
+  function confirmSocietyFee() {
+    if (!societyPreviewData || !pendingSocietyRowTarget) return;
+
+    const row      = pendingSocietyRowTarget;
+    const ay       = document.getElementById('modal-ay').value;
+    const ayLabel  = academicYears.find(a => a.id === ay)?.label || ay;
+
+    // Write hidden inputs
+    row.querySelector('.society-ay-input').value  = ay;
+
+    // Auto-fill amount
+    const amountInput = row.querySelector('.amount-input');
+    if (amountInput) {
+      amountInput.value = societyPreviewData.total.toFixed(2);
+      amountInput.readOnly = true;
+      amountInput.classList.add('opacity-70', 'cursor-not-allowed');
+    }
+
+    // Auto-fill category and description
+    const categoryInput    = row.querySelector('input[name="category[]"]');
+    const descriptionInput = row.querySelector('input[name="description[]"]');
+    if (categoryInput)    categoryInput.value    = 'Society Fee';
+    if (descriptionInput) descriptionInput.value =
+      `Society Fee — ${ayLabel}  (${societyPreviewData.student_count} students × ₱${fmt(societyPreviewData.fee_per_student)})`;
+
+    // Show info banner on the row
+    const info     = row.querySelector('.society-info');
+    const infoText = row.querySelector('.society-info-text');
+    if (info && infoText) {
+      infoText.textContent =
+        `${societyPreviewData.student_count} paid students × ₱${fmt(societyPreviewData.fee_per_student)} = ₱${fmt(societyPreviewData.total)}`;
+      info.classList.remove('hidden');
+    }
+
+    lucide.createIcons();
+    updateTotals();
+    document.getElementById('society-modal').close();
+  }
+
+  // Row Removal 
   function removeRow(btn) {
     const rows = document.querySelectorAll('.entry-row');
-    if (rows.length === 1) return; // keep at least one row
+    if (rows.length === 1) {
+        // Last row — remove it and show empty state
+        btn.closest('tr').remove();
+        const tbody = document.getElementById('entries-body');
+        tbody.innerHTML = `
+          <tr id="empty-row">
+            <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400">
+              <div class="flex flex-col items-center gap-2">
+                <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
+                <span>No entries yet. Add an income or expense row to get started.</span>
+              </div>
+            </td>
+          </tr>`;
+        lucide.createIcons();
+        updateTotals();
+        return;
+    }
     btn.closest('tr').remove();
-    updateTotal();
+    updateTotals();
+}
+
+  //  Totals 
+  function updateTotals() {
+    let income = 0, expense = 0;
+    document.querySelectorAll('.entry-row').forEach(row => {
+      const amount = parseFloat(row.querySelector('.amount-input')?.value) || 0;
+      if (row.dataset.type === 'income') income += amount;
+      else expense += amount;
+    });
+
+    const net = income - expense;
+
+    document.getElementById('income-total').textContent  = '₱ ' + fmt(income);
+    document.getElementById('expense-total').textContent = '₱ ' + fmt(expense);
+
+    const netEl = document.getElementById('grand-total');
+    netEl.textContent = (net >= 0 ? '₱ ' : '-₱ ') + fmt(Math.abs(net));
+    netEl.className = 'text-sm font-extrabold ' + (net >= 0 ? 'text-green-700' : 'text-red-700');
   }
 
-  function updateTotal() {
-    const inputs = document.querySelectorAll('.amount-input');
-    let total = 0;
-    inputs.forEach(input => {
-      total += parseFloat(input.value) || 0;
-    });
-    document.getElementById('grand-total').textContent = '₱ ' + total.toLocaleString('en-PH', {
+  function fmt(n) {
+    return parseFloat(n).toLocaleString('en-PH', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   }
+
 </script>
 
 {% endblock con %}

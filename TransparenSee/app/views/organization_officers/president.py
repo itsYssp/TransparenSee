@@ -3,6 +3,7 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from ...models import *
 from ..mixins import *
+from django.db.models import Q,Count
 
 class PresidentDashboardView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/president/dashboard.html'
@@ -23,22 +24,12 @@ class PresidentDashboardView(RoleRequireMixin, TemplateView):
         context["flagged_financial_reports"] = FinancialReport.objects.filter(organization=org, status='rejected').count()
         context["approved_financial_reports"] = FinancialReport.objects.filter(organization=org, status='approved').count()
         context["recent_approval_logs"] = recent_approval_log
-        context["recent_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').order_by('-created_at')[:3]
+        context['recent_financial_reports'] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').annotate(
+            income_count=Count('entries', filter=Q(entries__entry_type='income')),
+            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
+        ).order_by('-created_at')[:3]
         return context
     
-    
-    
-    
-       
-        recent_approval_log = ReportApprovalLog.objects.filter(report__organization = org).order_by('-created_at')[:3]
-        context["society_fee_amount"] = org.society_fee_amount
-        context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').count()
-        context["approved_financial_reports"] = FinancialReport.objects.filter(organization=org, status='approved').count()
-        context["recent_approval_logs"] = recent_approval_log
-        context["recent_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').order_by('-created_at')[:3]
-        
-      
-
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         org = self.get_organization(request.user) 

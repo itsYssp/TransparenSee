@@ -12,30 +12,28 @@ import os
 from dotenv import load_dotenv
 from ..models import *
 from .mixins import *
+from django.db.models import Sum, Q
 
-class StudentDashboardView(RoleRequireMixin, ListView):
-    template_name = 'app/student/dashboard.html'
-    model= CustomUser
-    role_required = 'student'
-    paginate_by = 8
-    context_object_name = 'users'
-
-class StudentView(RoleRequireMixin,TemplateView):
-    template_name = "app/student/student_dashboard.html"
+class StudentDashboardView(RoleRequireMixin, TemplateView):
+    template_name = "app/student/dashboard.html"
     role_required = 'student'
 
-    load_dotenv()
-    SEPOLIA_URL = os.getenv("SEPOLIA_URL")
+    load_dotenv(override=True)
+    SEPOLIA_URL      = os.getenv("SEPOLIA_URL")
     CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
     web3 = Web3(Web3.HTTPProvider(SEPOLIA_URL))
     web3.middleware_onion.inject(geth_poa_middleware, layer=0)
     contract = web3.eth.contract(address=CONTRACT_ADDRESS, abi=contract_abi)
 
     def get_context_data(self, **kwargs):
-        
         context = super().get_context_data(**kwargs)
+        user = self.request.user
 
-        # Fetch transactions from blockchain
+        org = None
+        if hasattr(user, 'student'):
+            org = user.student.organization
+
+        # Fetch blockchain transactions
         try:
             transactions = self.contract.functions.getTransactions().call()
         except Exception as e:
@@ -46,14 +44,37 @@ class StudentView(RoleRequireMixin,TemplateView):
         for t in transactions:
             tx_list.append({
                 "organization": t[0],
-                "amount": t[1],
-                "sender": t[2],
-                "timestamp": datetime.fromtimestamp(t[3]).strftime('%Y-%m-%d %H:%M:%S')
+                "amount":       t[1] / 100,   # convert cents back to pesos
+                "sender":       t[2],
+                "timestamp":    datetime.fromtimestamp(t[3]).strftime('%Y-%m-%d %H:%M:%S'),
+                "report_hash":  t[4],
+                "title":        t[5],
             })
 
-        context['transactions'] = tx_list
-        context['tx_count'] = len(tx_list)
+        # Filter to only show this student's organization transactions
+        if org:
+            org_tx_list = [t for t in tx_list if t['organization'] == org.name]
+        else:
+            org_tx_list = []
+
+        context['transactions'] = org_tx_list
+        context['tx_count']     = len(org_tx_list)
+
+        # Financial reports — only approved/on_blockchain visible to students
+        if org:
+            context['financial_reports'] = FinancialReport.objects.filter(
+                organization=org,
+                status__in=['approved', 'on_blockchain']
+            ).annotate(
+                total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
+                total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
+            ).order_by('-created_at')
+        else:
+            context['financial_reports'] = FinancialReport.objects.none()
+
+        context['active_tab'] = self.request.GET.get('type', 'financial')
         return context
+
 
 
 class StudentProfileView(RoleRequireMixin, TemplateView):

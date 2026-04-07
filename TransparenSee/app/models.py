@@ -26,6 +26,7 @@ class Organization(models.Model):
     program = models.CharField(choices=PROGRAM_CHOICE, blank=True, null=True)
     category = models.CharField(max_length=50, choices=ORG_CATEGORY)
     description = models.TextField()
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     society_fee_amount = models.DecimalField(max_digits=10,decimal_places=2,default=0)
     createdAt = models.DateTimeField(auto_now=True)
 
@@ -280,11 +281,30 @@ class FinancialReportEntry(models.Model):
         on_delete=models.CASCADE,
         related_name='entries'
     )
+    ENTRY_TYPE_CHOICES = [
+    ('income', 'Income'),
+    ('expense', 'Expense'),
+    ]
+
+    INCOME_SOURCE_CHOICES = [
+        ('society', 'Society Fee'),
+        ('other', 'Other Income'),
+    ]
+
+    SEMESTER_CHOICES = [
+        ('1stSem', '1st Semester'),
+        ('2ndSem', '2nd Semester'),
+    ]
     date = models.DateField()
     category = models.CharField(max_length=200)
     description = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     order = models.PositiveIntegerField(default=0)
+    entry_type = models.CharField(max_length=10, choices=ENTRY_TYPE_CHOICES, default='expense')
+    income_source = models.CharField(max_length=20, choices=INCOME_SOURCE_CHOICES, blank=True, null=True)
+    society_student_count = models.PositiveIntegerField(blank=True, null=True)
+    society_fee_per_student = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    society_semester = models.CharField(max_length=10, choices=SEMESTER_CHOICES, blank=True, null=True)
 
     class Meta:
         ordering = ['date', 'order']

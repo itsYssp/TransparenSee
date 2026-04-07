@@ -25,7 +25,7 @@
   <!-- Filters -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap gap-3 items-center justify-between">
 
-    <form method="get" class="flex flex-wrap gap-2 items-center w-full">
+    <form method="get" action="" class="flex flex-wrap gap-2 items-center w-full">
 
       <input 
         type="text" 
@@ -60,7 +60,7 @@
       <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
         <i data-lucide="file-text" class="w-4 h-4 text-blue-700"></i>
       </div>
-      <p class="font-bold text-gray-800 text-sm">Report List</p>
+      <p class="font-bold text-gray-800 text-sm">Financial Report List</p>
     </div>
 
     <div class="overflow-x-auto">
@@ -69,7 +69,7 @@
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
-            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Org</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Type</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">AY</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Total</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
@@ -81,7 +81,6 @@
         <tbody>
           {% for report in reports %} 
           <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-
             <td class="px-4 py-3 font-semibold text-gray-800">
               {{ report.title }}
               {% if report.blockchain_hash %}
@@ -91,8 +90,17 @@
               {% endif %}
             </td>
 
-            <td class="px-4 py-3 text-gray-600">
-              {{ report.organization }}
+            <td class="px-4 py-3">
+              {% if report.income_count %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Income</span>
+              {% endif %}
+              {% if report.expense_count %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
+              {% endif %}
+              <div class="flex  px-2 flex-col gap-0.5">
+                <span class="text-xs font-semibold text-green-700">▲ ₱{{ report.total_income|floatformat:2|default:"0.00" }}</span>
+                <span class="text-xs font-semibold text-red-600">▼ ₱{{ report.total_expense|floatformat:2|default:"0.00" }}</span>
+              </div>
             </td>
 
             <td class="px-4 py-3 text-gray-600">
@@ -187,7 +195,7 @@
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
-            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Org</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Type</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">AY</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Total</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
@@ -199,7 +207,6 @@
         <tbody>
           {% for rejected in rejected_reports %} 
           <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-
             <td class="px-4 py-3 font-semibold text-gray-800">
               {{ rejected.title }}
               {% if rejected.blockchain_hash %}
@@ -208,9 +215,17 @@
                 </span>
               {% endif %}
             </td>
-
-            <td class="px-4 py-3 text-gray-600">
-              {{ rejected.organization }}
+            <td class="px-4 py-3">
+              {% if rejeted.income_count %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Income</span>
+              {% endif %}
+              {% if rejected.expense_count %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
+              {% endif %}
+              <div class="flex  px-2 flex-col gap-0.5">
+                <span class="text-xs font-semibold text-green-700">▲ ₱{{ report.total_income|floatformat:2|default:"0.00" }}</span>
+                <span class="text-xs font-semibold text-red-600">▼ ₱{{ report.total_expense|floatformat:2|default:"0.00" }}</span>
+              </div>
             </td>
 
             <td class="px-4 py-3 text-gray-600">
@@ -221,7 +236,6 @@
               ₱ {{ rejected.total_amount|floatformat:2 }}
             </td>
 
-            <!-- STATUS -->
             <td class="px-4 py-3">
               <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
                 {% if rejected.status == 'approved' %}bg-green-100 text-green-700
@@ -266,7 +280,7 @@
     <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
 
       <div>
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        {{ rejected_reports.count }} rejected report{{ rejected_reports.count|pluralize }}
       </div>
 
       <div class="flex gap-2">
@@ -288,20 +302,6 @@
     </div>
 
   </div>
-
-  {% if request.GET.submitted %}
-    <input type="checkbox" id="message-modal" class="modal-toggle" checked />
-    <div class="modal">
-    <div class="modal-box text-center">
-        ✅<h3 class="font-bold text-lg">Success</h3>
-        <p>Report submitted for auditor approval.</p>
-        <div class="modal-action">
-        <label for="message-modal" class="btn btn-primary btn-sm">OK</label>
-        </div>
-    </div>
-    </div>
-    {% endif %}
-
 </div>
 
 <script>

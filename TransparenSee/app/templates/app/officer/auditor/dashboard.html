@@ -147,6 +147,7 @@
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Transaction</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Type</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
           </tr>
         </thead>
@@ -155,6 +156,14 @@
           {% for recent_fr in recent_financial_reports %}
             <tr class="hover:bg-blue-50/40 transition-colors duration-150">
                 <td class="px-5 py-3 text-xs font-semibold ">{{ recent_fr.title }}</td>
+                <td class="px-5 py-3">
+                  {% if recent_fr.income_count %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Income</span>
+                  {% endif %}
+                  {% if recent_fr.expense_count %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
+                  {% endif %}
+                </td>
                 <td class="px-5 py-3 text-sm font-mono">
                 <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
                 {% if recent_fr.status == 'approved' %}bg-green-100 text-green-700
