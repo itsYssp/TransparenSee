@@ -23,6 +23,8 @@
       <span class="bg-amber-50 text-amber-600 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Auditor</span>
       {% elif report.status == 'pending_president' %}
       <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending President</span>
+      {% elif report.status == 'pending_co_adviser' %}
+      <span class="bg-purple-50 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Adviser</span>
       {% elif report.status == 'pending_adviser' %}
       <span class="bg-purple-50 text-purple-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Adviser</span>
       {% elif report.status == 'approved' %}
@@ -85,6 +87,24 @@
         {% if report.president_approved_by %}
         <p class="text-xs text-gray-400">{{ report.president_approved_by.get_full_name }}</p>
         <p class="text-xs text-gray-300 font-mono">{{ report.president_approved_at|date:"M d, Y" }}</p>
+        {% else %}
+        <p class="text-xs text-gray-300">Pending</p>
+        {% endif %}
+      </div>
+      <div class="h-px flex-1 {% if report.adviser_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
+
+      <!-- Co-Adviser -->
+      <div class="flex flex-col items-center gap-2 flex-1">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
+          {% if report.co_adviser_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_co_adviser' %}bg-purple-50 border-purple-400{% else %}bg-gray-50 border-gray-200{% endif %}">
+          <i data-lucide="{% if report.co_adviser_approved_by %}circle-check{% elif report.status == 'pending_co_adviser' %}clock{% else %}circle{% endif %}"
+            class="w-5 h-5 {% if report.co_adviser_approved_by %}text-green-600{% elif report.status == 'pending_co_adviser' %}text-purple-600{% else %}text-gray-300{% endif %}">
+          </i>
+        </div>
+        <p class="text-xs font-semibold text-gray-700">Co-Adviser</p>
+        {% if report.co_adviser_approved_by %}
+        <p class="text-xs text-gray-400">{{ report.co_adviser_approved_by.get_full_name }}</p>
+        <p class="text-xs text-gray-300 font-mono">{{ report.co_adviser_approved_at|date:"M d, Y" }}</p>
         {% else %}
         <p class="text-xs text-gray-300">Pending</p>
         {% endif %}
@@ -171,6 +191,39 @@
         <i data-lucide="stamp" class="w-4 h-4 text-blue-600"></i>
       </div>
       <p class="font-bold text-gray-800 text-sm">President Action Required</p>
+    </div>
+    <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
+      {% csrf_token %}
+      <div class="form-control">
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
+        </label>
+        <textarea name="remarks" rows="2" placeholder="Add your remarks..."
+          class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
+      </div>
+      <div class="flex gap-3">
+        <button type="submit" name="action" value="approve"
+          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
+          <i data-lucide="circle-check" class="w-4 h-4"></i>
+          Approve
+        </button>
+        <button type="submit" name="action" value="reject"
+          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
+          <i data-lucide="x-circle" class="w-4 h-4"></i>
+          Reject
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if user.role == 'co_adviser' and report.status == 'pending_co_adviser' %}
+  <div class="bg-white rounded-2xl border border-blue-200 shadow-sm p-6">
+    <div class="flex items-center gap-2 mb-4">
+      <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+        <i data-lucide="stamp" class="w-4 h-4 text-blue-600"></i>
+      </div>
+      <p class="font-bold text-gray-800 text-sm">Co-Adviser Action Required</p>
     </div>
     <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
       {% csrf_token %}
@@ -290,7 +343,9 @@
                   {% if entry.income_source == 'society' %}
                     <div class="mt-1 text-[10px] px-2 text-blue-500 font-semibold">Society Fee</div>
                     {% if entry.society_student_count %}
-                      <div class="text-[10px] text-gray-400">{{ entry.society_student_count }} students × ₱{{ entry.society_fee_per_student }}</div>
+                      <div class="text-[10px] text-gray-400">
+                        {{ entry.society_student_count }} students contributed to this collection
+                      </div>
                     {% endif %}
                   {% endif %}
                 {% else %}
@@ -369,6 +424,8 @@
           </div>
           {% if log.remarks %}
           <p class="text-xs text-gray-400 mt-0.5">{{ log.remarks }}</p>
+          {% else %}
+          <p class="text-xs text-gray-400 mt-0.5">Approve by: {{log.action_by.get_role_display}}</p>
           {% endif %}
         </div>
       </div>
@@ -377,10 +434,9 @@
       {% endfor %}
     </div>
   </div>
-
+</div>
   {% if messages %}
 <input type="checkbox" id="message-modal" class="modal-toggle" checked />
-
 <div class="modal">
   <div class="modal-box text-center">
 
@@ -394,13 +450,9 @@
           ✅
         {% endif %}
       </div>
-
-  
       <h3 class="font-bold text-lg">
         {% if message.tags == 'error' %}Error{% else %}Success{% endif %}
       </h3>
-
-
       <p class="text-sm text-gray-500">
         {{ message }}
       </p>
@@ -413,11 +465,36 @@
 
     </div>
     {% endfor %}
-
   </div>
 </div>
 {% endif %}
 
+<div id="loadingModal" class="modal modal-middle">
+  <div class="modal-box rounded-xl p-10 ">
+    <div class="flex flex-col items-center justify-center gap-5 ">
+      <h1 class='text-xl font-mono '> Recording to Blockchain...</h1>
+      <span>Please wait, it might take some time.</span>
+      <span class="loading loading-bars loading-xl text-blue-700 "></span>
+    </div>
+  </div>
 </div>
+
+
+ <script>
+  const loadingModal = document.getElementById('loadingModal');
+
+  // Show the modal when any form is submitted
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', () => {
+      loadingModal.classList.add('modal-open'); // show modal
+    });
+  });
+
+  // Hide the modal after the page fully loads (optional)
+  window.addEventListener('load', () => {
+    loadingModal.classList.remove('modal-open'); // hide modal
+  });
+</script>
+
 
 {% endblock con %}

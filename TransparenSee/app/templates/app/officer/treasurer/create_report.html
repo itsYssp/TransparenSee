@@ -1,6 +1,6 @@
 {% extends "app/officer/treasurer/sidebar.html" %} {% load static %} {% block con %}
 
-<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 ">
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50">
 
   <div class="flex items-center gap-3">
     <a href="{% url 'reports' %}"
@@ -88,17 +88,16 @@
               <th class="px-3 py-3 w-10"></th>
             </tr>
           </thead>
+          <!-- ✅ Single tbody — duplicate was the root bug -->
           <tbody id="entries-body">
-            <tbody id="entries-body">
-              <tr id="empty-row">
-                <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400">
-                  <div class="flex flex-col items-center gap-2">
-                    <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
-                    <span>No entries yet. Add an income or expense row to get started.</span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>  
+            <tr id="empty-row">
+              <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400">
+                <div class="flex flex-col items-center gap-2">
+                  <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
+                  <span>No entries yet. Add an income or expense row to get started.</span>
+                </div>
+              </td>
+            </tr>
           </tbody>
           <tfoot>
             <tr class="border-t border-gray-100 bg-gray-50">
@@ -157,13 +156,13 @@
         <i data-lucide="users" class="w-4 h-4 text-blue-200"></i>
         <h3 class="font-bold text-white text-sm">Society Fee Income</h3>
       </div>
-      <button onclick="document.getElementById('society-modal').close()" class="text-blue-200 hover:text-white">
+      <button type="button" onclick="closeSocietyModal()" class="text-blue-200 hover:text-white">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
     </div>
 
     <div class="p-6 flex flex-col gap-4">
-      <p class="text-xs text-gray-500">Select the academic year and semester to auto-calculate the society fee income based on paid fees.</p>
+      <p class="text-xs text-gray-500">Select the academic year to auto-calculate society fee income based on paid fees.</p>
 
       <div class="form-control">
         <label class="label pb-1">
@@ -183,14 +182,13 @@
         Preview
       </button>
 
-      <!-- Preview Result -->
       <div id="society-preview" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 flex-col gap-2">
         <div class="flex items-center justify-between text-xs text-gray-600">
           <span class="font-semibold">Students (paid)</span>
           <span id="preview-count" class="font-bold text-gray-900">—</span>
         </div>
         <div class="flex items-center justify-between text-xs text-gray-600">
-          <span class="font-semibold">Fee per Student</span>
+          <span class="font-semibold">Amount Collected</span>
           <span id="preview-fee" class="font-bold text-gray-900">—</span>
         </div>
         <div class="border-t border-blue-200 pt-2 flex items-center justify-between text-sm">
@@ -203,7 +201,7 @@
     </div>
 
     <div class="px-6 pb-6 flex justify-end gap-2">
-      <button type="button" onclick="document.getElementById('society-modal').close()"
+      <button type="button" onclick="closeSocietyModal()"
         class="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50">
         Cancel
       </button>
@@ -217,43 +215,42 @@
 </dialog>
 
 <script>
-  //  State 
-  let pendingSocietyRowTarget = null;   // the row that triggered the modal
-  let societyPreviewData = null;        // last successful preview result
+  let pendingSocietyRowTarget = null;
+  let societyPreviewData = null;
 
-  // Academic year options for dynamic selects 
   const academicYears = [
     {% for ay in academic_years %}
     { id: "{{ ay.pk }}", label: "{{ ay }}" },
     {% endfor %}
   ];
 
-  // Row Builder 
+
   function addRow(type = 'expense') {
-    document.getElementById('empty-row')?.remove(); 
+    document.getElementById('empty-row')?.remove();
     const tbody = document.getElementById('entries-body');
-    const row = document.createElement('tr');
-    row.className = 'entry-row border-b border-gray-50 align-top';
+    const row   = document.createElement('tr');
+    row.className   = 'entry-row border-b border-gray-50 align-top';
     row.dataset.type = type;
-    row.innerHTML = buildRowHTML(type);
+    row.innerHTML   = buildRowHTML(type);
     tbody.appendChild(row);
     lucide.createIcons();
     updateTotals();
-}
-
-
+  }
 
   function buildRowHTML(type) {
-    const isIncome  = type === 'income';
+    const isIncome = type === 'income';
+
     const typeBadge = isIncome
       ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">
-          <i data-lucide="trending-up" class="w-3 h-3"></i> Income
-        </span>`
+           <i data-lucide="trending-up" class="w-3 h-3"></i> Income
+         </span>`
       : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">
-          <i data-lucide="trending-down" class="w-3 h-3"></i> Expense
-        </span>`;
+           <i data-lucide="trending-down" class="w-3 h-3"></i> Expense
+         </span>`;
 
-    const incomeSourceField = isIncome ? `
+    // Income rows get a source selector + hidden society fields.
+    // Expense rows get empty hidden fields so array indices stay aligned.
+    const sourceFields = isIncome ? `
       <div class="mt-1.5">
         <select name="income_source[]"
           class="select select-bordered select-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 income-source-select"
@@ -262,33 +259,34 @@
           <option value="society">Society Fee</option>
         </select>
       </div>
-      <!-- Society meta (hidden by default) -->
       <input type="hidden" name="society_academic_year[]" class="society-ay-input" value="" />
-      <input type="hidden" name="society_semester[]" class="society-sem-input" value="" />
       <div class="society-info hidden mt-1.5 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1.5 text-xs text-blue-700 flex items-start gap-1.5">
         <i data-lucide="info" class="w-3 h-3 mt-0.5 shrink-0"></i>
         <span class="society-info-text"></span>
       </div>
-    ` : `<input type="hidden" name="income_source[]" value="" />
-        <input type="hidden" name="society_academic_year[]" value="" />
-        <input type="hidden" name="society_semester[]" value="" />`;
+    ` : `
+      <input type="hidden" name="income_source[]" value="" />
+      <input type="hidden" name="society_academic_year[]" value="" />
+    `;
 
     return `
       <td class="px-2 py-2 w-28">
         ${typeBadge}
         <input type="hidden" name="entry_type[]" value="${type}" />
-        ${incomeSourceField}
+        ${sourceFields}
       </td>
       <td class="px-2 py-2">
         <input type="date" name="date[]"
           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
       </td>
       <td class="px-2 py-2">
-        <input type="text" name="category[]" placeholder="e.g. ${isIncome ? 'Society Shirt' : 'Office Supplies'}"
+        <input type="text" name="category[]"
+          placeholder="e.g. ${isIncome ? 'Society Shirt' : 'Office Supplies'}"
           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
       </td>
       <td class="px-2 py-2">
-        <input type="text" name="description[]" placeholder="e.g. ${isIncome ? 'Society collection 1st Sem' : '1 Ream Bond Paper A4'}"
+        <input type="text" name="description[]"
+          placeholder="e.g. ${isIncome ? 'Society collection 1st Sem' : '1 Ream Bond Paper A4'}"
           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
       </td>
       <td class="px-2 py-2">
@@ -319,7 +317,6 @@
     pendingSocietyRowTarget = row;
     societyPreviewData = null;
 
-    // Reset modal UI
     document.getElementById('modal-ay').value = '';
     document.getElementById('society-preview').classList.add('hidden');
     document.getElementById('society-error').classList.add('hidden');
@@ -328,8 +325,21 @@
     document.getElementById('society-modal').showModal();
   }
 
+  function closeSocietyModal() {
+    // If user closes without confirming, revert the select back to "other"
+    if (pendingSocietyRowTarget) {
+      const select = pendingSocietyRowTarget.querySelector('.income-source-select');
+      if (select && !pendingSocietyRowTarget.querySelector('.society-ay-input').value) {
+        select.value = 'other';
+      }
+    }
+    document.getElementById('society-modal').close();
+  }
+
   function clearSocietyData(row) {
-    row.querySelector('.society-ay-input').value  = '';
+    const ayInput = row.querySelector('.society-ay-input');
+    if (ayInput) ayInput.value = '';
+
     const info = row.querySelector('.society-info');
     if (info) {
       info.classList.add('hidden');
@@ -337,43 +347,44 @@
     }
 
     const amountInput = row.querySelector('.amount-input');
-    if (amountInput) amountInput.value = '';
+    if (amountInput) {
+      amountInput.value    = '';
+      amountInput.readOnly = false;
+      amountInput.classList.remove('opacity-70', 'cursor-not-allowed');
+    }
     updateTotals();
   }
 
-  //  Society Fee Preview 
+
   async function previewSocietyFee() {
-    const ay       = document.getElementById('modal-ay').value;
-    const previewEl = document.getElementById('society-preview');
-    const errorEl   = document.getElementById('society-error');
+    const ay         = document.getElementById('modal-ay').value;
+    const previewEl  = document.getElementById('society-preview');
+    const errorEl    = document.getElementById('society-error');
     const confirmBtn = document.getElementById('society-confirm-btn');
 
     previewEl.classList.add('hidden');
     errorEl.classList.add('hidden');
     confirmBtn.disabled = true;
-    societyPreviewData = null;
+    societyPreviewData  = null;
 
     if (!ay) {
-      errorEl.textContent = 'Please select both academic year and semester.';
+      errorEl.textContent = 'Please select an academic year.';
       errorEl.classList.remove('hidden');
       return;
     }
 
     try {
-      const url = `{% url 'society_fee_preview' %}?academic_year=${ay}`;
-      const res  = await fetch(url, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      const res  = await fetch(`{% url 'society_fee_preview' %}?academic_year=${ay}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Something went wrong.');
-      }
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
 
       societyPreviewData = data;
 
       document.getElementById('preview-count').textContent = data.student_count;
-      document.getElementById('preview-fee').textContent   = '₱ ' + fmt(data.fee_per_student);
+      document.getElementById('preview-fee').textContent   = '₱ ' + fmt(data.total);
       document.getElementById('preview-total').textContent = '₱ ' + fmt(data.total);
 
       previewEl.classList.remove('hidden');
@@ -388,67 +399,64 @@
   function confirmSocietyFee() {
     if (!societyPreviewData || !pendingSocietyRowTarget) return;
 
-    const row      = pendingSocietyRowTarget;
-    const ay       = document.getElementById('modal-ay').value;
-    const ayLabel  = academicYears.find(a => a.id === ay)?.label || ay;
+    const row     = pendingSocietyRowTarget;
+    const ay      = document.getElementById('modal-ay').value;
+    const ayLabel = academicYears.find(a => a.id === ay)?.label || ay;
 
-    // Write hidden inputs
-    row.querySelector('.society-ay-input').value  = ay;
+    row.querySelector('.society-ay-input').value = ay;
 
-    // Auto-fill amount
+    // Lock and fill amount
     const amountInput = row.querySelector('.amount-input');
     if (amountInput) {
-      amountInput.value = societyPreviewData.total.toFixed(2);
+      amountInput.value    = societyPreviewData.total.toFixed(2);
       amountInput.readOnly = true;
       amountInput.classList.add('opacity-70', 'cursor-not-allowed');
     }
 
-    // Auto-fill category and description
+    // Auto-fill category & description
     const categoryInput    = row.querySelector('input[name="category[]"]');
     const descriptionInput = row.querySelector('input[name="description[]"]');
-    if (categoryInput)    categoryInput.value    = 'Society Fee';
+    if (categoryInput)    categoryInput.value = 'Society Fee';
     if (descriptionInput) descriptionInput.value =
-      `Society Fee — ${ayLabel}  (${societyPreviewData.student_count} students × ₱${fmt(societyPreviewData.fee_per_student)})`;
+      `Society Fee — ${ayLabel} (${societyPreviewData.student_count} students paid ₱${fmt(societyPreviewData.total)})`;
 
-    // Show info banner on the row
+    // Show info banner
     const info     = row.querySelector('.society-info');
     const infoText = row.querySelector('.society-info-text');
     if (info && infoText) {
       infoText.textContent =
-        `${societyPreviewData.student_count} paid students × ₱${fmt(societyPreviewData.fee_per_student)} = ₱${fmt(societyPreviewData.total)}`;
+        `${societyPreviewData.student_count} students contributed a total of ₱${fmt(societyPreviewData.total)}`;
       info.classList.remove('hidden');
     }
 
     lucide.createIcons();
     updateTotals();
     document.getElementById('society-modal').close();
+    pendingSocietyRowTarget = null;
   }
 
-  // Row Removal 
+
   function removeRow(btn) {
     const rows = document.querySelectorAll('.entry-row');
-    if (rows.length === 1) {
-        // Last row — remove it and show empty state
-        btn.closest('tr').remove();
-        const tbody = document.getElementById('entries-body');
-        tbody.innerHTML = `
-          <tr id="empty-row">
-            <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400">
-              <div class="flex flex-col items-center gap-2">
-                <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
-                <span>No entries yet. Add an income or expense row to get started.</span>
-              </div>
-            </td>
-          </tr>`;
-        lucide.createIcons();
-        updateTotals();
-        return;
-    }
     btn.closest('tr').remove();
-    updateTotals();
-}
 
-  //  Totals 
+    if (rows.length === 1) {
+      // Was the last row — show empty state
+      document.getElementById('entries-body').innerHTML = `
+        <tr id="empty-row">
+          <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400">
+            <div class="flex flex-col items-center gap-2">
+              <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
+              <span>No entries yet. Add an income or expense row to get started.</span>
+            </div>
+          </td>
+        </tr>`;
+      lucide.createIcons();
+    }
+    updateTotals();
+  }
+
+
   function updateTotals() {
     let income = 0, expense = 0;
     document.querySelectorAll('.entry-row').forEach(row => {
@@ -457,14 +465,13 @@
       else expense += amount;
     });
 
-    const net = income - expense;
+    const net   = income - expense;
+    const netEl = document.getElementById('grand-total');
 
     document.getElementById('income-total').textContent  = '₱ ' + fmt(income);
     document.getElementById('expense-total').textContent = '₱ ' + fmt(expense);
-
-    const netEl = document.getElementById('grand-total');
     netEl.textContent = (net >= 0 ? '₱ ' : '-₱ ') + fmt(Math.abs(net));
-    netEl.className = 'text-sm font-extrabold ' + (net >= 0 ? 'text-green-700' : 'text-red-700');
+    netEl.className   = 'text-sm font-extrabold ' + (net >= 0 ? 'text-green-700' : 'text-red-700');
   }
 
   function fmt(n) {
@@ -473,7 +480,6 @@
       maximumFractionDigits: 2,
     });
   }
-
 </script>
 
 {% endblock con %}

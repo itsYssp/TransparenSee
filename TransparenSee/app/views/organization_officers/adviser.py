@@ -8,7 +8,7 @@ from django.contrib import messages
 
 class AdviserDashboardView(RoleRequireMixin, TemplateView):
     template_name = 'app/adviser/dashboard.html'
-    role_required = 'adviser'
+    role_required = ['adviser', 'co_adviser']
 
     def get_organization(self):
         return self.request.user.adviser.organization
@@ -21,7 +21,7 @@ class AdviserDashboardView(RoleRequireMixin, TemplateView):
     
 
 class RecordBlockchainView(RoleRequireMixin, TemplateView):
-    role_required = ['adviser']
+    role_required = ['adviser', 'co_adviser']
 
     def post(self, request, pk):
         report = get_object_or_404(FinancialReport, pk=pk)

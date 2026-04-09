@@ -40,6 +40,7 @@ class AdviserCreationForm(UserCreationForm):
     employee_id = forms.CharField(max_length=20, required=False)
     department = forms.CharField(max_length=100, required=False)
 
+
     organization = forms.ModelChoiceField(
         queryset=Organization.objects.all(),
         required=True,
@@ -49,17 +50,16 @@ class AdviserCreationForm(UserCreationForm):
     class Meta:
 
         model = CustomUser
-        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2', ]
+        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2','role' ]
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.role = 'adviser'
-        
+        user.role = self.cleaned_data['role']
         if commit:
             user.save()
             Adviser.objects.create(
                 user=user,
-                organization = self.cleaned_data.get('organization', ''),
+                organization = self.cleaned_data.get('organization'),
                 employee_id=self.cleaned_data.get('employee_id', ''),
                 department=self.cleaned_data.get('department', ''),
             )

@@ -4,8 +4,6 @@ from django.urls import reverse_lazy, reverse
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from accounts.models import CustomUser
 from ...forms import *
-
-
 from ..mixins import *
 class HeadDashBoardView(RoleRequireMixin, TemplateView):
     template_name = 'app/heads/dashboard.html'
@@ -90,7 +88,7 @@ class HeadUserRoleView(RoleRequireMixin, ListView):
         if user_type == "officers":
             roles = ["president", "treasurer", "auditor"]
         elif user_type == "advisers":
-            roles = ["adviser"]
+            roles = ["adviser", "co_adviser"]
         else:
             return CustomUser.objects.none()
 

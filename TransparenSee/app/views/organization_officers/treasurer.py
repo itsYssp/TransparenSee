@@ -156,10 +156,6 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
         messages.success(request, 'Added successfully.')
         return redirect('treasurer_society_fee')
 
-
-
-
-
 class CreateFinancialReportView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/create_report.html'
     role_required = 'treasurer'
@@ -170,12 +166,11 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
     def get(self, request):
         academic_years = AcademicYear.objects.all().order_by('-academic_year')
         return render(request, self.template_name, {
-            'academic_years': academic_years
+            'academic_years': academic_years,
         })
-    
 
     def post(self, request):
-        org = self.get_organization()
+        org   = self.get_organization()
         title = request.POST.get('title', '').strip()
         academic_year_id = request.POST.get('academic_year')
 
@@ -183,21 +178,20 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
             messages.error(request, 'Title is required.')
             return redirect(request.path)
 
-        dates        = request.POST.getlist('date[]')
-        categories   = request.POST.getlist('category[]')
-        descriptions = request.POST.getlist('description[]')
-        amounts      = request.POST.getlist('amount[]')
-        entry_types  = request.POST.getlist('entry_type[]')
-        income_sources      = request.POST.getlist('income_source[]')
-        society_semesters   = request.POST.getlist('society_semester[]')
-        society_ay_ids      = request.POST.getlist('society_academic_year[]')
+        dates          = request.POST.getlist('date[]')
+        categories     = request.POST.getlist('category[]')
+        descriptions   = request.POST.getlist('description[]')
+        amounts        = request.POST.getlist('amount[]')
+        entry_types    = request.POST.getlist('entry_type[]')
+        income_sources = request.POST.getlist('income_source[]')
+        society_ay_ids = request.POST.getlist('society_academic_year[]')
 
-        if not dates:
+        if not any(dates):
             messages.error(request, 'At least one entry is required.')
             return redirect(request.path)
 
         with transaction.atomic():
-            ay = AcademicYear.objects.get(pk=academic_year_id) if academic_year_id else None
+            ay = AcademicYear.objects.filter(pk=academic_year_id).first() if academic_year_id else None
 
             report = FinancialReport.objects.create(
                 organization=org,
@@ -208,34 +202,43 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
             )
 
             entries = []
-            for i, (date, category, description, amount) in enumerate(
-                zip(dates, categories, descriptions, amounts)
-            ):
+
+            for i in range(len(dates)):
+                date        = dates[i]
+                category    = categories[i]
+                description = descriptions[i]
+                amount      = amounts[i]
+
                 if not (date and amount):
                     continue
 
                 entry_type    = entry_types[i] if i < len(entry_types) else 'expense'
-                income_source = income_sources[i] if i < len(income_sources) else None
-                soc_semester  = society_semesters[i] if i < len(society_semesters) else None
-                soc_ay_id     = society_ay_ids[i] if i < len(society_ay_ids) else None
+                income_source = income_sources[i] if i < len(income_sources) else ''
+                soc_ay_id     = society_ay_ids[i] if i < len(society_ay_ids) else ''
 
-                student_count    = None
-                fee_per_student  = None
-                stored_semester  = None
+                student_count   = None
+                fee_per_student = None
 
-                # If this row is a society fee income entry, snapshot the data
-                if entry_type == 'income' and income_source == 'society' and soc_ay_id and soc_semester:
+            
+                if entry_type == 'income' and income_source == 'society' and soc_ay_id:
                     soc_ay = AcademicYear.objects.filter(pk=soc_ay_id).first()
+
                     if soc_ay:
                         paid_fees = SocietyFee.objects.filter(
                             organization=org,
                             academic_year=soc_ay,
-                            semester=soc_semester,
-                            status='paid',
+                            semester=soc_ay.semester,  
+                            amount_paid__gt=0,
                         )
-                        student_count   = paid_fees.count()
-                        fee_per_student = org.society_fee_amount
-                        stored_semester = soc_semester
+
+                    
+                        student_count = paid_fees.values('student').distinct().count()
+
+                       
+                        fee_per_student = None
+
+                        
+                        amount = paid_fees.aggregate(total=Sum('amount_paid'))['total'] or 0
 
                 entries.append(FinancialReportEntry(
                     report=report,
@@ -248,7 +251,7 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                     income_source=income_source if entry_type == 'income' else None,
                     society_student_count=student_count,
                     society_fee_per_student=fee_per_student,
-                    society_semester=stored_semester,
+                    society_semester=None,  
                 ))
 
             FinancialReportEntry.objects.bulk_create(entries)
@@ -257,7 +260,7 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                 report=report,
                 action_by=request.user,
                 action='submitted',
-                remarks='Report submitted for approval.'
+                remarks='Report submitted for approval.',
             )
 
         return redirect(f"{reverse('reports')}?submitted=1")
@@ -281,17 +284,15 @@ class SocietyFeePreviewView(RoleRequireMixin, TemplateView):
         paid_fees = SocietyFee.objects.filter(
             organization=org,
             academic_year=ay,
-            semester=ay.semester,   # <-- pulled from AcademicYear directly
-            status='paid',
+            semester=ay.semester,   
+            amount_paid__gt=0,
         )
-        student_count   = paid_fees.count()
-        fee_per_student = float(org.society_fee_amount)
-        total           = student_count * fee_per_student
+        student_count = paid_fees.values('student').distinct().count()
+        total = paid_fees.aggregate(total=Sum('amount_paid'))['total'] or 0
 
         return JsonResponse({
             'student_count':   student_count,
-            'fee_per_student': fee_per_student,
-            'total':           total,
+            'total':           float(total),
             'academic_year':   str(ay),
-            'semester':        ay.semester,   # pass back so JS can store it
+            'semester':        ay.semester, 
         })

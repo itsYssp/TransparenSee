@@ -46,9 +46,11 @@ class CustomUser(AbstractUser):
         ('super_admin', 'Super Admin'),
         ('campus_admin', 'Campus Admin'),
         ('adviser', 'Adviser'),
+        ('co_adviser', 'Co-Adviser'),
         ('treasurer', 'Treasurer'),
         ('auditor', 'Auditor'),
         ('president', 'President'),
+        ('secretary', 'Secretary'),
         ('student', 'Student'),
         ('head', 'Head')
     ]

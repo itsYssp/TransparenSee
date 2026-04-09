@@ -10,7 +10,7 @@ from ...blockchain import verify_report_hash
 
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
-    role_required = ['auditor', 'president', 'adviser']
+    role_required = ['auditor', 'president', 'adviser', 'co_adviser']
 
     def post(self, request, pk):
         report = get_object_or_404(FinancialReport, pk=pk)
@@ -35,6 +35,18 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
                 report.president_approved_by = user
                 report.president_approved_at = timezone.now()
                 report.president_remarks = remarks
+                report.status = 'pending_co_adviser'
+                report.save()
+                ReportApprovalLog.objects.create(
+                    report=report, action_by=user,
+                    action='approved', remarks=remarks
+                )
+                messages.success(request, 'Report approved. Sent to Co-Adviser.')
+
+            elif user.role == 'co_adviser' and report.status == 'pending_co_adviser':
+                report.co_adviser_approved_by= user
+                report.co_adviser_approved_at = timezone.now()
+                report.co_adviser_remarks = remarks
                 report.status = 'pending_adviser'
                 report.save()
                 ReportApprovalLog.objects.create(
@@ -50,14 +62,14 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
                 report.status = 'approved'
                 report.save()
                 
-                entities = report.organization
-                total_income = entities.filter(entity_type='income').aggregate(t=Sum('amount'))['t'] or 0
-                total_expense = entities.filter(entity_type='expense').aggregate(t=Sum('amount'   ))['t'] or 0
+                entities = report.entries.all()
+                total_income = entities.filter(entry_type='income').aggregate(t=Sum('amount'))['t'] or 0
+                total_expense = entities.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
                 net = total_income - total_expense
 
                 org = report.organization
                 org.balance = (org.balance or 0) + net
-                org.save(update_field=['balance'])
+                org.save(update_fields=['balance'])
 
                 ReportApprovalLog.objects.create(
                     report=report, action_by=user,
@@ -112,6 +124,8 @@ class ReportListView(ListView):
             return user.officer.organization
         elif hasattr(user, 'adviser'):
             return user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
+            return user.adviser.organization
         elif hasattr(user, 'campus_admin'):
             return getattr(user.campus_admin, 'organization', None)
         return None
@@ -120,11 +134,13 @@ class ReportListView(ListView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         org = self.get_organization(user)
+
         role_templates= {
             "treasurer": "app/officer/treasurer/sidebar.html",
             "auditor": "app/officer/auditor/sidebar.html",
             "president": "app/officer/president/sidebar.html",
             "adviser": "app/adviser/sidebar.html",
+            "co_adviser": "app/adviser/sidebar.html",
         }
  
         context['base_template'] = role_templates.get(user.role, "app/base.html")
@@ -154,6 +170,8 @@ class ReportListView(ListView):
             return user.officer.organization
         elif hasattr(user, 'adviser'):
             return user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
+            return user.adviser.organization
         elif hasattr(user, 'campus_admin'):
             return getattr(user.campus_admin, 'organization', None)
         return None
@@ -181,6 +199,7 @@ class ReportListView(ListView):
             "auditor":   "app/officer/auditor/sidebar.html",
             "president": "app/officer/president/sidebar.html",
             "adviser":   "app/adviser/sidebar.html",
+            "co_adviser":   "app/adviser/sidebar.html",
         }
 
         context['base_template'] = role_templates.get(user.role, "app/base.html")
@@ -214,7 +233,7 @@ class ReportDetailView(RoleRequireMixin, DetailView):
     model = FinancialReport
     template_name = 'app/officer/report_details.html'
     context_object_name = 'report'
-    role_required = ['treasurer', 'auditor', 'president', 'adviser']
+    role_required = ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -246,6 +265,7 @@ class ReportDetailView(RoleRequireMixin, DetailView):
             "auditor": "app/officer/auditor/sidebar.html",
             "president": "app/officer/president/sidebar.html",
             "adviser": "app/adviser/sidebar.html",
+            "co_adviser": "app/adviser/sidebar.html",
         }
 
         context['base_template'] = role_templates.get(user.role, "app/base.html")
@@ -267,12 +287,14 @@ class ReportDetailView(RoleRequireMixin, DetailView):
 
 class ChatView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/officer_chat.html'
-    role_required = ["treasurer", "auditor", "president", "adviser", "campus_admin"]
+    role_required = ["treasurer", "auditor", "president", "adviser", "campus_admin", "co_adviser"]
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
             return user.officer.organization
         elif hasattr(user, 'adviser'):
+            return user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
             return user.adviser.organization
         elif hasattr(user, 'campus_admin'):
             return getattr(user.campus_admin, 'organization', None)
@@ -299,6 +321,7 @@ class ChatView(RoleRequireMixin, TemplateView):
             "auditor": "app/officer/auditor/sidebar.html",
             "president": "app/officer/president/sidebar.html",
             "adviser": "app/adviser/sidebar.html",
+            "co_adviser": "app/adviser/sidebar.html",
             "campus_admin": "app/campus_admin/sidebar.html",
         }
         context["base_template"] = role_templates.get(user.role, "app/base.html")

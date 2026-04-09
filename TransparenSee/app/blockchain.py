@@ -100,17 +100,8 @@ def record_financial_report_on_blockchain(financial_report) -> dict:
     """
     if not w3.is_connected():
         raise ConnectionError("Cannot connect to Sepolia. Check SEPOLIA_URL in .env")
+
     
-    print(f"Connected: {w3.is_connected()}")
-    print(f"Wallet: {WALLET_ADDRESS}")
-    print(f"Balance: {w3.eth.get_balance(WALLET_ADDRESS)} wei")
-    print(f"Contract: {CONTRACT_ADDRESS}")
-    print(f"Org: {financial_report.organization.name}")
-    print(f"Title: {financial_report.title}")
-    print(f"Amount (cents): {int(financial_report.total_amount * Decimal('100'))}")
-
-
-    # Build SHA-256 hash from report fields for tamper-evidence
     report_payload = {
         "report_id":    financial_report.id,
         "title":        financial_report.title,
@@ -128,8 +119,9 @@ def record_financial_report_on_blockchain(financial_report) -> dict:
     org_name = financial_report.organization.name
     title    = financial_report.title
 
-    # Build transaction
+    
     nonce = w3.eth.get_transaction_count(WALLET_ADDRESS)
+    
     txn = contract.functions.addTransaction(
         org_name,
         amount_in_cents,
@@ -140,13 +132,12 @@ def record_financial_report_on_blockchain(financial_report) -> dict:
         "nonce":    nonce,
         "gas":      300_000,
         "gasPrice": w3.eth.gas_price,
-        "chainId":  11155111,  # Sepolia
+        "chainId":  11155111,  
     })
 
     signed_txn = w3.eth.account.sign_transaction(txn, private_key=PRIVATE_KEY)
     tx_hash    = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
 
-    # Wait for 1 block confirmation
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 
     if receipt.status != 1:
@@ -160,14 +151,13 @@ def record_financial_report_on_blockchain(financial_report) -> dict:
 
 
 def get_all_transactions() -> list:
-    """Read all on-chain transactions (free, no gas)."""
     if not w3.is_connected():
         raise ConnectionError("Cannot connect to Sepolia. Check SEPOLIA_URL in .env")
     return contract.functions.getTransactions().call()
 
 
 def get_transaction_count() -> int:
-    """Returns total number of transactions recorded on-chain."""
+    
     if not w3.is_connected():
         raise ConnectionError("Cannot connect to Sepolia. Check SEPOLIA_URL in .env")
     return contract.functions.getTransactionCount().call()

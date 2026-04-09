@@ -26,7 +26,7 @@ class Organization(models.Model):
     program = models.CharField(choices=PROGRAM_CHOICE, blank=True, null=True)
     category = models.CharField(max_length=50, choices=ORG_CATEGORY)
     description = models.TextField()
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    balance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     society_fee_amount = models.DecimalField(max_digits=10,decimal_places=2,default=0)
     createdAt = models.DateTimeField(auto_now=True)
 
@@ -94,7 +94,7 @@ class Officer(models.Model):
 
 
 class Adviser(models.Model):
-    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, null=True, blank=True)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='adviser' )
     employee_id = models.CharField(max_length=20, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True)
@@ -209,6 +209,7 @@ class FinancialReport(models.Model):
         ('pending_auditor', 'Pending Auditor'),
         ('pending_president', 'Pending President'),
         ('pending_adviser', 'Pending Adviser'),
+        ('pending_co_adviser', 'Pending Co-Adviser'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('on_blockchain', 'On Blockchain'),
@@ -248,6 +249,13 @@ class FinancialReport(models.Model):
     )
     president_approved_at = models.DateTimeField(null=True, blank=True)
     president_remarks = models.TextField(blank=True, null=True)
+
+    co_adviser_approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='co_adviser_approved_reports'
+    )
+    co_adviser_approved_at = models.DateTimeField(null=True, blank=True)
+    co_adviser_remarks = models.TextField(blank=True, null=True)
 
     adviser_approved_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
@@ -300,7 +308,7 @@ class FinancialReportEntry(models.Model):
     description = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     order = models.PositiveIntegerField(default=0)
-    entry_type = models.CharField(max_length=10, choices=ENTRY_TYPE_CHOICES, default='expense')
+    entry_type = models.CharField(max_length=10, choices=ENTRY_TYPE_CHOICES)
     income_source = models.CharField(max_length=20, choices=INCOME_SOURCE_CHOICES, blank=True, null=True)
     society_student_count = models.PositiveIntegerField(blank=True, null=True)
     society_fee_per_student = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
