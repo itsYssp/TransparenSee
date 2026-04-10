@@ -5,19 +5,20 @@ from django.views.generic import TemplateView, ListView, CreateView, UpdateView,
 from accounts.models import CustomUser
 from ...forms import *
 from ..mixins import *
+
 class HeadDashBoardView(RoleRequireMixin, TemplateView):
     template_name = 'app/heads/dashboard.html'
-    role_required = 'head'
-    
-    def get_organization(self):
-        return self.request.user.officer.organization
+    role_required = 'head' 
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
+        context['verified_financial_report_count'] = FinancialReport.objects.filter(status='on_blockchain').count()
+        context['pending_financial_report_count'] = FinancialReport.objects.exclude(status__in=['rejected',"on_blockchain"]).count()
+        context['verified_financial_reports'] = FinancialReport.objects.filter(status='on_blackchain')[:3]
         context["latest_ay"] = AcademicYear.objects.order_by("-academic_year", "-semester").first()
         context["total_organizations"] = Organization.objects.count()
         context["total_users"] = CustomUser.objects.count()
+
         return context
     
     def post(self, request, *args, **kwargs):

@@ -113,11 +113,11 @@
       <div class="w-px h-6 bg-gray-200"></div>
 
       
-      <select name="semester" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
-        <option value="">All Semester</option>
-        <option value="1stSem" {% if request.GET.semester == '1stSem' %}selected{% endif %}>1st Semester</option>
-        <option value="2ndSem" {% if request.GET.semester == '2ndSem' %}selected{% endif %}>2nd Semester</option>
-        <option value="midYear" {% if request.GET.semester == 'midYear' %}selected{% endif %}>Mid Year</option>
+      <select name="status" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
+        <option value="">All Status</option>
+        <option value="unpaid" {% if request.GET.status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+        <option value="partial" {% if request.GET.status == 'partial' %}selected{% endif %}>Partial</option>
+        <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>Paid</option>
       </select>
 
       <select name="academic_year" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
@@ -136,7 +136,7 @@
         Filter
       </button>
 
-      {% if request.GET.search or request.GET.semester or request.GET.academic_year %}
+      {% if request.GET.search or request.GET.semester or request.GET.academic_year or request.GET.status %}
       <a href="?" class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
         Clear

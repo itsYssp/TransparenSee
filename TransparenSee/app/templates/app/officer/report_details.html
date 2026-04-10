@@ -1,314 +1,314 @@
-{% extends base_template %} {% load static %} {% block con %}
+  {% extends base_template %} {% load static %} {% block con %}
 
-<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 ">
+  <div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 ">
 
-  <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <a href="{% url 'reports' %}"
-        class="w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-blue-700 hover:border-blue-200 transition-colors">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-      </a>
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="{% url 'reports' %}"
+          class="w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-blue-700 hover:border-blue-200 transition-colors">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        </a>
+        <div>
+          <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-0.5">Reports</p>
+          <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">{{ report.title }}</h1>
+        </div>
+      </div>
+
+      <!-- Status badge -->
       <div>
-        <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-0.5">Reports</p>
-        <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">{{ report.title }}</h1>
-      </div>
-    </div>
-
-    <!-- Status badge -->
-    <div>
-      {% if report.status == 'draft' %}
-      <span class="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1.5 rounded-xl">Draft</span>
-      {% elif report.status == 'pending_auditor' %}
-      <span class="bg-amber-50 text-amber-600 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Auditor</span>
-      {% elif report.status == 'pending_president' %}
-      <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending President</span>
-      {% elif report.status == 'pending_co_adviser' %}
-      <span class="bg-purple-50 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Adviser</span>
-      {% elif report.status == 'pending_adviser' %}
-      <span class="bg-purple-50 text-purple-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Adviser</span>
-      {% elif report.status == 'approved' %}
-      <span class="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-xl">Approved</span>
-      {% elif report.status == 'rejected' %}
-      <span class="bg-red-50 text-red-600 text-xs font-bold px-3 py-1.5 rounded-xl">Rejected</span>
-      {% elif report.status == 'on_blockchain' %}
-      <span class="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-        <i data-lucide="link" class="w-3.5 h-3.5"></i> On Blockchain
-      </span>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Approval Progress -->
-  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-    <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-4">Approval Progress</p>
-    <div class="flex items-center gap-0">
-
-      <!-- Treasurer -->
-      <div class="flex flex-col items-center gap-2 flex-1">
-        <div class="w-10 h-10 rounded-xl bg-green-50 border-2 border-green-500 flex items-center justify-center">
-          <i data-lucide="circle-check" class="w-5 h-5 text-green-600"></i>
-        </div>
-        <p class="text-xs font-semibold text-gray-700">Treasurer</p>
-        <p class="text-xs text-gray-400">{{ report.created_by.get_full_name }}</p>
-        <p class="text-xs text-gray-300 font-mono">{{ report.created_at|date:"M d, Y" }}</p>
-      </div>
-
-      <div class="h-px flex-1 {% if report.status != 'pending_auditor' and report.status != 'draft' %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
-
-      <!-- Auditor -->
-      <div class="flex flex-col items-center gap-2 flex-1">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
-          {% if report.auditor_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_auditor' %}bg-amber-50 border-amber-400{% else %}bg-gray-50 border-gray-200{% endif %}">
-          <i data-lucide="{% if report.auditor_approved_by %}circle-check{% elif report.status == 'pending_auditor' %}clock{% else %}circle{% endif %}"
-            class="w-5 h-5 {% if report.auditor_approved_by %}text-green-600{% elif report.status == 'pending_auditor' %}text-amber-500{% else %}text-gray-300{% endif %}">
-          </i>
-        </div>
-        <p class="text-xs font-semibold text-gray-700">Auditor</p>
-        {% if report.auditor_approved_by %}
-        <p class="text-xs text-gray-400">{{ report.auditor_approved_by.get_full_name }}</p>
-        <p class="text-xs text-gray-300 font-mono">{{ report.auditor_approved_at|date:"M d, Y" }}</p>
-        {% else %}
-        <p class="text-xs text-gray-300">Pending</p>
+        {% if report.status == 'draft' %}
+        <span class="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1.5 rounded-xl">Draft</span>
+        {% elif report.status == 'pending_auditor' %}
+        <span class="bg-amber-50 text-amber-600 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Auditor</span>
+        {% elif report.status == 'pending_president' %}
+        <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending President</span>
+        {% elif report.status == 'pending_co_adviser' %}
+        <span class="bg-purple-50 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Adviser</span>
+        {% elif report.status == 'pending_adviser' %}
+        <span class="bg-purple-50 text-purple-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Adviser</span>
+        {% elif report.status == 'approved' %}
+        <span class="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-xl">Approved</span>
+        {% elif report.status == 'rejected' %}
+        <span class="bg-red-50 text-red-600 text-xs font-bold px-3 py-1.5 rounded-xl">Rejected</span>
+        {% elif report.status == 'on_blockchain' %}
+        <span class="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+          <i data-lucide="link" class="w-3.5 h-3.5"></i> On Blockchain
+        </span>
         {% endif %}
       </div>
+    </div>
 
-      <div class="h-px flex-1 {% if report.president_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
+    <!-- Approval Progress -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-4">Approval Progress</p>
+      <div class="flex items-center gap-0">
 
-      <!-- President -->
-      <div class="flex flex-col items-center gap-2 flex-1">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
-          {% if report.president_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_president' %}bg-blue-50 border-blue-400{% else %}bg-gray-50 border-gray-200{% endif %}">
-          <i data-lucide="{% if report.president_approved_by %}circle-check{% elif report.status == 'pending_president' %}clock{% else %}circle{% endif %}"
-            class="w-5 h-5 {% if report.president_approved_by %}text-green-600{% elif report.status == 'pending_president' %}text-blue-600{% else %}text-gray-300{% endif %}">
-          </i>
+        <!-- Treasurer -->
+        <div class="flex flex-col items-center gap-2 flex-1">
+          <div class="w-10 h-10 rounded-xl bg-green-50 border-2 border-green-500 flex items-center justify-center">
+            <i data-lucide="circle-check" class="w-5 h-5 text-green-600"></i>
+          </div>
+          <p class="text-xs font-semibold text-gray-700">Treasurer</p>
+          <p class="text-xs text-gray-400">{{ report.created_by.get_full_name }}</p>
+          <p class="text-xs text-gray-300 font-mono">{{ report.created_at|date:"M d, Y" }}</p>
         </div>
-        <p class="text-xs font-semibold text-gray-700">President</p>
-        {% if report.president_approved_by %}
-        <p class="text-xs text-gray-400">{{ report.president_approved_by.get_full_name }}</p>
-        <p class="text-xs text-gray-300 font-mono">{{ report.president_approved_at|date:"M d, Y" }}</p>
-        {% else %}
-        <p class="text-xs text-gray-300">Pending</p>
-        {% endif %}
-      </div>
-      <div class="h-px flex-1 {% if report.adviser_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
 
-      <!-- Co-Adviser -->
-      <div class="flex flex-col items-center gap-2 flex-1">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
-          {% if report.co_adviser_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_co_adviser' %}bg-purple-50 border-purple-400{% else %}bg-gray-50 border-gray-200{% endif %}">
-          <i data-lucide="{% if report.co_adviser_approved_by %}circle-check{% elif report.status == 'pending_co_adviser' %}clock{% else %}circle{% endif %}"
-            class="w-5 h-5 {% if report.co_adviser_approved_by %}text-green-600{% elif report.status == 'pending_co_adviser' %}text-purple-600{% else %}text-gray-300{% endif %}">
-          </i>
-        </div>
-        <p class="text-xs font-semibold text-gray-700">Co-Adviser</p>
-        {% if report.co_adviser_approved_by %}
-        <p class="text-xs text-gray-400">{{ report.co_adviser_approved_by.get_full_name }}</p>
-        <p class="text-xs text-gray-300 font-mono">{{ report.co_adviser_approved_at|date:"M d, Y" }}</p>
-        {% else %}
-        <p class="text-xs text-gray-300">Pending</p>
-        {% endif %}
-      </div>
+        <div class="h-px flex-1 {% if report.status != 'pending_auditor' and report.status != 'draft' %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
 
-      <div class="h-px flex-1 {% if report.adviser_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
-
-      <!-- Adviser -->
-      <div class="flex flex-col items-center gap-2 flex-1">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
-          {% if report.adviser_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_adviser' %}bg-purple-50 border-purple-400{% else %}bg-gray-50 border-gray-200{% endif %}">
-          <i data-lucide="{% if report.adviser_approved_by %}circle-check{% elif report.status == 'pending_adviser' %}clock{% else %}circle{% endif %}"
-            class="w-5 h-5 {% if report.adviser_approved_by %}text-green-600{% elif report.status == 'pending_adviser' %}text-purple-600{% else %}text-gray-300{% endif %}">
-          </i>
-        </div>
-        <p class="text-xs font-semibold text-gray-700">Adviser</p>
-        {% if report.adviser_approved_by %}
-        <p class="text-xs text-gray-400">{{ report.adviser_approved_by.get_full_name }}</p>
-        <p class="text-xs text-gray-300 font-mono">{{ report.adviser_approved_at|date:"M d, Y" }}</p>
-        {% else %}
-        <p class="text-xs text-gray-300">Pending</p>
-        {% endif %}
-      </div>
-
-      <div class="h-px flex-1 {% if report.status == 'on_blockchain' %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
-
-      <!-- Blockchain -->
-      <div class="flex flex-col items-center gap-2 flex-1">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
-          {% if report.status == 'on_blockchain' %}bg-indigo-50 border-indigo-500{% else %}bg-gray-50 border-gray-200{% endif %}">
-          <i data-lucide="link"
-            class="w-5 h-5 {% if report.status == 'on_blockchain' %}text-indigo-600{% else %}text-gray-300{% endif %}">
-          </i>
-        </div>
-        <p class="text-xs font-semibold text-gray-700">Blockchain</p>
-        {% if report.blockchain_hash %}
-        <p class="text-xs text-gray-300 font-mono truncate max-w-20">{{ report.blockchain_hash|truncatechars:10 }}</p>
-        {% else %}
-        <p class="text-xs text-gray-300">Not yet</p>
-        {% endif %}
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Approval Action (shown to relevant role) -->
-  {% if user.role == 'auditor' and report.status == 'pending_auditor' %}
-  <div class="bg-white rounded-2xl border border-amber-200 shadow-sm p-6">
-    <div class="flex items-center gap-2 mb-4">
-      <div class="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
-        <i data-lucide="stamp" class="w-4 h-4 text-amber-600"></i>
-      </div>
-      <p class="font-bold text-gray-800 text-sm">Auditor Action Required</p>
-    </div>
-    <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
-      {% csrf_token %}
-      <div class="form-control">
-        <label class="label pb-1">
-          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
-        </label>
-        <textarea name="remarks" rows="2" placeholder="Add your remarks..."
-          class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
-      </div>
-      <div class="flex gap-3">
-        <button type="submit" name="action" value="approve"
-          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
-          <i data-lucide="circle-check" class="w-4 h-4"></i>
-          Approve
-        </button>
-        <button type="submit" name="action" value="reject"
-          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
-          <i data-lucide="x-circle" class="w-4 h-4"></i>
-          Reject
-        </button>
-      </div>
-    </form>
-  </div>
-  {% endif %}
-
-  {% if user.role == 'president' and report.status == 'pending_president' %}
-  <div class="bg-white rounded-2xl border border-blue-200 shadow-sm p-6">
-    <div class="flex items-center gap-2 mb-4">
-      <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
-        <i data-lucide="stamp" class="w-4 h-4 text-blue-600"></i>
-      </div>
-      <p class="font-bold text-gray-800 text-sm">President Action Required</p>
-    </div>
-    <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
-      {% csrf_token %}
-      <div class="form-control">
-        <label class="label pb-1">
-          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
-        </label>
-        <textarea name="remarks" rows="2" placeholder="Add your remarks..."
-          class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
-      </div>
-      <div class="flex gap-3">
-        <button type="submit" name="action" value="approve"
-          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
-          <i data-lucide="circle-check" class="w-4 h-4"></i>
-          Approve
-        </button>
-        <button type="submit" name="action" value="reject"
-          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
-          <i data-lucide="x-circle" class="w-4 h-4"></i>
-          Reject
-        </button>
-      </div>
-    </form>
-  </div>
-  {% endif %}
-
-  {% if user.role == 'co_adviser' and report.status == 'pending_co_adviser' %}
-  <div class="bg-white rounded-2xl border border-blue-200 shadow-sm p-6">
-    <div class="flex items-center gap-2 mb-4">
-      <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
-        <i data-lucide="stamp" class="w-4 h-4 text-blue-600"></i>
-      </div>
-      <p class="font-bold text-gray-800 text-sm">Co-Adviser Action Required</p>
-    </div>
-    <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
-      {% csrf_token %}
-      <div class="form-control">
-        <label class="label pb-1">
-          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
-        </label>
-        <textarea name="remarks" rows="2" placeholder="Add your remarks..."
-          class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
-      </div>
-      <div class="flex gap-3">
-        <button type="submit" name="action" value="approve"
-          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
-          <i data-lucide="circle-check" class="w-4 h-4"></i>
-          Approve
-        </button>
-        <button type="submit" name="action" value="reject"
-          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
-          <i data-lucide="x-circle" class="w-4 h-4"></i>
-          Reject
-        </button>
-      </div>
-    </form>
-  </div>
-  {% endif %}
-
-  {% if user.role == 'adviser' and report.status == 'pending_adviser' %}
-  <div class="bg-white rounded-2xl border border-purple-200 shadow-sm p-6">
-    <div class="flex items-center gap-2 mb-4">
-      <div class="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
-        <i data-lucide="stamp" class="w-4 h-4 text-purple-600"></i>
-      </div>
-      <p class="font-bold text-gray-800 text-sm">Adviser Action Required</p>
-    </div>
-    <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
-      {% csrf_token %}
-      <div class="form-control">
-        <label class="label pb-1">
-          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
-        </label>
-        <textarea name="remarks" rows="2" placeholder="Add your remarks..."
-          class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
-      </div>
-      <div class="flex gap-3">
-        <button type="submit" name="action" value="approve"
-          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
-          <i data-lucide="circle-check" class="w-4 h-4"></i>
-          Approve & Send to Blockchain
-        </button>
-        <button type="submit" name="action" value="reject"
-          class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
-          <i data-lucide="x-circle" class="w-4 h-4"></i>
-          Reject
-        </button>
-      </div>
-    </form>
-  </div>
-  {% endif %}
-
-   {% if request.user.role == 'adviser' and report.status == 'approved' %}
-  <form method="post" action="{% url 'record_blockchain' pk=report.pk %}">
-      {% csrf_token %}
-      <button type="submit" class="btn" onclick="return confirm('Record this report on the blockchain? This cannot be undone.')">
-          🔗 Record on Blockchain
-      </button>
-  </form>
-  {% endif %}
-
-  <!-- Blockchain Status Badge -->
-  {% if report.status == 'on_blockchain' %}
-      <p>🔗 Recorded on Blockchain: {{ report.blockchain_recorded_at }}</p>
-      {% if blockchain_verified == True %}
-          <span style="color: green;">✅ Verified — Data matches blockchain record</span>
-      {% elif blockchain_verified == False %}
-          <span style="color: red;">⚠️ TAMPERED — Data does not match blockchain record!</span>
-      {% endif %}
-      <!-- Show TX hash from the approval log -->
-      {% for log in approval_logs %}
-          {% if log.action == 'blockchain' %}
-              <p><small>{{ log.remarks }}</small></p>
+        <!-- Auditor -->
+        <div class="flex flex-col items-center gap-2 flex-1">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
+            {% if report.auditor_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_auditor' %}bg-amber-50 border-amber-400{% else %}bg-gray-50 border-gray-200{% endif %}">
+            <i data-lucide="{% if report.auditor_approved_by %}circle-check{% elif report.status == 'pending_auditor' %}clock{% else %}circle{% endif %}"
+              class="w-5 h-5 {% if report.auditor_approved_by %}text-green-600{% elif report.status == 'pending_auditor' %}text-amber-500{% else %}text-gray-300{% endif %}">
+            </i>
+          </div>
+          <p class="text-xs font-semibold text-gray-700">Auditor</p>
+          {% if report.auditor_approved_by %}
+          <p class="text-xs text-gray-400">{{ report.auditor_approved_by.get_full_name }}</p>
+          <p class="text-xs text-gray-300 font-mono">{{ report.auditor_approved_at|date:"M d, Y" }}</p>
+          {% else %}
+          <p class="text-xs text-gray-300">Pending</p>
           {% endif %}
-      {% endfor %}
-  {% endif %}
+        </div>
 
-    <!-- Financial Statement Table -->
+        <div class="h-px flex-1 {% if report.president_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
+
+        <!-- President -->
+        <div class="flex flex-col items-center gap-2 flex-1">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
+            {% if report.president_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_president' %}bg-blue-50 border-blue-400{% else %}bg-gray-50 border-gray-200{% endif %}">
+            <i data-lucide="{% if report.president_approved_by %}circle-check{% elif report.status == 'pending_president' %}clock{% else %}circle{% endif %}"
+              class="w-5 h-5 {% if report.president_approved_by %}text-green-600{% elif report.status == 'pending_president' %}text-blue-600{% else %}text-gray-300{% endif %}">
+            </i>
+          </div>
+          <p class="text-xs font-semibold text-gray-700">President</p>
+          {% if report.president_approved_by %}
+          <p class="text-xs text-gray-400">{{ report.president_approved_by.get_full_name }}</p>
+          <p class="text-xs text-gray-300 font-mono">{{ report.president_approved_at|date:"M d, Y" }}</p>
+          {% else %}
+          <p class="text-xs text-gray-300">Pending</p>
+          {% endif %}
+        </div>
+        <div class="h-px flex-1 {% if report.adviser_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
+
+        <!-- Co-Adviser -->
+        <div class="flex flex-col items-center gap-2 flex-1">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
+            {% if report.co_adviser_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_co_adviser' %}bg-purple-50 border-purple-400{% else %}bg-gray-50 border-gray-200{% endif %}">
+            <i data-lucide="{% if report.co_adviser_approved_by %}circle-check{% elif report.status == 'pending_co_adviser' %}clock{% else %}circle{% endif %}"
+              class="w-5 h-5 {% if report.co_adviser_approved_by %}text-green-600{% elif report.status == 'pending_co_adviser' %}text-purple-600{% else %}text-gray-300{% endif %}">
+            </i>
+          </div>
+          <p class="text-xs font-semibold text-gray-700">Co-Adviser</p>
+          {% if report.co_adviser_approved_by %}
+          <p class="text-xs text-gray-400">{{ report.co_adviser_approved_by.get_full_name }}</p>
+          <p class="text-xs text-gray-300 font-mono">{{ report.co_adviser_approved_at|date:"M d, Y" }}</p>
+          {% else %}
+          <p class="text-xs text-gray-300">Pending</p>
+          {% endif %}
+        </div>
+
+        <div class="h-px flex-1 {% if report.adviser_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
+
+        <!-- Adviser -->
+        <div class="flex flex-col items-center gap-2 flex-1">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
+            {% if report.adviser_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_adviser' %}bg-purple-50 border-purple-400{% else %}bg-gray-50 border-gray-200{% endif %}">
+            <i data-lucide="{% if report.adviser_approved_by %}circle-check{% elif report.status == 'pending_adviser' %}clock{% else %}circle{% endif %}"
+              class="w-5 h-5 {% if report.adviser_approved_by %}text-green-600{% elif report.status == 'pending_adviser' %}text-purple-600{% else %}text-gray-300{% endif %}">
+            </i>
+          </div>
+          <p class="text-xs font-semibold text-gray-700">Adviser</p>
+          {% if report.adviser_approved_by %}
+          <p class="text-xs text-gray-400">{{ report.adviser_approved_by.get_full_name }}</p>
+          <p class="text-xs text-gray-300 font-mono">{{ report.adviser_approved_at|date:"M d, Y" }}</p>
+          {% else %}
+          <p class="text-xs text-gray-300">Pending</p>
+          {% endif %}
+        </div>
+
+        <div class="h-px flex-1 {% if report.status == 'on_blockchain' %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
+
+        <!-- Blockchain -->
+        <div class="flex flex-col items-center gap-2 flex-1">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
+            {% if report.status == 'on_blockchain' %}bg-indigo-50 border-indigo-500{% else %}bg-gray-50 border-gray-200{% endif %}">
+            <i data-lucide="link"
+              class="w-5 h-5 {% if report.status == 'on_blockchain' %}text-indigo-600{% else %}text-gray-300{% endif %}">
+            </i>
+          </div>
+          <p class="text-xs font-semibold text-gray-700">Blockchain</p>
+          {% if report.blockchain_hash %}
+          <p class="text-xs text-gray-300 font-mono truncate max-w-20">{{ report.blockchain_hash|truncatechars:10 }}</p>
+          {% else %}
+          <p class="text-xs text-gray-300">Not yet</p>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Approval Action (shown to relevant role) -->
+    {% if user.role == 'auditor' and report.status == 'pending_auditor' %}
+    <div class="bg-white rounded-2xl border border-amber-200 shadow-sm p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
+          <i data-lucide="stamp" class="w-4 h-4 text-amber-600"></i>
+        </div>
+        <p class="font-bold text-gray-800 text-sm">Auditor Action Required</p>
+      </div>
+      <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
+        {% csrf_token %}
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
+          </label>
+          <textarea name="remarks" rows="2" placeholder="Add your remarks..."
+            class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" name="action" value="approve"
+            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
+            <i data-lucide="circle-check" class="w-4 h-4"></i>
+            Approve
+          </button>
+          <button type="submit" name="action" value="reject"
+            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
+            <i data-lucide="x-circle" class="w-4 h-4"></i>
+            Reject
+          </button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if user.role == 'president' and report.status == 'pending_president' %}
+    <div class="bg-white rounded-2xl border border-blue-200 shadow-sm p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+          <i data-lucide="stamp" class="w-4 h-4 text-blue-600"></i>
+        </div>
+        <p class="font-bold text-gray-800 text-sm">President Action Required</p>
+      </div>
+      <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
+        {% csrf_token %}
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
+          </label>
+          <textarea name="remarks" rows="2" placeholder="Add your remarks..."
+            class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" name="action" value="approve"
+            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
+            <i data-lucide="circle-check" class="w-4 h-4"></i>
+            Approve
+          </button>
+          <button type="submit" name="action" value="reject"
+            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
+            <i data-lucide="x-circle" class="w-4 h-4"></i>
+            Reject
+          </button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if user.role == 'co_adviser' and report.status == 'pending_co_adviser' %}
+    <div class="bg-white rounded-2xl border border-blue-200 shadow-sm p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+          <i data-lucide="stamp" class="w-4 h-4 text-blue-600"></i>
+        </div>
+        <p class="font-bold text-gray-800 text-sm">Co-Adviser Action Required</p>
+      </div>
+      <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
+        {% csrf_token %}
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
+          </label>
+          <textarea name="remarks" rows="2" placeholder="Add your remarks..."
+            class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" name="action" value="approve"
+            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
+            <i data-lucide="circle-check" class="w-4 h-4"></i>
+            Approve
+          </button>
+          <button type="submit" name="action" value="reject"
+            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
+            <i data-lucide="x-circle" class="w-4 h-4"></i>
+            Reject
+          </button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if user.role == 'adviser' and report.status == 'pending_adviser' %}
+    <div class="bg-white rounded-2xl border border-purple-200 shadow-sm p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
+          <i data-lucide="stamp" class="w-4 h-4 text-purple-600"></i>
+        </div>
+        <p class="font-bold text-gray-800 text-sm">Adviser Action Required</p>
+      </div>
+      <form method="POST" action="{% url 'report_approve' report.pk %}" class="flex flex-col gap-3">
+        {% csrf_token %}
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Remarks (optional)</span>
+          </label>
+          <textarea name="remarks" rows="2" placeholder="Add your remarks..."
+            class="textarea textarea-bordered w-full bg-gray-50 focus:bg-white focus:border-blue-500 text-sm resize-none"></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" name="action" value="approve"
+            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors">
+            <i data-lucide="circle-check" class="w-4 h-4"></i>
+            Approve & Send to Blockchain
+          </button>
+          <button type="submit" name="action" value="reject"
+            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
+            <i data-lucide="x-circle" class="w-4 h-4"></i>
+            Reject
+          </button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if request.user.role == 'adviser' and report.status == 'approved' %}
+    <form method="post" action="{% url 'record_blockchain' pk=report.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn" onclick="return confirm('Record this report on the blockchain? This cannot be undone.')">
+            🔗 Record on Blockchain
+        </button>
+    </form>
+    {% endif %}
+
+    <!-- Blockchain Status Badge -->
+    {% if report.status == 'on_blockchain' %}
+        <p>🔗 Recorded on Blockchain: {{ report.blockchain_recorded_at }}</p>
+        {% if blockchain_verified == True %}
+            <span style="color: green;">✅ Verified — Data matches blockchain record</span>
+        {% elif blockchain_verified == False %}
+            <span style="color: red;">⚠️ TAMPERED — Data does not match blockchain record!</span>
+        {% endif %}
+        <!-- Show TX hash from the approval log -->
+        {% for log in approval_logs %}
+            {% if log.action == 'blockchain' %}
+                <p><small>{{ log.remarks }}</small></p>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+      <!-- Financial Statement Table -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -326,59 +326,100 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Type</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Category</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
-            <th class="px-5 py-3 text-right text-xs font-bold tracking-widest text-gray-400 uppercase">Amount (₱)</th>
+            <th class="px-5 py-3 text-right text-xs font-bold tracking-widest text-gray-400 uppercase">Income (₱)</th>
+            <th class="px-5 py-3 text-right text-xs font-bold tracking-widest text-gray-400 uppercase">Expense (₱)</th>
           </tr>
         </thead>
         <tbody>
-          {% for group in grouped_entries %}
-            {% for entry in group.entries %}
-            <tr class="border-b border-gray-200 hover:bg-gray-50">
-              <td class="px-5 py-3 align-top">
-                {% if entry.entry_type == 'income' %}
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Income</span>
-                  {% if entry.income_source == 'society' %}
-                    <div class="mt-1 text-[10px] px-2 text-blue-500 font-semibold">Society Fee</div>
-                    {% if entry.society_student_count %}
-                      <div class="text-[10px] text-gray-400">
-                        {{ entry.society_student_count }} students contributed to this collection
-                      </div>
-                    {% endif %}
-                  {% endif %}
-                {% else %}
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
-                {% endif %}
-              </td>
-              <td class="px-5 py-3 text-xs align-top font-mono text-gray-700">{{ entry.date }}</td>
-              <td class="px-5 py-3 text-sm text-gray-700">{{ entry.category }}</td>
-              <td class="px-5 py-3 text-sm text-gray-700">{{ entry.description }}</td>
-              <td class="px-5 py-3 text-right text-sm font-semibold {% if entry.entry_type == 'income' %}text-green-700{% else %}text-red-600{% endif %}">
-                {% if entry.entry_type == 'income' %}+{% else %}-{% endif %}₱{{ entry.amount|floatformat:2 }}
-              </td>
-            </tr>
-            {% endfor %}
+  {% for group in grouped_entries %}
 
-            <tr class="border-b border-gray-200 bg-gray-50">
-              <td colspan="4" class="px-5 py-2 text-right text-xs font-bold text-gray-500 uppercase tracking-wide">Subtotal</td>
-              <td class="px-5 py-2 text-right text-sm font-extrabold text-gray-900">₱{{ group.subtotal|floatformat:2 }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
+    {% for item in group.entries %}
+    <tr class="border-b border-gray-100 hover:bg-gray-50">
+
+      {% if forloop.first %}
+      <td class="px-5 py-3 text-xs font-mono text-gray-500 align-top border-r border-gray-100"
+          rowspan="{{ group.entries|length }}">
+        {{ group.date }}
+      </td>
+      {% endif %}
+
+      {% if item.show_category %}
+      <td class="px-5 py-3 align-top border-r border-gray-100"
+          {% if item.category_rowspan > 1 %}rowspan="{{ item.category_rowspan }}"{% endif %}>
+        <span class="text-sm text-gray-700">{{ item.entry.category }}</span>
+        {% if item.entry.entry_type == 'income' and item.entry.income_source == 'society' %}
+          <div class="mt-0.5 text-[10px] text-blue-500 font-semibold">Society Fee</div>
+          {% if item.entry.society_student_count %}
+            <div class="text-[10px] text-gray-400">{{ item.entry.society_student_count }} students</div>
+          {% endif %}
+        {% endif %}
+      </td>
+      {% endif %}
+
+      <td class="px-5 py-3 text-sm text-gray-600 align-top">{{ item.entry.description }}</td>
+
+      <td class="px-5 py-3 text-right align-top font-semibold">
+        {% if item.entry.entry_type == 'income' %}
+          <span class="text-green-700">₱{{ item.entry.amount|floatformat:2 }}</span>
+        {% else %}
+          <span class="text-gray-200">—</span>
+        {% endif %}
+      </td>
+
+      <td class="px-5 py-3 text-right align-top font-semibold">
+        {% if item.entry.entry_type == 'expense' %}
+          <span class="text-red-600">₱{{ item.entry.amount|floatformat:2 }}</span>
+        {% else %}
+          <span class="text-gray-200">—</span>
+        {% endif %}
+      </td>
+
+    </tr>
+    {% endfor %}
+
+    <!-- Per-date subtotal -->
+    <tr class="bg-gray-50 border-b-2 border-gray-200">
+      <td class="px-5 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-wide border-r border-gray-100">
+        {{ group.date }}
+      </td>
+      <td colspan="2" class="px-5 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-wide">
+        Subtotal
+      </td>
+      <td class="px-5 py-2 text-right text-sm font-extrabold">
+        {% if group.income_subtotal %}
+          <span class="text-green-700">₱{{ group.income_subtotal|floatformat:2 }}</span>
+        {% else %}
+          <span class="text-gray-300">—</span>
+        {% endif %}
+      </td>
+      <td class="px-5 py-2 text-right text-sm font-extrabold">
+        {% if group.expense_subtotal %}
+          <span class="text-red-600">₱{{ group.expense_subtotal|floatformat:2 }}</span>
+        {% else %}
+          <span class="text-gray-300">—</span>
+        {% endif %}
+      </td>
+    </tr>
+
+  {% endfor %}
+</tbody>
         <tfoot>
-          <tr class="border-t border-gray-100 bg-gray-50">
-            <td colspan="4" class="px-5 py-2 text-right text-xs font-bold text-green-600 uppercase tracking-wide">Total Income</td>
+          <tr class="border-t border-gray-200 bg-gray-50">
+            <td colspan="3" class="px-5 py-2 text-right text-xs font-bold text-green-600 uppercase tracking-wide">Total Income</td>
             <td class="px-5 py-2 text-right text-sm font-extrabold text-green-700">+₱{{ total_income|floatformat:2 }}</td>
+            <td></td>
           </tr>
           <tr class="bg-gray-50">
-            <td colspan="4" class="px-5 py-2 text-right text-xs font-bold text-red-600 uppercase tracking-wide">Total Expenses</td>
+            <td colspan="3" class="px-5 py-2 text-right text-xs font-bold text-red-600 uppercase tracking-wide">Total Expenses</td>
+            <td></td>
             <td class="px-5 py-2 text-right text-sm font-extrabold text-red-600">-₱{{ total_expense|floatformat:2 }}</td>
           </tr>
           <tr class="border-t-2 border-gray-300 bg-white">
-            <td colspan="4" class="px-5 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Net Total</td>
-            <td class="px-5 py-3 text-right text-base font-extrabold {% if net_total >= 0 %}text-green-700{% else %}text-red-600{% endif %}">
+            <td colspan="3" class="px-5 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Net Total</td>
+            <td colspan="2" class="px-5 py-3 text-right text-base font-extrabold {% if net_total >= 0 %}text-green-700{% else %}text-red-600{% endif %}">
               {% if net_total >= 0 %}+{% endif %}₱{{ net_total|floatformat:2 }}
             </td>
           </tr>
@@ -387,114 +428,112 @@
     </div>
   </div>
 
-  <!-- Approval Log -->
-  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-    <div class="px-5 py-4 border-b border-gray-100">
-      <div class="flex items-center gap-2">
-        <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
-          <i data-lucide="history" class="w-3.5 h-3.5 text-blue-600"></i>
+    <!-- Approval Log -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+            <i data-lucide="history" class="w-3.5 h-3.5 text-blue-600"></i>
+          </div>
+          <p class="text-sm font-bold text-gray-800">Approval Log</p>
         </div>
-        <p class="text-sm font-bold text-gray-800">Approval Log</p>
+      </div>
+      <div class="p-5 flex flex-col gap-3">
+        {% for log in approval_logs %}
+        <div class="flex items-start gap-3">
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0
+            {% if log.action == 'approved' %}bg-green-50{% elif log.action == 'rejected' %}bg-red-50{% elif log.action == 'blockchain' %}bg-indigo-50{% else %}bg-blue-50{% endif %}">
+            <i data-lucide="
+              {% if log.action == 'approved' %}circle-check
+              {% elif log.action == 'rejected' %}x-circle
+              {% elif log.action == 'blockchain' %}link
+              {% else %}send
+              {% endif %}"
+              class="w-3.5 h-3.5
+              {% if log.action == 'approved' %}text-green-600
+              {% elif log.action == 'rejected' %}text-red-500
+              {% elif log.action == 'blockchain' %}text-indigo-600
+              {% else %}text-blue-600
+              {% endif %}">
+            </i>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-gray-800">{{ log.action_by.get_full_name }}</p>
+              <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ log.action_by.get_role_display }}</span>
+              <span class="text-xs text-gray-300 font-mono">{{ log.created_at|date:"M d, Y H:i" }}</span>
+            </div>
+            {% if log.remarks %}
+            <p class="text-xs text-gray-400 mt-0.5">{{ log.remarks }}</p>
+            {% else %}
+            <p class="text-xs text-gray-400 mt-0.5">Approve by: {{log.action_by.get_role_display}}</p>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-sm text-gray-400 italic text-center py-4">No activity yet</p>
+        {% endfor %}
       </div>
     </div>
-    <div class="p-5 flex flex-col gap-3">
-      {% for log in approval_logs %}
-      <div class="flex items-start gap-3">
-        <div class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0
-          {% if log.action == 'approved' %}bg-green-50{% elif log.action == 'rejected' %}bg-red-50{% elif log.action == 'blockchain' %}bg-indigo-50{% else %}bg-blue-50{% endif %}">
-          <i data-lucide="
-            {% if log.action == 'approved' %}circle-check
-            {% elif log.action == 'rejected' %}x-circle
-            {% elif log.action == 'blockchain' %}link
-            {% else %}send
-            {% endif %}"
-            class="w-3.5 h-3.5
-            {% if log.action == 'approved' %}text-green-600
-            {% elif log.action == 'rejected' %}text-red-500
-            {% elif log.action == 'blockchain' %}text-indigo-600
-            {% else %}text-blue-600
-            {% endif %}">
-          </i>
-        </div>
-        <div class="flex-1">
-          <div class="flex items-center gap-2">
-            <p class="text-sm font-semibold text-gray-800">{{ log.action_by.get_full_name }}</p>
-            <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ log.action_by.get_role_display }}</span>
-            <span class="text-xs text-gray-300 font-mono">{{ log.created_at|date:"M d, Y H:i" }}</span>
-          </div>
-          {% if log.remarks %}
-          <p class="text-xs text-gray-400 mt-0.5">{{ log.remarks }}</p>
+  </div>
+    {% if messages %}
+  <input type="checkbox" id="message-modal" class="modal-toggle" checked />
+  <div class="modal">
+    <div class="modal-box text-center">
+
+      {% for message in messages %}
+      <div class="flex flex-col items-center gap-3">
+
+        <div class="text-4xl">
+          {% if message.tags == 'error' %}
+            ❌
           {% else %}
-          <p class="text-xs text-gray-400 mt-0.5">Approve by: {{log.action_by.get_role_display}}</p>
+            ✅
           {% endif %}
         </div>
+        <h3 class="font-bold text-lg">
+          {% if message.tags == 'error' %}Error{% else %}Success{% endif %}
+        </h3>
+        <p class="text-sm text-gray-500">
+          {{ message }}
+        </p>
+
+        <div class="modal-action">
+          <a href="{% url 'reports' %}" class="btn btn-primary btn-sm">
+            OK
+          </a>
+        </div>
+
       </div>
-      {% empty %}
-      <p class="text-sm text-gray-400 italic text-center py-4">No activity yet</p>
       {% endfor %}
     </div>
   </div>
-</div>
-  {% if messages %}
-<input type="checkbox" id="message-modal" class="modal-toggle" checked />
-<div class="modal">
-  <div class="modal-box text-center">
+  {% endif %}
 
-    {% for message in messages %}
-    <div class="flex flex-col items-center gap-3">
-
-      <div class="text-4xl">
-        {% if message.tags == 'error' %}
-          ❌
-        {% else %}
-          ✅
-        {% endif %}
+  <div id="loadingModal" class="modal modal-middle">
+    <div class="modal-box rounded-xl p-10 ">
+      <div class="flex flex-col items-center justify-center gap-5 ">
+        <h1 class='text-xl font-mono '> Recording to Blockchain...</h1>
+        <span>Please wait, it might take some time.</span>
+        <span class="loading loading-bars loading-xl text-blue-700 "></span>
       </div>
-      <h3 class="font-bold text-lg">
-        {% if message.tags == 'error' %}Error{% else %}Success{% endif %}
-      </h3>
-      <p class="text-sm text-gray-500">
-        {{ message }}
-      </p>
-
-      <div class="modal-action">
-        <a href="{% url 'reports' %}" class="btn btn-primary btn-sm">
-          OK
-        </a>
-      </div>
-
-    </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-
-<div id="loadingModal" class="modal modal-middle">
-  <div class="modal-box rounded-xl p-10 ">
-    <div class="flex flex-col items-center justify-center gap-5 ">
-      <h1 class='text-xl font-mono '> Recording to Blockchain...</h1>
-      <span>Please wait, it might take some time.</span>
-      <span class="loading loading-bars loading-xl text-blue-700 "></span>
     </div>
   </div>
-</div>
 
 
- <script>
-  const loadingModal = document.getElementById('loadingModal');
+  <script>
+    const loadingModal = document.getElementById('loadingModal');
 
-  // Show the modal when any form is submitted
-  document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', () => {
-      loadingModal.classList.add('modal-open'); // show modal
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', () => {
+        loadingModal.classList.add('modal-open'); 
+      });
     });
-  });
 
-  // Hide the modal after the page fully loads (optional)
-  window.addEventListener('load', () => {
-    loadingModal.classList.remove('modal-open'); // hide modal
-  });
-</script>
+    window.addEventListener('load', () => {
+      loadingModal.classList.remove('modal-open'); 
+    });
+  </script>
 
 
-{% endblock con %}
+  {% endblock con %}

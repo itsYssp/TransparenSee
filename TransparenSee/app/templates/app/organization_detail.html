@@ -47,7 +47,10 @@
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+  <div class="grid grid-cols-2 {% if org_category == 'academic' %} md:grid-cols-4 
+  {% else %}
+  md:grid-cols-2
+  {% endif %}  gap-3">
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 flex flex-col gap-2">
       <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
@@ -65,6 +68,7 @@
       <p class="text-xs text-gray-400 font-medium">Advisers</p>
     </div>
 
+    {% if org_category == 'academic' %}
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 flex flex-col gap-2">
       <div class="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
         <i data-lucide="circle-check" class="w-4 h-4 text-green-600"></i>
@@ -80,6 +84,9 @@
       <p class="text-2xl font-extrabold text-gray-900">{{ unpaid_fees }}</p>
       <p class="text-xs text-gray-400 font-medium">Unpaid Fees</p>
     </div>
+    {% endif %}
+
+    
 
   </div>
 
@@ -185,6 +192,7 @@
     </div>
   </div>
 
+  {% if org_category == 'academic' %}
   <!-- Society Fees Table -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -231,6 +239,9 @@
       </table>
     </div>
   </div>
+  {% else %}
+  {% endif %}
+  
 
 </div>
 

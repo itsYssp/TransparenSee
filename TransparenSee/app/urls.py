@@ -10,7 +10,7 @@ urlpatterns = [
     path('student/', StudentDashboardView.as_view(), name='student_dashboard'),
     path('student/profile/', StudentProfileView.as_view(), name='student_profile'),
     path('password-change/', auth_views.PasswordChangeView.as_view(template_name='app/student/student_profile.html',success_url='/profile/'), name='password_change'),
-    path('officer/chat', ChatView.as_view(), name='chat'),
+    path('chat', ChatView.as_view(), name='chat'),
     path('officer/treasurer/', TreasurerDashboardView.as_view(), name='treasurer_dashboard'),
     path('treasurer/society-fee/',SocietyFeeView.as_view(),name='treasurer_society_fee'),
     path('treasurer/society-fee/',SocietyFeeView.as_view(),name='treasurer_society_fee_create'),

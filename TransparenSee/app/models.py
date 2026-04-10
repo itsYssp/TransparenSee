@@ -16,6 +16,7 @@ class Organization(models.Model):
         ("BSC", "Bachelor of Science in Criminology"),
         ("BSBA-MM", "Bachelor of Science in Bussiness Administration - Marketing Management"),
         ("BSBA-HR", "Bachelor of Science in Bussiness Admisnustration - Human Resource Management"),
+        ("all_program", "All Program"),
     ]
     ORG_CATEGORY = [
         ('academic', 'Academic'),

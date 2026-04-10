@@ -229,6 +229,15 @@ class ReportListView(ListView):
 
         return context
     
+# views.py
+
+from itertools import groupby  # ← add this import at the top of your file
+
+class CreateFinancialReportView(RoleRequireMixin, TemplateView):
+    # ✅ NO CHANGES HERE — leave this entire view exactly as it is
+    ...
+
+
 class ReportDetailView(RoleRequireMixin, DetailView):
     model = FinancialReport
     template_name = 'app/officer/report_details.html'
@@ -240,54 +249,70 @@ class ReportDetailView(RoleRequireMixin, DetailView):
         report = self.get_object()
         user = self.request.user
 
-        entries = report.entries.all()
-        grouped = {}
-        date_subtotals = {}
+        # ✅ Sort by date → category → original input order
+        entries = report.entries.order_by('date', 'category', 'order')
 
+        # ✅ Group by date first
+        grouped = {}
         for entry in entries:
             key = entry.date
             if key not in grouped:
-                grouped[key] = []
-                date_subtotals[key] = 0
-            grouped[key].append(entry)
-            date_subtotals[key] += entry.amount or 0
+                grouped[key] = {
+                    'date': key,
+                    'entries': [],
+                    'income_subtotal': 0,
+                    'expense_subtotal': 0,
+                }
+            grouped[key]['entries'].append(entry)
+            if entry.entry_type == 'income':
+                grouped[key]['income_subtotal'] += entry.amount or 0
+            else:
+                grouped[key]['expense_subtotal'] += entry.amount or 0
 
+        # ✅ Within each date group, merge same-category rows using rowspan metadata
         grouped_entries = []
-        for date, date_entries in grouped.items():
+        for group in grouped.values():
+            entries_with_meta = []
+            for category, cat_entries in groupby(group['entries'], key=lambda e: e.category):
+                cat_list = list(cat_entries)
+                for i, entry in enumerate(cat_list):
+                    entries_with_meta.append({
+                        'entry':            entry,
+                        'show_category':    i == 0,
+                        'category_rowspan': len(cat_list) if i == 0 else None,
+                    })
+
             grouped_entries.append({
-                'date': date,
-                'entries': date_entries,
-                'subtotal': date_subtotals[date],
+                'date':             group['date'],
+                'entries':          entries_with_meta,
+                'income_subtotal':  group['income_subtotal'] or None,
+                'expense_subtotal': group['expense_subtotal'] or None,
             })
 
         role_templates = {
-            "treasurer": "app/officer/treasurer/sidebar.html",
-            "auditor": "app/officer/auditor/sidebar.html",
-            "president": "app/officer/president/sidebar.html",
-            "adviser": "app/adviser/sidebar.html",
+            "treasurer":  "app/officer/treasurer/sidebar.html",
+            "auditor":    "app/officer/auditor/sidebar.html",
+            "president":  "app/officer/president/sidebar.html",
+            "adviser":    "app/adviser/sidebar.html",
             "co_adviser": "app/adviser/sidebar.html",
         }
 
-        context['base_template'] = role_templates.get(user.role, "app/base.html")
-        context['grouped_entries'] = grouped_entries
-        context['approval_logs'] = report.approval_logs.all()
-        context['total_amount'] = sum(entry.amount for entry in entries)
-        entries = report.entries.all()
-        context['total_income']  = entries.filter(entry_type='income').aggregate(t=Sum('amount'))['t'] or 0
-        context['total_expense'] = entries.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
-        context['net_total']     = context['total_income'] - context['total_expense']
+        total_income  = entries.filter(entry_type='income').aggregate(t=Sum('amount'))['t'] or 0
+        total_expense = entries.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
 
-        if report.blockchain_hash:
-            context['blockchain_verified'] = verify_report_hash(report)
-        else:
-            context['blockchain_verified'] = None  # None = not yet on blockchain
+        context['base_template']       = role_templates.get(user.role, "app/base.html")
+        context['grouped_entries']     = grouped_entries
+        context['approval_logs']       = report.approval_logs.order_by('created_at')
+        context['total_income']        = total_income
+        context['total_expense']       = total_expense
+        context['net_total']           = total_income - total_expense
+        context['blockchain_verified'] = verify_report_hash(report) if report.blockchain_hash else None
 
         return context
 
-
 class ChatView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/officer_chat.html'
-    role_required = ["treasurer", "auditor", "president", "adviser", "campus_admin", "co_adviser"]
+    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser"]
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -296,8 +321,8 @@ class ChatView(RoleRequireMixin, TemplateView):
             return user.adviser.organization
         elif hasattr(user, 'co_adviser'):
             return user.adviser.organization
-        elif hasattr(user, 'campus_admin'):
-            return getattr(user.campus_admin, 'organization', None)
+        elif hasattr(user, 'head'):
+            return getattr(user.head, 'organization', None)
         return None
 
     def get_context_data(self, **kwargs):
@@ -308,6 +333,8 @@ class ChatView(RoleRequireMixin, TemplateView):
         context["global_messages"] = GlobalChat.objects.select_related(
             "user"
         ).order_by("createdAt")[:50]
+
+        context['user_role'] = user.role
 
         if org:
             context["announcements"] = OrganizationAnnouncement.objects.filter(
@@ -322,7 +349,7 @@ class ChatView(RoleRequireMixin, TemplateView):
             "president": "app/officer/president/sidebar.html",
             "adviser": "app/adviser/sidebar.html",
             "co_adviser": "app/adviser/sidebar.html",
-            "campus_admin": "app/campus_admin/sidebar.html",
+            "head": "app/heads/sidebar.html",
         }
         context["base_template"] = role_templates.get(user.role, "app/base.html")
         context["chat_form"] = GlobalChatForm()

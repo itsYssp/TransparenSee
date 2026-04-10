@@ -30,8 +30,8 @@ class OrganizationListView(RoleRequireMixin, ListView):
         context['total_organizations'] = Organization.objects.count()
         context['search'] = self.request.GET.get('search', '')
         organizations = Organization.objects.annotate(
-            officer_count=Count('officer'),
-            adviser_count=Count('adviser')
+            officer_count=Count('officer',distinct=True),
+            adviser_count=Count('adviser',distinct=True)
         )
         context['organizations'] = organizations
         return context
@@ -47,6 +47,8 @@ class OrganizationDetailView(RoleRequireMixin, DetailView):
         context = super().get_context_data(**kwargs)
         org = self.get_object()
         user = self.request.user
+
+
 
         role_template = {
             "head": "app/heads/sidebar.html",
@@ -69,6 +71,8 @@ class OrganizationDetailView(RoleRequireMixin, DetailView):
         context['society_fees'] = SocietyFee.objects.filter(
             organization=org
         ).order_by('-created_at')
+
+        context['org_category'] = org.category
 
         # Stats
         context['total_officers'] = context['officers'].count()

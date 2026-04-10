@@ -15,7 +15,7 @@ class AuditorDashboardView(RoleRequireMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         org = self.get_organization()
         recent_approval_logs = ReportApprovalLog.objects.filter(report__organization = org).order_by('-created_at')[:3]
-        context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').count()
+        context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status__in=['rejected','approved', 'on_blockchain']).count()
         context["approved_financial_reports"] = FinancialReport.objects.filter(organization=org, status='approved').count()
         context["flagged_financial_reports"] = FinancialReport.objects.filter(organization=org, status='rejected').count()
         context['recent_financial_reports'] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').annotate(

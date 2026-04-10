@@ -40,6 +40,15 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
             transactions = []
             print("Error fetching transactions:", e)
 
+        # Remove duplicates based on report hash (assuming hash is index 0 or adjust)
+        unique_transactions = {}
+        for tx in transactions:
+            report_hash = tx[4]  # adjust index depending on your struct
+            if report_hash not in unique_transactions:
+                unique_transactions[report_hash] = tx
+
+        transactions = list(unique_transactions.values())
+
         tx_list = []
         for t in transactions:
             tx_list.append({

@@ -12,6 +12,7 @@ from django.db import transaction
 from django.http import JsonResponse
 
 
+
 class TreasurerDashboardView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/dashboard.html'
     role_required = 'treasurer'
@@ -25,7 +26,7 @@ class TreasurerDashboardView(RoleRequireMixin, TemplateView):
         recent_approval_log = ReportApprovalLog.objects.filter(report__organization = org).order_by('-created_at')[:3]
         context["society_fee_amount"] = org.society_fee_amount
         context["balance"] = org.balance
-        context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org, status='pending').exclude(status='rejected').count()
+        context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status__in=['rejected','approved', 'on_blockchain']).count()
         context["approved_financial_reports"] = FinancialReport.objects.filter(organization=org, status__in=['approved', 'on_blockchain']).count()
         context["recent_approval_logs"] = recent_approval_log
         context['recent_financial_reports'] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').annotate(
@@ -58,6 +59,7 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
         academic_year = request.GET.get('academic_year', '')
         semester = request.GET.get('semester', '')
         semester_choices = SocietyFee.SEMESTER_CHOICES 
+        status = request.GET.get('status', '')
 
         if search:
             fees = fees.filter(
@@ -71,6 +73,8 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
 
         if semester:
             fees = fees.filter(semester=semester)
+        if status: 
+            fees = fees.filter(status=status)
 
         total_students = fees.count()
         target_amount = fees.aggregate(total=Sum('amount'))['total'] or 0
@@ -233,8 +237,6 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
 
                     
                         student_count = paid_fees.values('student').distinct().count()
-
-                       
                         fee_per_student = None
 
                         
@@ -264,6 +266,7 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
             )
 
         return redirect(f"{reverse('reports')}?submitted=1")
+    
 
 
 class SocietyFeePreviewView(RoleRequireMixin, TemplateView):

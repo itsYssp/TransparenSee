@@ -20,7 +20,7 @@ class PresidentDashboardView(RoleRequireMixin, TemplateView):
         context["society_fee_amount"] = org.society_fee_amount
         recent_approval_log = ReportApprovalLog.objects.filter(report__organization = org).order_by('-created_at')[:5]
         context["society_fee_amount"] = org.society_fee_amount
-        context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').count()
+        context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status__in=['rejected','approved', 'on_blockchain']).count()
         context["flagged_financial_reports"] = FinancialReport.objects.filter(organization=org, status='rejected').count()
         context["approved_financial_reports"] = FinancialReport.objects.filter(organization=org, status='approved').count()
         context["recent_approval_logs"] = recent_approval_log
