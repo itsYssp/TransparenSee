@@ -6,6 +6,7 @@ from ...forms import *
 from ..mixins import *
 from django.db.models import Sum, Q, Count 
 from ...blockchain import verify_report_hash
+from itertools import groupby  
 
 
 
@@ -144,7 +145,7 @@ class ReportListView(ListView):
         }
  
         context['base_template'] = role_templates.get(user.role, "app/base.html")
-        context['reports'] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').annotate(
+        context['reports'] = FinancialReport.objects.filter(organization=org).exclude(status__in=['rejected', 'on_blockchain']).annotate(
             total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
             total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
             income_count=Count('entries', filter=Q(entries__entry_type='income')),
@@ -158,84 +159,6 @@ class ReportListView(ListView):
         )
         context['status_choices'] = FinancialReport.STATUS_CHOICES
         return context
-    
-class ReportListView(ListView):
-    model = FinancialReport
-    template_name = 'app/officer/treasurer/report_list.html'
-    paginate_by = 10
-
-    def get_organization(self):
-        user = self.request.user
-        if hasattr(user, 'officer'):
-            return user.officer.organization
-        elif hasattr(user, 'adviser'):
-            return user.adviser.organization
-        elif hasattr(user, 'co_adviser'):
-            return user.adviser.organization
-        elif hasattr(user, 'campus_admin'):
-            return getattr(user.campus_admin, 'organization', None)
-        return None
-
-
-
-    def get_annotated_reports(self, org):
-        """Reusable annotation query to avoid repetition."""
-        return FinancialReport.objects.filter(organization=org).annotate(
-            total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
-            total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
-            income_count=Count('entries', filter=Q(entries__entry_type='income')),
-            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        org = self.get_organization()
-
-        
-
-        role_templates = {
-            "treasurer": "app/officer/treasurer/sidebar.html",
-            "auditor":   "app/officer/auditor/sidebar.html",
-            "president": "app/officer/president/sidebar.html",
-            "adviser":   "app/adviser/sidebar.html",
-            "co_adviser":   "app/adviser/sidebar.html",
-        }
-
-        context['base_template'] = role_templates.get(user.role, "app/base.html")
-        context['status_choices'] = FinancialReport.STATUS_CHOICES
-
-        search = self.request.GET.get('search', '').strip()
-        status = self.request.GET.get('status', '').strip()
-
-        if org:
-            base_qs = self.get_annotated_reports(org)
-
-            reports = base_qs.exclude(status='rejected')
-            if search:
-                reports = reports.filter(title__icontains=search)
-            if status:
-                reports = reports.filter(status=status)
-
-            rejected = base_qs.filter(status='rejected')
-            if search:
-                rejected = rejected.filter(title__icontains=search)
-
-            context['reports'] = reports
-            context['rejected_reports'] = rejected
-        else:
-            context['reports'] = FinancialReport.objects.none()
-            context['rejected_reports'] = FinancialReport.objects.none()
-
-        return context
-    
-# views.py
-
-from itertools import groupby  # ← add this import at the top of your file
-
-class CreateFinancialReportView(RoleRequireMixin, TemplateView):
-    # ✅ NO CHANGES HERE — leave this entire view exactly as it is
-    ...
 
 
 class ReportDetailView(RoleRequireMixin, DetailView):
@@ -249,10 +172,9 @@ class ReportDetailView(RoleRequireMixin, DetailView):
         report = self.get_object()
         user = self.request.user
 
-        # ✅ Sort by date → category → original input order
+
         entries = report.entries.order_by('date', 'category', 'order')
 
-        # ✅ Group by date first
         grouped = {}
         for entry in entries:
             key = entry.date
@@ -269,7 +191,6 @@ class ReportDetailView(RoleRequireMixin, DetailView):
             else:
                 grouped[key]['expense_subtotal'] += entry.amount or 0
 
-        # ✅ Within each date group, merge same-category rows using rowspan metadata
         grouped_entries = []
         for group in grouped.values():
             entries_with_meta = []
@@ -382,4 +303,81 @@ class ChatView(RoleRequireMixin, TemplateView):
                 print(form.errors)
 
         return redirect(f"{request.path}?type={tab}")
+
+class OrgPublicProfileView(DetailView):
+    model = Organization
+    template_name = "app/officer/org_profile.html"
+    context_object_name = "org"
+
+    role_template = {
+       "treasurer": "app/officer/treasurer/sidebar.html",
+        "auditor": "app/officer/auditor/sidebar.html",
+        "president": "app/officer/president/sidebar.html",
+        "adviser": "app/adviser/sidebar.html",
+        "co_adviser": "app/adviser/sidebar.html",
+        "head": "app/heads/sidebar.html",
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        org = self.object
+        user = self.request.user
+
+        officers = Officer.objects.filter(
+            organization=org
+        ).select_related("user")
+
+        advisers = Adviser.objects.filter(
+            organization=org
+        ).select_related("user")
+
+        announcements = OrganizationAnnouncement.objects.filter(
+            organization=org
+        ).select_related("author")[:5]
+
+        context['base_template'] = self.role_template.get(user.role, 'app/base.html')
+        context["org_category"] = org.category
+        context["officers"] = officers
+        context["advisers"] = advisers
+        context["total_officers"] = officers.count()
+        context["total_advisers"] = advisers.count()
+        context["announcements"] = announcements
+        return context
+    
+
+class ProductListView(ListView, RoleRequireMixin):
+    model = Product
+    template_name = 'app/officer/product_list.html'
+    context_object_name = 'products'
+    role_required = ["treasurer", "auditor", "president", "adviser", "co_adviser"]
+    paginate_by = 10
+
+    role_templates = {
+        'treasurer' : 'app/officer/treasurer/sidebar.html',
+        'auditor' : 'app/officer/auditor/sidebar.html',
+        'president' : 'app/officer/president/sidebar.html',
+        'adviser' : 'app/adviser/sidebar.html',
+        'co_adviser' : 'app/adviser/sidebar.html',
+    }
+
+    def get_organization(self, user):
+        if hasattr(user, 'officer'):
+            return self.request.user.officer.organization
+        elif hasattr(user, 'adviser'):
+            return self.request.user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
+            return self.request.user.adviser.organization
+        
+        return None
+        
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = self.get_organization(user)
+        context["base_template"] = self.role_templates.get(user.role,'app/base.html')
+        context["products"] = Product.objects.filter(organization=org).annotate(
+            variant_count = Count('variants')
+        )
+        return context
     

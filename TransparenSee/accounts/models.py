@@ -29,7 +29,7 @@ class CustomUserManager(BaseUserManager):
 
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('role', 'super_admin')
+        extra_fields.setdefault('role', 'admin')
 
         return self.create_user(
             username,
@@ -43,7 +43,7 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
-        ('super_admin', 'Super Admin'),
+        ('admin', 'Admin'),
         ('campus_admin', 'Campus Admin'),
         ('adviser', 'Adviser'),
         ('co_adviser', 'Co-Adviser'),

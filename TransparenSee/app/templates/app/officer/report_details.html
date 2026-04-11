@@ -329,10 +329,11 @@
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Category</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
-            <th class="px-5 py-3 text-right text-xs font-bold tracking-widest text-gray-400 uppercase">Income (₱)</th>
-            <th class="px-5 py-3 text-right text-xs font-bold tracking-widest text-gray-400 uppercase">Expense (₱)</th>
-          </tr>
-        </thead>
+            <th class="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase">Qty</th>
+            <th class="px-5 py-3 text-right text-xs font-bold text-gray-400 uppercase">Unit Price</th>
+            <th class="px-5 py-3 text-right text-xs font-bold text-green-500 uppercase">Income (₱)</th>
+            <th class="px-5 py-3 text-right text-xs font-bold text-red-400 uppercase">Expense (₱)</th>
+          </thead>
         <tbody>
   {% for group in grouped_entries %}
 
@@ -359,24 +360,35 @@
       </td>
       {% endif %}
 
-      <td class="px-5 py-3 text-sm text-gray-600 align-top">{{ item.entry.description }}</td>
+      <td class="px-5 py-3 text-sm text-gray-600 align-top">
+          {{ item.entry.description }}
+        </td>
 
-      <td class="px-5 py-3 text-right align-top font-semibold">
-        {% if item.entry.entry_type == 'income' %}
-          <span class="text-green-700">₱{{ item.entry.amount|floatformat:2 }}</span>
-        {% else %}
-          <span class="text-gray-200">—</span>
-        {% endif %}
-      </td>
+        <!-- NEW: Quantity -->
+        <td class="px-5 py-3 text-center text-sm text-gray-700">
+          {{ item.entry.quantity|default:1 }}
+        </td>
 
-      <td class="px-5 py-3 text-right align-top font-semibold">
-        {% if item.entry.entry_type == 'expense' %}
-          <span class="text-red-600">₱{{ item.entry.amount|floatformat:2 }}</span>
-        {% else %}
-          <span class="text-gray-200">—</span>
-        {% endif %}
-      </td>
+        <!-- NEW: Unit Price -->
+        <td class="px-5 py-3 text-right text-sm text-gray-700">
+          ₱{{ item.entry.unit_price|default:0|floatformat:2 }}
+        </td>
 
+        <td class="px-5 py-3 text-right font-semibold">
+          {% if item.entry.entry_type == 'income' %}
+            <span class="text-green-700">₱{{ item.entry.amount|floatformat:2 }}</span>
+          {% else %}
+            <span class="text-gray-200">—</span>
+          {% endif %}
+        </td>
+
+        <td class="px-5 py-3 text-right font-semibold">
+          {% if item.entry.entry_type == 'expense' %}
+            <span class="text-red-600">₱{{ item.entry.amount|floatformat:2 }}</span>
+          {% else %}
+            <span class="text-gray-200">—</span>
+          {% endif %}
+        </td>
     </tr>
     {% endfor %}
 
@@ -385,7 +397,7 @@
       <td class="px-5 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-wide border-r border-gray-100">
         {{ group.date }}
       </td>
-      <td colspan="2" class="px-5 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-wide">
+      <td colspan="4" class="px-5 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-wide">
         Subtotal
       </td>
       <td class="px-5 py-2 text-right text-sm font-extrabold">
@@ -408,17 +420,17 @@
 </tbody>
         <tfoot>
           <tr class="border-t border-gray-200 bg-gray-50">
-            <td colspan="3" class="px-5 py-2 text-right text-xs font-bold text-green-600 uppercase tracking-wide">Total Income</td>
+            <td colspan="5" class="px-5 py-2 text-right text-xs font-bold text-green-600 uppercase tracking-wide">Total Income</td>
             <td class="px-5 py-2 text-right text-sm font-extrabold text-green-700">+₱{{ total_income|floatformat:2 }}</td>
             <td></td>
           </tr>
           <tr class="bg-gray-50">
-            <td colspan="3" class="px-5 py-2 text-right text-xs font-bold text-red-600 uppercase tracking-wide">Total Expenses</td>
+            <td colspan="5" class="px-5 py-2 text-right text-xs font-bold text-red-600 uppercase tracking-wide">Total Expenses</td>
             <td></td>
             <td class="px-5 py-2 text-right text-sm font-extrabold text-red-600">-₱{{ total_expense|floatformat:2 }}</td>
           </tr>
           <tr class="border-t-2 border-gray-300 bg-white">
-            <td colspan="3" class="px-5 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Net Total</td>
+            <td colspan="5" class="px-5 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Net Total</td>
             <td colspan="2" class="px-5 py-3 text-right text-base font-extrabold {% if net_total >= 0 %}text-green-700{% else %}text-red-600{% endif %}">
               {% if net_total >= 0 %}+{% endif %}₱{{ net_total|floatformat:2 }}
             </td>

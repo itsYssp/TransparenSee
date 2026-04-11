@@ -48,8 +48,6 @@ class OrganizationDetailView(RoleRequireMixin, DetailView):
         org = self.get_object()
         user = self.request.user
 
-
-
         role_template = {
             "head": "app/heads/sidebar.html",
             "campus_admin ": "app/campus_admin/sidebar.html", 
@@ -57,24 +55,24 @@ class OrganizationDetailView(RoleRequireMixin, DetailView):
 
         context["base_template"] = role_template.get(user.role,  'app/base.html')
 
-        # Officers in this org
+       
         context['officers'] = Officer.objects.filter(
             organization=org
         ).select_related('user').order_by('user__first_name')
 
-        # Advisers in this org
+        
         context['advisers'] = Adviser.objects.filter(
             organization=org
         ).select_related('user').order_by('user__first_name')
 
-        # Society fees
+       
         context['society_fees'] = SocietyFee.objects.filter(
             organization=org
         ).order_by('-created_at')
 
         context['org_category'] = org.category
 
-        # Stats
+       
         context['total_officers'] = context['officers'].count()
         context['total_advisers'] = context['advisers'].count()
         context['paid_fees'] = SocietyFee.objects.filter(

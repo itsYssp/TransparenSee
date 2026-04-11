@@ -1,0 +1,180 @@
+{% extends base_template %}
+{% load static %}
+
+{% block con %}
+<div class="min-h-screen bg-base-200">
+
+  <!-- Banner Header -->
+  <div class="bg-blue-700 px-6 pt-6 pb-16">
+    <div class="flex items-end gap-5 flex-wrap">
+      <div class="w-20 h-20 rounded-2xl bg-blue-100 text-blue-900 text-2xl font-extrabold flex items-center justify-center border-2 border-white/20 shrink-0 overflow-hidden">
+        {% if org.logo %}
+          <img src="{{ org.logo.url }}" alt="{{ org.name }}" class="w-full h-full object-cover" />
+        {% else %}
+          {{ org.name|slice:":2"|upper }}
+        {% endif %}
+      </div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-white tracking-tight">{{ org.name }}</h1>
+        {% if org.description %}
+        <p class="text-sm text-blue-300 mt-1 leading-relaxed max-w-xl">{{ org.description }}</p>
+        {% endif %}
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white ">
+            {{ org.get_category_display }}
+          </span>
+          {% if org.program %}
+          <span class="text-xs font-semibold px-3 py-1 rounded-full  bg-white/10 border border-white/20 text-white">
+            {{ org.get_program_display }}
+          </span>
+          {% endif %}
+          <span class="text-xs font-semibold px-3 py-1 rounded-full  bg-white/10 border border-white/20 text-white">
+            Est. {{ org.createdAt|date:"Y" }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="max-w-4xl mx-auto px-4 -mt-8 pb-12 flex flex-col gap-5">
+
+    <!-- Stats Strip -->
+    <div class="grid grid-cols-2 gap-px bg-base-300 rounded-2xl overflow-hidden shadow-sm">
+      <div class="bg-base-100 px-6 py-4">
+        <p class="text-2xl font-extrabold text-base-content">{{ total_officers }}</p>
+        <p class="text-xs text-base-content/40 font-medium mt-0.5">Officer{{ total_officers|pluralize }}</p>
+      </div>
+      <div class="bg-base-100 px-6 py-4">
+        <p class="text-2xl font-extrabold text-base-content">{{ total_advisers }}</p>
+        <p class="text-xs text-base-content/40 font-medium mt-0.5">Adviser{{ total_advisers|pluralize }}</p>
+      </div>
+    </div>
+
+    <!-- About -->
+    <div class="card bg-base-100 shadow-sm border border-base-300">
+      <div class="px-5 py-3.5 border-b border-base-300 flex items-center gap-2.5">
+        <span class="w-2 h-2 rounded-full bg-blue-700 shrink-0"></span>
+        <h2 class="text-sm font-bold text-base-content">About</h2>
+      </div>
+      <div class="px-5 py-4 flex flex-col gap-4">
+        {% if org.description %}
+        <p class="text-sm text-base-content/70 leading-relaxed">{{ org.description }}</p>
+        {% endif %}
+        <div class="divider my-0"></div>
+        <div class="flex flex-wrap gap-6">
+          <div>
+            <p class="text-xs font-bold tracking-widest text-base-content/30 uppercase mb-1">Category</p>
+            <p class="text-sm font-semibold text-base-content">{{ org.get_category_display }}</p>
+          </div>
+          {% if org.program %}
+          <div>
+            <p class="text-xs font-bold tracking-widest text-base-content/30 uppercase mb-1">Program</p>
+            <p class="text-sm font-semibold text-base-content">{{ org.get_program_display }}</p>
+          </div>
+          {% endif %}
+          <div>
+            <p class="text-xs font-bold tracking-widest text-base-content/30 uppercase mb-1">Founded</p>
+            <p class="text-sm font-semibold text-base-content">{{ org.createdAt|date:"Y" }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Announcements -->
+    {% if announcements %}
+    <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-base-300 flex items-center gap-2.5">
+        <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+        <h2 class="text-sm font-bold text-base-content">Announcements</h2>
+      </div>
+      {% for announcement in announcements %}
+      <div class="px-5 py-4 {% if not forloop.last %}border-b border-base-300{% endif %}">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-semibold text-blue-700">
+            {{ announcement.author.get_full_name }}
+          </span>
+          <span class="text-xs text-base-content/30">
+            {{ announcement.createdAt|date:"M d, Y" }}
+          </span>
+        </div>
+        <p class="text-sm text-base-content/70 leading-relaxed">{{ announcement.message }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Officers -->
+    <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-base-300 flex items-center gap-2.5">
+        <span class="w-2 h-2 rounded-full bg-blue-700 shrink-0"></span>
+        <h2 class="text-sm font-bold text-base-content">Officers</h2>
+        <span class="ml-auto text-xs text-base-content/30 font-medium">
+          {{ total_officers }} officer{{ total_officers|pluralize }}
+        </span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 divide-x divide-y divide-base-200">
+        {% for officer in officers %}
+        <div class="flex flex-col items-center gap-2 px-3 py-5 text-center hover:bg-base-200 transition-colors">
+          <div class="avatar placeholder">
+            <div class="w-11 h-11 rounded-full flex items-center justify-center bg-blue-50 text-blue-800 text-sm font-bold">
+              {% if officer.user.profile_image %}
+                <img src="{{ officer.user.profile_image.url }}" alt="{{ officer.user.get_full_name }}" class="object-cover" />
+              {% else %}
+                <span> {{ officer.user.first_name|slice:":1" }}{{ officer.user.last_name|slice:":1" }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-base-content leading-snug">{{ officer.user.get_full_name }}</p>
+            <p class="text-xs text-base-content/40 mt-0.5">{{ officer.user.get_role_display }}</p>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-span-5 py-10 text-center text-sm text-base-content/40 italic">
+          No officers listed yet.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Advisers -->
+    <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-base-300 flex items-center gap-2.5">
+        <span class="w-2 h-2 rounded-full bg-violet-600 shrink-0"></span>
+        <h2 class="text-sm font-bold text-base-content">Advisers</h2>
+        <span class="ml-auto text-xs text-base-content/30 font-medium">
+          {{ total_advisers }} adviser{{ total_advisers|pluralize }}
+        </span>
+      </div>
+      {% for adviser in advisers %}
+      <div class="flex items-center gap-3 px-5 py-3.5 {% if not forloop.last %}border-b border-base-200{% endif %} hover:bg-base-200 transition-colors">
+        <div class="avatar placeholder shrink-0">
+          <div class="w-9 h-9 rounded-full bg-violet-50 flex justify-center items-center text-violet-800 text-xs font-bold">
+            {% if adviser.user.profile_image %}
+              <img src="{{ adviser.user.profile_image.url }}" alt="{{ adviser.user.get_full_name }}" class="object-cover" />
+            {% else %}
+              <span>{{ adviser.user.first_name|slice:":1" }}{{ adviser.user.last_name|slice:":1" }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-base-content truncate">{{ adviser.user.get_full_name }}</p>
+          <p class="text-xs text-base-content/40 truncate">{{ adviser.department|default:"—" }}</p>
+        </div>
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-50 text-violet-800 shrink-0">
+          Faculty
+        </span>
+      </div>
+      {% empty %}
+      <div class="py-10 text-center text-sm text-base-content/40 italic">No advisers listed yet.</div>
+      {% endfor %}
+    </div>
+
+    <p class="text-center text-xs text-base-content/30 pt-2">
+      This page is publicly visible. Information is managed by the organization officers.
+    </p>
+
+  </div>
+</div>
+{% endblock con %}

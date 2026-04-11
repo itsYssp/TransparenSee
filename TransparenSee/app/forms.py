@@ -130,3 +130,14 @@ class OrganizationForm(forms.ModelForm):
     class Meta:
         model = Organization
         fields = ['name', 'logo','description', 'program', 'category']
+
+from django import forms
+from django.forms import inlineformset_factory
+from .models import Product, ProductVariant
+
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['name', 'description', 'is_active']
+

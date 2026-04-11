@@ -83,7 +83,14 @@
               <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-28">Type</th>
               <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-36">Date</th>
               <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Category</th>
-              <th class="px-3 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Description</th>
+              <th class="px-3 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
+              <th class="px-3 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase w-24">Quantity</th>
+
+              <!-- NEW COLUMN -->
+              <th class="px-3 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase w-28">
+                Unit Price (₱)
+              </th>
+
               <th class="px-3 py-3 text-right text-xs font-bold tracking-widest text-green-500 uppercase w-36">Income (₱)</th>
               <th class="px-3 py-3 text-right text-xs font-bold tracking-widest text-red-400 uppercase w-36">Expense (₱)</th>
               <th class="px-3 py-3 w-10"></th>
@@ -91,7 +98,7 @@
           </thead>
           <tbody id="entries-body">
             <tr id="empty-row">
-              <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-400">
+              <td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400">
                 <div class="flex flex-col items-center gap-2">
                   <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
                   <span>No entries yet. Add an income or expense row to get started.</span>
@@ -101,23 +108,22 @@
           </tbody>
           <tfoot>
             <tr class="border-t border-gray-100 bg-gray-50">
-              <td colspan="4" class="px-4 py-2 text-right text-xs font-bold text-green-600 uppercase tracking-wide">Total Income</td>
+              <td colspan="7" class="px-4 py-2 text-right text-xs font-bold text-green-600 uppercase tracking-wide">Total Income</td>
               <td class="px-4 py-2">
                 <span id="income-total" class="text-xs font-extrabold text-green-700">₱ 0.00</span>
               </td>
               <td></td>
-              <td></td>
             </tr>
             <tr class="bg-gray-50">
-              <td colspan="4" class="px-4 py-2 text-right text-xs font-bold text-red-600 uppercase tracking-wide">Total Expenses</td>
-              <td></td>
+              <td colspan="7" class="px-4 py-2 text-right text-xs font-bold text-red-600 uppercase tracking-wide">Total Expenses</td>
+
               <td class="px-4 py-2">
                 <span id="expense-total" class="text-xs font-extrabold text-red-700">₱ 0.00</span>
               </td>
               <td></td>
             </tr>
             <tr class="border-t-2 border-gray-200 bg-gray-50">
-              <td colspan="4" class="px-4 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Net Total</td>
+              <td colspan="7" class="px-4 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Net Total</td>
               <td colspan="2" class="px-4 py-3">
                 <span id="grand-total" class="text-sm font-extrabold text-gray-900">₱ 0.00</span>
               </td>
@@ -195,7 +201,7 @@
         </div>
         <div class="border-t border-blue-200 pt-2 flex items-center justify-between text-sm">
           <span class="font-bold text-blue-800">Total Income</span>
-          <span id="preview-total" class="font-extrabold text-blue-900">—</span>
+          <span id="society-preview-total" class="font-extrabold text-blue-900">—</span>
         </div>
       </div>
 
@@ -216,7 +222,111 @@
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
+<!-- Product Preview Modal -->
+<dialog id="product-modal" class="modal">
+  <div class="modal-box rounded-2xl border border-gray-200 shadow-xl max-w-md p-0 overflow-hidden">
+
+    <!-- HEADER -->
+    <div class="bg-green-700 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i data-lucide="shopping-cart" class="w-4 h-4 text-green-200"></i>
+        <h3 class="font-bold text-white text-sm">Product Sale</h3>
+      </div>
+      <button type="button" onclick="closeProductModal()" class="text-green-200 hover:text-white">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- BODY -->
+    <div class="p-6 flex flex-col gap-4">
+
+      <p class="text-xs text-gray-500">
+        Select product, variant, and quantity to calculate total income.
+      </p>
+
+      <!-- PRODUCT -->
+      <select id="modal-product"
+        class="select select-bordered select-sm w-full bg-gray-50"
+        onchange="loadModalVariants()">
+        <option value="">-- Select Product --</option>
+        {% for product in products %}
+          <option value="{{ product.id }}">{{ product.name }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- VARIANT -->
+      <select id="modal-variant"
+        class="select select-bordered select-sm w-full bg-gray-50"
+       onchange="localPreview()">
+        <option value="">-- Select Variant --</option>
+      </select>
+
+      <!-- QUANTITY -->
+      <input id="modal-qty" type="number" min="1" value="1"
+        class="input input-bordered input-sm w-full bg-gray-50"
+        oninput="localPreview()"/>
+
+      <!-- PREVIEW -->
+      <div id="product-preview"
+        class="hidden bg-green-50 border border-green-100 rounded-xl p-4  flex-col gap-2">
+
+        <div class="flex justify-between text-xs">
+          <span class="font-semibold text-gray-600">Unit Price</span>
+          <span id="product-preview-unit">—</span>
+        </div>
+
+        <div class="flex justify-between text-xs">
+          <span class="font-semibold text-gray-600">Quantity</span>
+          <span id="product-preview-qty">—</span>
+        </div>
+
+        <div class="border-t border-green-200 pt-2 flex justify-between text-sm">
+          <span class="font-bold text-green-800">Total</span>
+          <span id="product-preview-total">—</span>
+        </div>
+
+      </div>
+
+      <div id="product-error"
+        class="hidden text-xs text-red-600"></div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="px-6 pb-6 flex justify-end gap-2">
+      <button type="button" onclick="closeProductModal()"
+        class="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200">
+        Cancel
+      </button>
+
+      <button type="button" id="product-confirm-btn"
+        onclick="confirmProduct()" disabled
+        class="px-4 py-2 rounded-xl text-sm font-semibold bg-green-700 text-white disabled:opacity-40">
+        Add to Report
+      </button>
+    </div>
+
+  </div>
+
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
 <script>
+  let pendingProductRow = null;
+  let productPreviewData = null;
+  const PRODUCTS = {
+  {% for product in products %}
+    "{{ product.id }}": [
+      {% for v in product.variants.all %}
+      {
+        id: "{{ v.id }}",
+        label: "{{ v.size }} {{ v.color }}",
+        price: "{{ v.price }}"
+      },
+      {% endfor %}
+    ],
+  {% endfor %}
+  };
   let pendingSocietyRowTarget = null;
   let societyPreviewData = null;
 
@@ -225,6 +335,7 @@
     { id: "{{ ay.pk }}", label: "{{ ay }}" },
     {% endfor %}
   ];
+
 
 
   function addRow(type = 'expense') {
@@ -252,34 +363,47 @@
 
   const sourceFields = isIncome ? `
     <div class="mt-1.5">
-      <select name="income_source[]"
-        class="select select-bordered select-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 income-source-select"
+      <select name="income_source[]" 
+        class="select select-bordered select-xs w-full bg-gray-50 income-source-select"
         onchange="handleIncomeSourceChange(this)">
         <option value="other">Other Income</option>
         <option value="society">Society Fee</option>
+        <option value="product">Product Sale</option>
       </select>
     </div>
-    <input type="hidden" name="society_academic_year[]" class="society-ay-input" value="" />
-    <div class="society-info hidden mt-1.5 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1.5 text-xs text-blue-700 flex items-start gap-1.5">
-      <i data-lucide="info" class="w-3 h-3 mt-0.5 shrink-0"></i>
-      <span class="society-info-text"></span>
-    </div>
-  ` : `
-    <input type="hidden" name="income_source[]" value="" />
-    <input type="hidden" name="society_academic_year[]" value="" />
+    
+  ` : `<input type="hidden" name="income_source[]" value="" />`;
+
+  const qtyCell = `
+    <td class="px-2 py-2 text-center">
+      <input type="number" name="quantity[]" min="1" value="1"
+        class="input input-bordered input-xs w-20 text-center qty-input bg-gray-50"
+        oninput="handleQtyChange(this)"
+        data-unit-price="0" />
+    </td>
+  `;
+
+  const unitPriceCell = `
+    <td class="px-2 py-2 text-center">
+      <input type="number"
+        class="input input-bordered input-xs w-24 text-center unit-price-input bg-gray-100"
+        value="0"
+        oninput="handleUnitPriceChange(this)"
+         />
+    </td>
   `;
 
   const incomeCell = isIncome
     ? `<td class="px-2 py-2">
-         <input type="number" name="amount[]" placeholder="0.00" step="0.01" min="0"
-           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 amount-input"
+         <input type="number" name="amount[]" placeholder="0.00"
+           class="input input-bordered input-xs w-full bg-gray-50 amount-input"
            oninput="updateTotals()" required />
        </td>
-       <td class="px-2 py-2 text-center text-gray-200 text-xs pt-3">—</td>`
-    : `<td class="px-2 py-2 text-center text-gray-200 text-xs pt-3">—</td>
+       <td class="px-2 py-2 text-center text-gray-200">—</td>`
+    : `<td class="px-2 py-2 text-center text-gray-200">—</td>
        <td class="px-2 py-2">
-         <input type="number" name="amount[]" placeholder="0.00" step="0.01" min="0"
-           class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 amount-input"
+         <input type="number" name="amount[]" placeholder="0.00"
+           class="input input-bordered input-xs w-full bg-gray-50 amount-input"
            oninput="updateTotals()" required />
        </td>`;
 
@@ -289,22 +413,27 @@
       <input type="hidden" name="entry_type[]" value="${type}" />
       ${sourceFields}
     </td>
+
     <td class="px-2 py-2">
-      <input type="date" name="date[]"
-        class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 date-input" required />
+      <input type="date" name="date[]" class="input input-xs w-full bg-gray-50 date-input" required />
     </td>
+
     <td class="px-2 py-2">
-      <input type="text" name="category[]"
-        value="${prefillCategory}"
-        placeholder="e.g. ${isIncome ? 'Society Shirt' : 'Office Supplies'}"
-        class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500 category-input" required />
+      <input type="text" name="category[]" value="${prefillCategory}"
+        placeholder="${isIncome ? 'e.g. Membership Fee, Product Sale' : 'e.g. Supplies, Event Expense'}"
+        class="input input-xs w-full bg-gray-50 category-input" required />
     </td>
+
     <td class="px-2 py-2">
       <input type="text" name="description[]"
-        placeholder="e.g. ${isIncome ? 'Society collection 1st Sem' : '1 ream Bond Paper A4'}"
-        class="input input-bordered input-xs w-full bg-gray-50 focus:bg-white focus:border-blue-500" required />
+        placeholder="${isIncome ? 'Describe the income source' : 'Describe the expense details'}"
+        class="input input-xs w-full bg-gray-50" required />
     </td>
+
+    ${qtyCell}
+    ${unitPriceCell}
     ${incomeCell}
+
     <td class="px-2 py-2">
       <div class="flex flex-col gap-1">
         <button type="button" onclick="addSubRow(this)"
@@ -321,6 +450,7 @@
     </td>
   `;
 }
+
 function addSubRow(btn) {
   const currentRow = btn.closest('tr');
   const type       = currentRow.dataset.type;
@@ -344,16 +474,21 @@ function addSubRow(btn) {
 }
 
 
-  function handleIncomeSourceChange(select) {
-    const row = select.closest('tr');
-    if (select.value === 'society') {
-      openSocietyModal(row);
-    } else {
-      clearSocietyData(row);
-    }
+function handleIncomeSourceChange(select) {
+  const row = select.closest('tr');
+
+  if (select.value === 'product') {
+
+    openProductModal(row);
   }
 
-  function openSocietyModal(row) {
+  if (select.value === 'society') {
+    openSocietyModal(row);
+  }
+}
+
+
+ function openSocietyModal(row) {
     pendingSocietyRowTarget = row;
     societyPreviewData = null;
 
@@ -366,15 +501,13 @@ function addSubRow(btn) {
   }
 
   function closeSocietyModal() {
-    // If user closes without confirming, revert the select back to "other"
-    if (pendingSocietyRowTarget) {
-      const select = pendingSocietyRowTarget.querySelector('.income-source-select');
-      if (select && !pendingSocietyRowTarget.querySelector('.society-ay-input').value) {
-        select.value = 'other';
-      }
-    }
-    document.getElementById('society-modal').close();
+  if (pendingSocietyRowTarget) {
+    const select = pendingSocietyRowTarget.querySelector('.income-source-select');
+    if (select) select.value = 'other';
   }
+
+  document.getElementById('society-modal').close();
+}
 
   function clearSocietyData(row) {
     const ayInput = row.querySelector('.society-ay-input');
@@ -425,7 +558,7 @@ function addSubRow(btn) {
 
       document.getElementById('preview-count').textContent = data.student_count;
       document.getElementById('preview-fee').textContent   = '₱ ' + fmt(data.total);
-      document.getElementById('preview-total').textContent = '₱ ' + fmt(data.total);
+      document.getElementById('society-preview-total').textContent = '₱ ' + fmt(data.total);
 
       previewEl.classList.remove('hidden');
       confirmBtn.disabled = false;
@@ -436,62 +569,116 @@ function addSubRow(btn) {
     }
   }
 
-  function confirmSocietyFee() {
-    if (!societyPreviewData || !pendingSocietyRowTarget) return;
+function confirmSocietyFee() {
+  if (!societyPreviewData || !pendingSocietyRowTarget) return;
 
-    const row     = pendingSocietyRowTarget;
-    const ay      = document.getElementById('modal-ay').value;
-    const ayLabel = academicYears.find(a => a.id === ay)?.label || ay;
+  const row = pendingSocietyRowTarget;
 
-    row.querySelector('.society-ay-input').value = ay;
+  const ay = document.getElementById('modal-ay').value;
+  const ayLabel =
+    academicYears.find(a => a.id === ay)?.label || ay;
 
-    // Lock and fill amount
-    const amountInput = row.querySelector('.amount-input');
-    if (amountInput) {
-      amountInput.value    = societyPreviewData.total.toFixed(2);
-      amountInput.readOnly = true;
-      amountInput.classList.add('opacity-70', 'cursor-not-allowed');
-    }
+  const qtyInput = row.querySelector('.qty-input');
+  const amountInput = row.querySelector('.amount-input');
 
-    // Auto-fill category & description
-    const categoryInput    = row.querySelector('input[name="category[]"]');
-    const descriptionInput = row.querySelector('input[name="description[]"]');
-    if (categoryInput)    categoryInput.value = 'Society Fee';
-    if (descriptionInput) descriptionInput.value =
-      `Society Fee — ${ayLabel} (${societyPreviewData.student_count} students paid ₱${fmt(societyPreviewData.total)})`;
+  // Save AY
+  const ayInput = row.querySelector('.society-ay-input');
+  if (ayInput) ayInput.value = ay;
 
-    // Show info banner
-    const info     = row.querySelector('.society-info');
-    const infoText = row.querySelector('.society-info-text');
-    if (info && infoText) {
-      infoText.textContent =
-        `${societyPreviewData.student_count} students contributed a total of ₱${fmt(societyPreviewData.total)}`;
-      info.classList.remove('hidden');
-    }
-
-    lucide.createIcons();
-    updateTotals();
-    document.getElementById('society-modal').close();
-    pendingSocietyRowTarget = null;
+  // Lock + fill quantity
+  if (qtyInput) {
+    qtyInput.value = societyPreviewData.student_count;
+    qtyInput.readOnly = true;
+    qtyInput.classList.add('opacity-70', 'cursor-not-allowed');
   }
 
+  // Lock + fill amount
+  if (amountInput) {
+    amountInput.value = societyPreviewData.total.toFixed(2);
+    amountInput.readOnly = true;
+    amountInput.classList.add('opacity-70', 'cursor-not-allowed');
+  }
+
+  // Category + description
+  const categoryInput = row.querySelector('input[name="category[]"]');
+  const descriptionInput = row.querySelector('input[name="description[]"]');
+  const qtyDisplay = row.querySelector('.qty-display');
+
+  if (categoryInput) categoryInput.value = 'Society Fee';
+
+  if (descriptionInput) {
+    descriptionInput.value =
+      `Society Fee — ${ayLabel} (${societyPreviewData.student_count} students paid ₱${fmt(societyPreviewData.total)})`;
+  }
+
+  if (qtyDisplay) {
+    qtyDisplay.textContent = societyPreviewData.student_count;
+  }
+
+  // Info banner
+  const info = row.querySelector('.society-info');
+  const infoText = row.querySelector('.society-info-text');
+
+  if (info && infoText) {
+    infoText.textContent =
+      `${societyPreviewData.student_count} students contributed a total of ₱${fmt(societyPreviewData.total)}`;
+    info.classList.remove('hidden');
+  }
+
+  lucide.createIcons();
+  updateTotals();
+
+  document.getElementById('society-modal').close();
+  pendingSocietyRowTarget = null;
+}
+
+  function addSubRow(btn) {
+  const currentRow = btn.closest('tr');
+  const type       = currentRow.dataset.type;
+
+  const category   = currentRow.querySelector('.category-input')?.value || '';
+  const date       = currentRow.querySelector('.date-input')?.value || '';
+
+  const newRow = document.createElement('tr');
+  newRow.className = 'entry-row border-b border-gray-50 align-top';
+  newRow.dataset.type = type;
+
+  newRow.innerHTML = buildRowHTML(type, category);
+
+  // insert right after current row
+  currentRow.insertAdjacentElement('afterend', newRow);
+
+  // copy date
+  const newDate = newRow.querySelector('.date-input');
+  if (newDate && date) newDate.value = date;
+
+  // ensure unit price starts clean
+  const unitPriceInput = newRow.querySelector('.unit-price-input');
+  if (unitPriceInput) unitPriceInput.value = 0;
+
+  lucide.createIcons();
+  updateTotals();
+}
 
   function removeRow(btn) {
-  const rows = document.querySelectorAll('.entry-row');
   btn.closest('tr').remove();
 
-  if (rows.length === 1) {
+  const rows = document.querySelectorAll('.entry-row');
+
+  if (rows.length === 0) {
     document.getElementById('entries-body').innerHTML = `
       <tr id="empty-row">
-        <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-400">
+        <td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400">
           <div class="flex flex-col items-center gap-2">
             <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
-            <span>No entries yet. Add an income or expense row to get started.</span>
+            <span>No entries yet. Add income or expense to get started.</span>
           </div>
         </td>
-      </tr>`;
+      </tr>
+    `;
     lucide.createIcons();
   }
+
   updateTotals();
 }
 
@@ -519,6 +706,161 @@ function addSubRow(btn) {
       maximumFractionDigits: 2,
     });
   }
+
+function openProductModal(row) {
+  pendingProductRow = row;
+  productPreviewData = null;
+
+  document.getElementById('modal-product').value = "";
+  document.getElementById('modal-variant').innerHTML =
+    `<option value="">-- Select Variant --</option>`;
+  document.getElementById('modal-qty').value = 1;
+
+  document.getElementById('product-preview').classList.add('hidden');
+  document.getElementById('product-confirm-btn').disabled = true;
+
+  document.getElementById('product-modal').showModal();
+}
+
+  function handleProductChange(select) {
+  const row = select.closest('tr');
+  const productId = select.value;
+
+  const variantSelect = row.querySelector('.variant-select');
+
+  variantSelect.innerHTML = `<option value="">-- Select Variant --</option>`;
+
+  if (!productId || !PRODUCTS[productId]) return;
+
+  PRODUCTS[productId].forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = `${v.label} - ₱${v.price}`;
+    opt.dataset.price = v.price;
+    variantSelect.appendChild(opt);
+  });
+}
+function handleVariantChange(select) {
+  const row = select.closest('tr');
+  const price = select.selectedOptions[0]?.dataset.price;
+
+  const amountInput = row.querySelector('.amount-input');
+
+  if (price && amountInput) {
+    amountInput.value = price;
+    updateTotals();
+  }
+}
+
+function localPreview() {
+  const variantSelect = document.getElementById('modal-variant');
+  const qty = parseInt(document.getElementById('modal-qty').value || 1);
+
+  const price = parseFloat(
+    variantSelect.selectedOptions[0]?.dataset.price || 0
+  );
+
+  const total = price * qty;
+
+  document.getElementById('product-preview-unit').textContent = "₱ " + fmt(price);
+  document.getElementById('product-preview-qty').textContent = qty;
+  document.getElementById('product-preview-total').textContent = "₱ " + fmt(total);
+
+  document.getElementById('product-preview').classList.remove('hidden');
+
+  productPreviewData = { unit_price: price, total };
+  document.getElementById('product-confirm-btn').disabled = false;
+}
+
+function confirmProduct() {
+  if (!productPreviewData || !pendingProductRow) return;
+
+  const row = pendingProductRow;
+
+  const qtyInput = row.querySelector('.qty-input');
+  const unitPriceInput = row.querySelector('.unit-price-input');
+  const amountInput = row.querySelector('.amount-input');
+
+  const qty = parseFloat(document.getElementById('modal-qty').value || 1);
+
+  const productText = document.getElementById('modal-product');
+  const variantText = document.getElementById('modal-variant');
+
+  const productName = productText.selectedOptions[0]?.text || '';
+  const variantName = variantText.selectedOptions[0]?.text || '';
+
+  // SET VALUES
+  if (qtyInput) qtyInput.value = qty;
+
+  if (unitPriceInput) {
+    unitPriceInput.value = productPreviewData.unit_price;
+    unitPriceInput.readOnly = true;  // ✅ LOCK
+    unitPriceInput.classList.add('opacity-70', 'cursor-not-allowed');
+  }
+
+  if (amountInput) {
+    amountInput.value = productPreviewData.total.toFixed(2);
+  }
+
+  row.querySelector('input[name="category[]"]').value = "Product Sale";
+
+  row.querySelector('input[name="description[]"]').value =
+    `Product Sale — ${productName} (${variantName}) x${qty}`;
+
+  updateTotals();
+
+  document.getElementById('product-modal').close();
+  pendingProductRow = null;
+}
+
+function closeProductModal() {
+  document.getElementById('product-modal').close();
+  pendingProductRow = null;
+}
+
+function loadModalVariants() {
+  const productId = document.getElementById('modal-product').value;
+  const variantSelect = document.getElementById('modal-variant');
+
+  variantSelect.innerHTML = `<option value="">-- Select Variant --</option>`;
+
+  if (!productId || !PRODUCTS[productId]) return;
+
+  PRODUCTS[productId].forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.id;
+    opt.dataset.price = v.price;
+    opt.textContent = `${v.label} - ₱${v.price}`;
+    variantSelect.appendChild(opt);
+  });
+}
+function handleQtyChange(input) {
+  const row = input.closest('tr');
+
+  const qty = parseFloat(input.value) || 1;
+  const unit = parseFloat(row.querySelector('.unit-price-input')?.value) || 0;
+
+  const total = qty * unit;
+
+  const amountInput = row.querySelector('.amount-input');
+  if (amountInput) amountInput.value = total.toFixed(2);
+
+  updateTotals();
+}
+function handleUnitPriceChange(input) {
+  const row = input.closest('tr');
+
+  const qty = parseFloat(row.querySelector('.qty-input')?.value) || 1;
+  const unit = parseFloat(input.value) || 0;
+
+  const total = qty * unit;
+
+  const amountInput = row.querySelector('.amount-input');
+  if (amountInput) amountInput.value = total.toFixed(2);
+
+  updateTotals();
+}
+
 </script>
 
 {% endblock con %}

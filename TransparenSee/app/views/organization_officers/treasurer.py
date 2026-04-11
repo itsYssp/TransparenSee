@@ -10,6 +10,8 @@ from django.db.models import Q, Sum, Count
 from ..mixins import *
 from django.db import transaction
 from django.http import JsonResponse
+from decimal import Decimal
+
 
 
 
@@ -168,9 +170,12 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
         return self.request.user.officer.organization
 
     def get(self, request):
+        org = self.get_organization()
         academic_years = AcademicYear.objects.all().order_by('-academic_year')
+        products = Product.objects.filter(organization=org)
         return render(request, self.template_name, {
             'academic_years': academic_years,
+            'products': products,
         })
 
     def post(self, request):
@@ -189,8 +194,10 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
         entry_types    = request.POST.getlist('entry_type[]')
         income_sources = request.POST.getlist('income_source[]')
         society_ay_ids = request.POST.getlist('society_academic_year[]')
+        product_ids  = request.POST.getlist('product_id[]')
+        variant_ids  = request.POST.getlist('variant_id[]')
 
-        if not any(dates):
+        if not any(d.strip() for d in dates):
             messages.error(request, 'At least one entry is required.')
             return redirect(request.path)
 
@@ -219,9 +226,10 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                 entry_type    = entry_types[i] if i < len(entry_types) else 'expense'
                 income_source = income_sources[i] if i < len(income_sources) else ''
                 soc_ay_id     = society_ay_ids[i] if i < len(society_ay_ids) else ''
-
                 student_count   = None
                 fee_per_student = None
+                product_id = product_ids[i] if i < len(product_ids) else ''
+                variant_id = variant_ids[i] if i < len(variant_ids) else ''
 
             
                 if entry_type == 'income' and income_source == 'society' and soc_ay_id:
@@ -234,6 +242,12 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                             semester=soc_ay.semester,  
                             amount_paid__gt=0,
                         )
+                    if entry_type == 'income' and income_source == 'product' and product_id and variant_id:
+                        product_obj = Product.objects.filter(pk=product_id, organization=org).first()
+                        variant_obj = ProductVariant.objects.filter(pk=variant_id, product=product_obj).first()
+
+                        if variant_obj:
+                            amount = variant_obj.price  # AUTO OVERRIDE PRICE
 
                     
                         student_count = paid_fees.values('student').distinct().count()
@@ -253,7 +267,10 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                     income_source=income_source if entry_type == 'income' else None,
                     society_student_count=student_count,
                     society_fee_per_student=fee_per_student,
-                    society_semester=None,  
+                    society_semester=None,
+                    
+                    product=product_obj if income_source == 'product' else None,
+                    variant=variant_obj if income_source == 'product' else None,
                 ))
 
             FinancialReportEntry.objects.bulk_create(entries)
@@ -270,7 +287,6 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
 
 
 class SocietyFeePreviewView(RoleRequireMixin, TemplateView):
-
     role_required = 'treasurer'
 
     def get(self, request):
@@ -298,4 +314,29 @@ class SocietyFeePreviewView(RoleRequireMixin, TemplateView):
             'total':           float(total),
             'academic_year':   str(ay),
             'semester':        ay.semester, 
+        })
+    
+class ProductPreviewView(RoleRequireMixin, TemplateView):
+    role_required = 'treasurer'
+
+    def get(self, request):
+        product_id = request.GET.get('product_id')
+        variant_id = request.GET.get('variant_id')
+        qty = int(request.GET.get('quantity', 1))
+
+        variant = ProductVariant.objects.filter(
+            id=variant_id,
+            product_id=product_id
+        ).first()
+
+        if not variant:
+            return JsonResponse({'error': 'Invalid product/variant'}, status=404)
+
+        unit_price = float(variant.price)
+        total = unit_price * qty
+
+        return JsonResponse({
+            'unit_price': unit_price,
+            'quantity': qty,
+            'total': total
         })

@@ -185,17 +185,31 @@
                   {% endif %}
                 </td>
                 <td class="px-5 py-3 text-sm font-mono">
-                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
-                {% if recent_fr.status == 'approved' %}bg-green-100 text-green-700
-                {% elif recent_fr.status == 'rejected' %}bg-red-100 text-red-700
-                {% elif recent_fr.status == 'pending_auditor' %}bg-amber-100 text-amber-700
-                {% elif recent_fr.status == 'pending_president' %}bg-lime-100 text-lime-700
-                {% elif recent_fr.status == 'pending_adviser' %}bg-blue-100 text-blue-700
-                {% elif recent_log.action == 'on_blockchain' %}bg-purple-100 text-purple-700
-                {% else %}bg-gray-100 text-gray-600
-                {% endif %}"> 
-                {{ recent_fr.get_status_display }}
-                </span>
+                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-full tracking-wide
+                  {% if recent_fr.status == 'approved' %}
+                      bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200
+
+                  {% elif recent_fr.status == 'rejected' %}
+                      bg-rose-50 text-rose-700 ring-1 ring-rose-200
+
+                  {% elif recent_fr.status == 'pending_auditor' %}
+                      bg-amber-50 text-amber-700 ring-1 ring-amber-200
+
+                  {% elif recent_fr.status == 'pending_president' %}
+                      bg-sky-50 text-sky-700 ring-1 ring-sky-200
+
+                  {% elif recent_fr.status == 'pending_adviser' %}
+                      bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200
+
+                  {% elif recent_fr.status == 'on_blockchain' %}
+                      bg-green-100 text-green-800 ring-1 ring-green-300
+
+                  {% else %}
+                      bg-gray-50 text-gray-600 ring-1 ring-gray-200
+                  {% endif %}">
+                  
+                  {{ recent_fr.get_status_display }}
+              </span>
               </td>
           
             </tr>
@@ -295,7 +309,6 @@
 
 
     <div class="lg:col-span-2 flex flex-col gap-4">
-
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 flex-1 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">

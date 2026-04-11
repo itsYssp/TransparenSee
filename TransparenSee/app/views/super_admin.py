@@ -8,7 +8,7 @@ from ..models import *
 from .mixins import *
 
 class SuperAdminView(RoleRequireMixin, TemplateView):
-    role_required = 'super_admin'
+    role_required = 'admin'
     template_name = 'app/superadmin/dashboard.html'
 
 class UserRolesView(RoleRequireMixin,ListView ):
@@ -29,7 +29,7 @@ class UserRolesView(RoleRequireMixin,ListView ):
         return CustomUser.objects.filter(role__in=roles).order_by('date_joined')
 
 class CreateCampusAdminView(RoleRequireMixin,CreateView):
-    role_required = 'super_admin'
+    role_required = 'admin'
     form_class = CampusAdminCreationForm
     template_name = 'app/superadmin/create_campus_admin.html'
     success_url = reverse_lazy('superadmin_user_role')

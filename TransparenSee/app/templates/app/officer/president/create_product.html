@@ -1,0 +1,231 @@
+{% extends "app/officer/president/sidebar.html" %}
+{% load static %}
+{% block con %}
+
+<div class="min-h-screen bg-base-200 px-4 py-8">
+
+  <!-- Header -->
+  <div class="max-w-3xl mx-auto mb-6">
+     <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">
+        {{ user.get_role_display }}
+      </p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">
+        Create Product
+      </h1>
+  </div>
+
+  <form method="POST" class="max-w-3xl mx-auto flex flex-col gap-4">
+    {% csrf_token %}
+
+    <!-- Variant errors -->
+    {% if variant_errors %}
+    <div class="alert alert-error">
+      <i data-lucide='circle-alert' class="w-5 h-5"></i>
+      <div>
+        <p class="font-semibold mb-1">Some variants failed to save:</p>
+        <ul class="list-disc list-inside text-sm">
+          {% for err in variant_errors %}<li>{{ err }}</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Product Information -->
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+      <div class="card-body gap-4">
+
+        <div class="flex items-center gap-3 mb-1">
+          <div class="bg-blue-600/10 text-blue-600 rounded-lg p-2">
+            <i data-lucide='archive' class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="card-title text-sm">Product Information</h2>
+            <p class="text-xs text-base-content/50">Basic details about your product</p>
+          </div>
+        </div>
+
+        <!-- Name -->
+        <div class="form-control gap-1">
+          <label class="label py-0"><span class="label-text font-medium">Product Name</span></label>
+          <input type="text" name="name" value="{{ form.name.value|default:'' }}"
+            placeholder="e.g. Organization T-Shirt"
+            class="input input-bordered w-full {% if form.name.errors %}input-error{% endif %}" />
+          {% if form.name.errors %}
+            <span class="text-error text-xs mt-1">{{ form.name.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="form-control gap-1">
+          <label class="label py-0"><span class="label-text font-medium">Description</span></label>
+          <textarea name="description" rows="3"
+            placeholder="Optional description..."
+            class="textarea textarea-bordered w-full {% if form.description.errors %}textarea-error{% endif %}">{{ form.description.value|default:'' }}</textarea>
+        </div>
+
+        <!-- Active toggle -->
+        <label class="label cursor-pointer justify-start gap-3 bg-base-200 rounded-xl px-4 py-3">
+          <input type="checkbox" name="is_active" class="checkbox checkbox-blue-600 checkbox-sm"
+            {% if form.is_active.value %}checked{% endif %} />
+          <span class="label-text font-medium">Active listing</span>
+          <span id="active-badge" class="badge badge-ghost badge-sm ml-auto">Inactive</span>
+        </label>
+
+      </div>
+    </div>
+
+    <!-- Product Variants -->
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+      <div class="card-body gap-4">
+
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-3">
+            <div class="bg-blue-600/10 text-blue-600 rounded-lg p-2">
+              <i data-lucide='layers' class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="card-title text-sm">
+                Product Variants
+                <span id="variant-count" class="badge badge-primary badge-sm ml-1">0</span>
+              </h2>
+              <p class="text-xs text-base-content/50">Sizes, colors, pricing</p>
+            </div>
+          </div>
+
+          <button type="button" id="add-variant" class="btn bg-blue-700 text-white btn-sm gap-1  hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+            <i data-lucide='plus' class="w-5 h-5"></i>
+            Add Variant
+          </button>
+        </div>
+
+        <!-- Variants list -->
+        <div id="variants" class="flex flex-col gap-3"></div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="flex flex-col items-center py-8 text-base-content/40 border-2 border-dashed border-base-300 rounded-xl">
+          <i data-lucide='circle-plus' class="w-6 h-6 text-center"></i>
+          <p class="text-sm font-medium">No variants yet</p>
+          <p class="text-xs mt-1">Click <strong>Add Variant</strong> to get started</p>
+        </div>
+
+        <!-- Variant row template -->
+        <template id="variant-template">
+          <div class="variant-form bg-base-200 border border-base-300 rounded-xl p-4 transition-all">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+              <!-- Size -->
+              <div class="form-control gap-1">
+                <label class="label py-0">
+                  <span class="label-text text-xs font-semibold uppercase tracking-wide opacity-50">Size</span>
+                </label>
+                <select name="size[]" class="select select-bordered select-sm w-full">
+                  <option value="">— N/A —</option>
+                  {% for val, label in size_choices %}
+                    {% if val != 'none' %}
+                      <option value="{{ val }}">{{ label }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Color -->
+              <div class="form-control gap-1">
+                <label class="label py-0">
+                  <span class="label-text text-xs font-semibold uppercase tracking-wide opacity-50">Color</span>
+                </label>
+                <input type="text" name="color[]" placeholder="e.g. Red" class="input input-bordered input-sm w-full" />
+              </div>
+
+              <!-- Price -->
+              <div class="form-control gap-1">
+                <label class="label py-0">
+                  <span class="label-text text-xs font-semibold uppercase tracking-wide opacity-50">Price</span>
+                </label>
+                <input type="number" name="price[]" placeholder="0.00" step="0.01" min="0" class="input input-bordered input-sm w-full" required />
+              </div>
+
+
+            </div>
+
+            <div class="flex items-center justify-between mt-3">
+              <span class="text-xs text-base-content/30 font-mono">Variant #<span class="v-num"></span></span>
+              <button type="button" class="remove-btn btn btn-error btn-xs btn-outline gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Remove
+              </button>
+            </div>
+          </div>
+        </template>
+
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end gap-3 pb-10">
+      <a href="#" class="btn btn-ghost btn-sm">Cancel</a>
+      <button type="submit" class="btn btn-blue-600 btn-sm gap-2">
+        <i data-lucide="circle-check" class="w-4 h-4"></i>
+        Save Product
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const container  = document.getElementById('variants');
+  const addBtn     = document.getElementById('add-variant');
+  const countBadge = document.getElementById('variant-count');
+  const emptyState = document.getElementById('empty-state');
+  const tmpl       = document.getElementById('variant-template');
+
+  function refreshUI() {
+    const n = container.children.length;
+    countBadge.textContent = n;
+    emptyState.classList.toggle('hidden', n > 0);
+    container.querySelectorAll('.v-num').forEach((el, i) => el.textContent = i + 1);
+  }
+
+  // Add variant
+  addBtn.addEventListener('click', () => {
+    const clone = tmpl.content.cloneNode(true);
+    container.appendChild(clone);
+    refreshUI();
+    container.lastElementChild?.querySelector('input, select')?.focus();
+  });
+
+  // Remove variant
+  container.addEventListener('click', function (e) {
+    const btn = e.target.closest('.remove-btn');
+    if (!btn) return;
+
+    const form = btn.closest('.variant-form');
+    form.style.transition = 'opacity 0.15s, transform 0.15s';
+    form.style.opacity    = '0';
+    form.style.transform  = 'scale(0.97)';
+
+    setTimeout(() => { form.remove(); refreshUI(); }, 150);
+  });
+
+  const toggleCb    = document.querySelector('input[name="is_active"]');
+  const activeBadge = document.getElementById('active-badge');
+  if (toggleCb && activeBadge) {
+    function syncBadge() {
+      activeBadge.textContent = toggleCb.checked ? 'Active' : 'Inactive';
+      activeBadge.className   = toggleCb.checked
+        ? 'badge badge-success badge-sm ml-auto'
+        : 'badge badge-ghost badge-sm ml-auto';
+    }
+    toggleCb.addEventListener('change', syncBadge);
+    syncBadge();
+  }
+
+  refreshUI();
+});
+</script>
+
+{% endblock con %}
