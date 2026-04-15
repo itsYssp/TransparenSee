@@ -118,6 +118,16 @@ class ReportListView(ListView):
         if status   :
             qs = qs.filter(status=status)
 
+        qs = qs.annotate(
+        total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
+        total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
+        income_count=Count('entries', filter=Q(entries__entry_type='income')),
+        expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
+        )
+
+        # ✅ ADD ORDERING HERE
+        qs = qs.order_by('-created_at')
+
         return qs
 
     def get_organization(self, user):
@@ -136,27 +146,27 @@ class ReportListView(ListView):
         user = self.request.user
         org = self.get_organization(user)
 
-        role_templates= {
+        role_templates = {
             "treasurer": "app/officer/treasurer/sidebar.html",
             "auditor": "app/officer/auditor/sidebar.html",
             "president": "app/officer/president/sidebar.html",
             "adviser": "app/adviser/sidebar.html",
             "co_adviser": "app/adviser/sidebar.html",
         }
- 
+
         context['base_template'] = role_templates.get(user.role, "app/base.html")
-        context['reports'] = FinancialReport.objects.filter(organization=org).exclude(status__in=['rejected', 'on_blockchain']).annotate(
+
+        context['reports'] = context['object_list']
+
+        context['rejected_reports'] = FinancialReport.objects.filter(
+            organization=org, status='rejected'
+        ).annotate(
             total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
             total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
             income_count=Count('entries', filter=Q(entries__entry_type='income')),
             expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
         )
-        context['rejected_reports'] = FinancialReport.objects.filter(organization=org, status='rejected').annotate(
-            total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
-            total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
-            income_count=Count('entries', filter=Q(entries__entry_type='income')),
-            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
-        )
+
         context['status_choices'] = FinancialReport.STATUS_CHOICES
         return context
 

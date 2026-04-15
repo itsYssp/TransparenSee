@@ -361,18 +361,7 @@
          <i data-lucide="trending-down" class="w-3 h-3"></i> Expense
        </span>`;
 
-  const sourceFields = isIncome ? `
-    <div class="mt-1.5">
-      <select name="income_source[]" 
-        class="select select-bordered select-xs w-full bg-gray-50 income-source-select"
-        onchange="handleIncomeSourceChange(this)">
-        <option value="other">Other Income</option>
-        <option value="society">Society Fee</option>
-        <option value="product">Product Sale</option>
-      </select>
-    </div>
-    
-  ` : `<input type="hidden" name="income_source[]" value="" />`;
+ 
 
   const qtyCell = `
     <td class="px-2 py-2 text-center">
@@ -386,12 +375,32 @@
   const unitPriceCell = `
     <td class="px-2 py-2 text-center">
       <input type="number"
-        class="input input-bordered input-xs w-24 text-center unit-price-input bg-gray-100"
+        name = 'unit_price[]'
+        class="input input-bordered input-xs w-24 text-center unit-price-input bg-gray-100 unit-price-input"
         value="0"
         oninput="handleUnitPriceChange(this)"
          />
     </td>
   `;
+  const sourceFields = isIncome ? `
+  <div class="mt-1.5">
+    <select name="income_source[]" 
+      class="select select-bordered select-xs w-full bg-gray-50 income-source-select"
+      onchange="handleIncomeSourceChange(this)">
+      <option value="other">Other Income</option>
+      <option value="society">Society Fee</option>
+      <option value="product">Product Sale</option>
+    </select>
+  </div>
+  <input type="hidden" name="society_academic_year[]" class="society-ay-input" value="" />
+  <input type="hidden" name="product_id[]" class="product-id-input" value="" />
+  <input type="hidden" name="variant_id[]" class="variant-id-input" value="" />
+` : `
+  <input type="hidden" name="income_source[]" value="" />
+  <input type="hidden" name="society_academic_year[]" value="" />
+  <input type="hidden" name="product_id[]" value="" />
+  <input type="hidden" name="variant_id[]" value="" />
+`;
 
   const incomeCell = isIncome
     ? `<td class="px-2 py-2">
@@ -580,11 +589,11 @@ function confirmSocietyFee() {
 
   const qtyInput = row.querySelector('.qty-input');
   const amountInput = row.querySelector('.amount-input');
+  
 
   // Save AY
   const ayInput = row.querySelector('.society-ay-input');
   if (ayInput) ayInput.value = ay;
-
   // Lock + fill quantity
   if (qtyInput) {
     qtyInput.value = societyPreviewData.student_count;
@@ -754,22 +763,66 @@ function handleVariantChange(select) {
 
 function localPreview() {
   const variantSelect = document.getElementById('modal-variant');
-  const qty = parseInt(document.getElementById('modal-qty').value || 1);
+  const qty   = parseInt(document.getElementById('modal-qty').value || 1);
+  const price = parseFloat(variantSelect.selectedOptions[0]?.dataset.price || 0);
 
-  const price = parseFloat(
-    variantSelect.selectedOptions[0]?.dataset.price || 0
-  );
+  if (!price) {
+    document.getElementById('product-preview').classList.add('hidden');
+    document.getElementById('product-confirm-btn').disabled = true;
+    productPreviewData = null;
+    return;
+  }
 
   const total = price * qty;
 
-  document.getElementById('product-preview-unit').textContent = "₱ " + fmt(price);
-  document.getElementById('product-preview-qty').textContent = qty;
-  document.getElementById('product-preview-total').textContent = "₱ " + fmt(total);
-
+  document.getElementById('product-preview-unit').textContent  = '₱ ' + fmt(price);
+  document.getElementById('product-preview-qty').textContent   = qty;
+  document.getElementById('product-preview-total').textContent = '₱ ' + fmt(total);
   document.getElementById('product-preview').classList.remove('hidden');
 
   productPreviewData = { unit_price: price, total };
   document.getElementById('product-confirm-btn').disabled = false;
+}
+
+function confirmSocietyFee() {
+  if (!societyPreviewData || !pendingSocietyRowTarget) return;
+
+  const row     = pendingSocietyRowTarget;
+  const ay      = document.getElementById('modal-ay').value;
+  const ayLabel = academicYears.find(a => a.id === ay)?.label || ay;
+
+  const qtyInput         = row.querySelector('.qty-input');
+  const amountInput      = row.querySelector('.amount-input');
+  const ayInput          = row.querySelector('.society-ay-input');
+  const categoryInput    = row.querySelector('input[name="category[]"]');
+  const descriptionInput = row.querySelector('input[name="description[]"]');
+
+  if (ayInput) ayInput.value = ay;  // ← single safe null-checked assignment
+
+  if (qtyInput) {
+    qtyInput.value    = societyPreviewData.student_count;
+    qtyInput.readOnly = true;
+    qtyInput.classList.add('opacity-70', 'cursor-not-allowed');
+  }
+
+  if (amountInput) {
+    amountInput.value    = societyPreviewData.total.toFixed(2);
+    amountInput.readOnly = true;
+    amountInput.classList.add('opacity-70', 'cursor-not-allowed');
+  }
+
+  if (categoryInput) categoryInput.value = 'Society Fee';
+
+  if (descriptionInput) {
+    descriptionInput.value =
+      `Society Fee — ${ayLabel} (${societyPreviewData.student_count} students paid ₱${fmt(societyPreviewData.total)})`;
+  }
+
+  lucide.createIcons();
+  updateTotals();
+
+  document.getElementById('society-modal').close();
+  pendingSocietyRowTarget = null;
 }
 
 function confirmProduct() {
@@ -777,33 +830,40 @@ function confirmProduct() {
 
   const row = pendingProductRow;
 
-  const qtyInput = row.querySelector('.qty-input');
+  const qtyInput       = row.querySelector('.qty-input');
   const unitPriceInput = row.querySelector('.unit-price-input');
-  const amountInput = row.querySelector('.amount-input');
+  const amountInput    = row.querySelector('.amount-input');
 
-  const qty = parseFloat(document.getElementById('modal-qty').value || 1);
+  const qty        = parseFloat(document.getElementById('modal-qty').value || 1);
+  const productId  = document.getElementById('modal-product').value;
+  const variantId  = document.getElementById('modal-variant').value;
+  const productName = document.getElementById('modal-product').selectedOptions[0]?.text || '';
+  const variantName = document.getElementById('modal-variant').selectedOptions[0]?.text || '';
 
-  const productText = document.getElementById('modal-product');
-  const variantText = document.getElementById('modal-variant');
+  // Write hidden inputs
+  row.querySelector('.product-id-input').value = productId;
+  row.querySelector('.variant-id-input').value = variantId;
 
-  const productName = productText.selectedOptions[0]?.text || '';
-  const variantName = variantText.selectedOptions[0]?.text || '';
+  // Set quantity
+  if (qtyInput) {
+    qtyInput.value    = qty;
+    qtyInput.readOnly = true;
+    qtyInput.classList.add('opacity-70', 'cursor-not-allowed');
+  }
 
-  // SET VALUES
-  if (qtyInput) qtyInput.value = qty;
-
+  // Set unit price and lock it
   if (unitPriceInput) {
-    unitPriceInput.value = productPreviewData.unit_price;
-    unitPriceInput.readOnly = true;  // ✅ LOCK
+    unitPriceInput.value    = productPreviewData.unit_price;
+    unitPriceInput.readOnly = true;
     unitPriceInput.classList.add('opacity-70', 'cursor-not-allowed');
   }
 
+  // Explicitly calculate and set amount instead of relying on oninput
   if (amountInput) {
-    amountInput.value = productPreviewData.total.toFixed(2);
+    amountInput.value = (productPreviewData.unit_price * qty).toFixed(2);
   }
 
-  row.querySelector('input[name="category[]"]').value = "Product Sale";
-
+  row.querySelector('input[name="category[]"]').value    = 'Product Sale';
   row.querySelector('input[name="description[]"]').value =
     `Product Sale — ${productName} (${variantName}) x${qty}`;
 

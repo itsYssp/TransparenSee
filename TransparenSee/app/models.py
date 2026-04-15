@@ -314,6 +314,9 @@ class FinancialReportEntry(models.Model):
     society_student_count = models.PositiveIntegerField(blank=True, null=True)
     society_fee_per_student = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     society_semester = models.CharField(max_length=10, choices=SEMESTER_CHOICES, blank=True, null=True)
+    product = models.ForeignKey('Product', null=True, blank=True, on_delete=models.SET_NULL)
+    variant = models.ForeignKey('ProductVariant', null=True, blank=True, on_delete=models.SET_NULL)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     class Meta:
         ordering = ['date', 'order']

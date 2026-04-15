@@ -7,10 +7,8 @@
   <!-- Header -->
   <div class="flex items-center justify-between">
     <div>
-      <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Reports</p>
-      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">
-        Financial Reports
-      </h1>
+      <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-0.5">Reports</p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Financial Reports</h1>
     </div>
     {% if user.role == 'treasurer' %}
     <a href="{% url 'treasurer_create_report' %}"
@@ -19,22 +17,18 @@
       Create Report
     </a>
     {% endif %}
-    
   </div>
 
   <!-- Filters -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap gap-3 items-center justify-between">
-
     <form method="get" action="" class="flex flex-wrap gap-2 items-center w-full">
-
-      <input 
-        type="text" 
+      <input
+        type="text"
         name="search"
         value="{{ request.GET.search }}"
         placeholder="Search report title..."
         class="input input-sm bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
       >
-
       <select name="status"
         class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
         <option value="">All Status</option>
@@ -44,18 +38,14 @@
           </option>
         {% endfor %}
       </select>
-
-      <button
-        class="px-4 py-2 rounded-xl text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
+      <button class="px-4 py-2 rounded-xl text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
         Filter
       </button>
-
     </form>
   </div>
 
   <!-- Report Table Card -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-
     <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
       <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
         <i data-lucide="file-text" class="w-4 h-4 text-blue-700"></i>
@@ -65,7 +55,6 @@
 
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
@@ -77,19 +66,15 @@
             <th class="px-4 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase">Action</th>
           </tr>
         </thead>
-
         <tbody>
-          {% for report in reports %} 
+          {% for report in reports %}
           <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
             <td class="px-4 py-3 font-semibold text-gray-800">
               {{ report.title }}
               {% if report.blockchain_hash %}
-                <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">
-                  On-chain
-                </span>
+                <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">On-chain</span>
               {% endif %}
             </td>
-
             <td class="px-4 py-3">
               {% if report.income_count %}
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Income</span>
@@ -97,48 +82,31 @@
               {% if report.expense_count %}
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
               {% endif %}
-              <div class="flex  px-2 flex-col gap-0.5">
+              <div class="flex px-2 flex-col gap-0.5">
                 <span class="text-xs font-semibold text-green-700">▲ ₱{{ report.total_income|floatformat:2|default:"0.00" }}</span>
                 <span class="text-xs font-semibold text-red-600">▼ ₱{{ report.total_expense|floatformat:2|default:"0.00" }}</span>
               </div>
             </td>
-
-            <td class="px-4 py-3 text-gray-600">
-              {{ report.academic_year }}
-            </td>
-
-            <td class="px-4 py-3 font-semibold text-gray-900">
-              ₱ {{ report.total_amount|floatformat:2 }}
-            </td>
-
-            <!-- STATUS -->
+            <td class="px-4 py-3 text-gray-600">{{ report.academic_year }}</td>
+            <td class="px-4 py-3 font-semibold text-gray-900">₱ {{ report.total_amount|floatformat:2 }}</td>
             <td class="px-4 py-3">
               <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
                 {% if report.status == 'approved' %}bg-green-100 text-green-700
                 {% elif report.status == 'rejected' %}bg-red-100 text-red-700
                 {% elif 'pending' in report.status %}bg-amber-100 text-amber-700
                 {% elif report.status == 'on_blockchain' %}bg-purple-100 text-purple-700
-                {% else %}bg-gray-100 text-gray-600
-                {% endif %}
-              ">
+                {% else %}bg-gray-100 text-gray-600{% endif %}">
                 {{ report.get_status_display }}
               </span>
             </td>
-
-            <td class="px-4 py-3 text-gray-500 text-xs">
-              {{ report.created_at|date:"M d, Y" }}
-            </td>
-
+            <td class="px-4 py-3 text-gray-500 text-xs">{{ report.created_at|date:"M d, Y" }}</td>
             <td class="px-4 py-3 text-center">
               <a href="{% url 'report_detail' report.pk %}"
                 class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold">
-                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                View
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
               </a>
             </td>
-
           </tr>
-
           {% empty %}
           <tr>
             <td colspan="7" class="text-center py-10 text-gray-400">
@@ -148,40 +116,42 @@
           </tr>
           {% endfor %}
         </tbody>
-
       </table>
     </div>
 
-    <!-- Pagination -->
+    <!-- ✅ Main list pagination — preserves search & status filters -->
+    {% if is_paginated %}
     <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
-
       <div>
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} reports
       </div>
-
       <div class="flex gap-2">
         {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}"
-          class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">
-          Prev
-        </a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+          class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">Prev</a>
         {% endif %}
+
+        {% for num in paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="px-3 py-1 rounded-lg bg-blue-700 text-white font-bold">{{ num }}</span>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+            <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+              class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
 
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}"
-          class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">
-          Next
-        </a>
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+          class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">Next</a>
         {% endif %}
       </div>
-
     </div>
-
+    {% endif %}
   </div>
 
 
+  <!-- Rejected Reports Table -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-
     <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
       <div class="w-7 h-7 rounded-lg bg-red-100 flex items-center justify-center">
         <i data-lucide="file-text" class="w-4 h-4 text-red-700"></i>
@@ -191,7 +161,6 @@
 
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
@@ -203,109 +172,64 @@
             <th class="px-4 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase">Action</th>
           </tr>
         </thead>
-
         <tbody>
-          {% for rejected in rejected_reports %} 
+          {% for rejected in rejected_reports %}
           <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
             <td class="px-4 py-3 font-semibold text-gray-800">
               {{ rejected.title }}
               {% if rejected.blockchain_hash %}
-                <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">
-                  On-chain
-                </span>
+                <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">On-chain</span>
               {% endif %}
             </td>
             <td class="px-4 py-3">
-              {% if rejeted.income_count %}
+              <!-- ✅ Fixed typo: was "rejeted" -->
+              {% if rejected.income_count %}
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Income</span>
               {% endif %}
               {% if rejected.expense_count %}
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
               {% endif %}
-              <div class="flex  px-2 flex-col gap-0.5">
-                <span class="text-xs font-semibold text-green-700">▲ ₱{{ report.total_income|floatformat:2|default:"0.00" }}</span>
-                <span class="text-xs font-semibold text-red-600">▼ ₱{{ report.total_expense|floatformat:2|default:"0.00" }}</span>
+              <div class="flex px-2 flex-col gap-0.5">
+                <!-- ✅ Fixed: was using "report." instead of "rejected." -->
+                <span class="text-xs font-semibold text-green-700">▲ ₱{{ rejected.total_income|floatformat:2|default:"0.00" }}</span>
+                <span class="text-xs font-semibold text-red-600">▼ ₱{{ rejected.total_expense|floatformat:2|default:"0.00" }}</span>
               </div>
             </td>
-
-            <td class="px-4 py-3 text-gray-600">
-              {{ rejected.academic_year }}
-            </td>
-
-            <td class="px-4 py-3 font-semibold text-gray-900">
-              ₱ {{ rejected.total_amount|floatformat:2 }}
-            </td>
-
+            <td class="px-4 py-3 text-gray-600">{{ rejected.academic_year }}</td>
+            <td class="px-4 py-3 font-semibold text-gray-900">₱ {{ rejected.total_amount|floatformat:2 }}</td>
             <td class="px-4 py-3">
-              <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
-                {% if rejected.status == 'approved' %}bg-green-100 text-green-700
-                {% elif rejected.status == 'rejected' %}bg-red-100 text-red-700
-                {% elif 'pending' in rejected.status %}bg-amber-100 text-amber-700
-                {% elif rejected.status == 'on_blockchain' %}bg-purple-100 text-purple-700
-                {% else %}bg-gray-100 text-gray-600
-                {% endif %}
-              ">
+              <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide bg-red-100 text-red-700">
                 {{ rejected.get_status_display }}
               </span>
             </td>
-
-            <td class="px-4 py-3 text-gray-500 text-xs">
-              {{ rejected.created_at|date:"M d, Y" }}
-            </td>
-
+            <td class="px-4 py-3 text-gray-500 text-xs">{{ rejected.created_at|date:"M d, Y" }}</td>
             <td class="px-4 py-3 text-center">
               <a href="{% url 'report_detail' rejected.pk %}"
                 class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold">
-                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                View
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
               </a>
             </td>
-
           </tr>
-
           {% empty %}
           <tr>
             <td colspan="7" class="text-center py-10 text-gray-400">
               <i data-lucide="file-x" class="w-8 h-8 mx-auto mb-2"></i>
-              No reports found
+              No rejected reports
             </td>
           </tr>
           {% endfor %}
         </tbody>
-
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
-
-      <div>
-        {{ rejected_reports.count }} rejected report{{ rejected_reports.count|pluralize }}
-      </div>
-
-      <div class="flex gap-2">
-        {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}"
-          class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">
-          Prev
-        </a>
-        {% endif %}
-
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}"
-          class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">
-          Next
-        </a>
-        {% endif %}
-      </div>
-
+    <!-- ✅ Rejected table footer — just a count, no pagination needed -->
+    <div class="px-6 py-4 border-t border-gray-100 text-xs text-gray-500">
+      {{ rejected_reports.count }} rejected report{{ rejected_reports.count|pluralize }}
     </div>
 
   </div>
 </div>
 
-<script>
-  lucide.createIcons();
-</script>
+<script>lucide.createIcons();</script>
 
 {% endblock con %}

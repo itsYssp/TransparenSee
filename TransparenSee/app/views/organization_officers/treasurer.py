@@ -165,6 +165,7 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
 class CreateFinancialReportView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/create_report.html'
     role_required = 'treasurer'
+    
 
     def get_organization(self):
         return self.request.user.officer.organization
@@ -194,8 +195,10 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
         entry_types    = request.POST.getlist('entry_type[]')
         income_sources = request.POST.getlist('income_source[]')
         society_ay_ids = request.POST.getlist('society_academic_year[]')
-        product_ids  = request.POST.getlist('product_id[]')
-        variant_ids  = request.POST.getlist('variant_id[]')
+        product_ids    = request.POST.getlist('product_id[]')
+        variant_ids    = request.POST.getlist('variant_id[]')
+        quantities     = request.POST.getlist('quantity[]')  
+        unit_prices     = request.POST.getlist('unit_price[]')
 
         if not any(d.strip() for d in dates):
             messages.error(request, 'At least one entry is required.')
@@ -219,6 +222,7 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                 category    = categories[i]
                 description = descriptions[i]
                 amount      = amounts[i]
+                
 
                 if not (date and amount):
                     continue
@@ -226,35 +230,48 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                 entry_type    = entry_types[i] if i < len(entry_types) else 'expense'
                 income_source = income_sources[i] if i < len(income_sources) else ''
                 soc_ay_id     = society_ay_ids[i] if i < len(society_ay_ids) else ''
+                product_id    = product_ids[i] if i < len(product_ids) else ''
+                variant_id    = variant_ids[i] if i < len(variant_ids) else ''
                 student_count   = None
                 fee_per_student = None
-                product_id = product_ids[i] if i < len(product_ids) else ''
-                variant_id = variant_ids[i] if i < len(variant_ids) else ''
+                product_obj = None
+                variant_obj = None
 
-            
-                if entry_type == 'income' and income_source == 'society' and soc_ay_id:
-                    soc_ay = AcademicYear.objects.filter(pk=soc_ay_id).first()
+                try:
+                    amount = Decimal(str(amount).strip())
+                except Exception:
+                    amount = Decimal('0')
 
-                    if soc_ay:
-                        paid_fees = SocietyFee.objects.filter(
-                            organization=org,
-                            academic_year=soc_ay,
-                            semester=soc_ay.semester,  
-                            amount_paid__gt=0,
-                        )
-                    if entry_type == 'income' and income_source == 'product' and product_id and variant_id:
+                try:
+                    quantity = int(quantities[i]) if i < len(quantities) and quantities[i] else 1
+                except (ValueError, TypeError):
+                    quantity = 1
+                
+                try:
+                    raw_unit = unit_prices[i] if i < len(unit_prices) else '0'
+                    unit_price = Decimal(raw_unit.strip()) if raw_unit.strip() else None
+                except Exception:
+                    unit_price = None
+
+                if entry_type == 'income':
+                    if income_source == 'society' and soc_ay_id:
+                        soc_ay = AcademicYear.objects.filter(pk=soc_ay_id).first()
+                        if soc_ay:
+                            paid_fees = SocietyFee.objects.filter(
+                                organization=org,
+                                academic_year=soc_ay,
+                                semester=soc_ay.semester,
+                                amount_paid__gt=0,
+                            )
+                            student_count = paid_fees.values('student').distinct().count()
+                            fee_per_student = None
+                            amount = paid_fees.aggregate(total=Sum('amount_paid'))['total'] or Decimal('0')
+
+                    elif income_source == 'product' and product_id and variant_id:
                         product_obj = Product.objects.filter(pk=product_id, organization=org).first()
                         variant_obj = ProductVariant.objects.filter(pk=variant_id, product=product_obj).first()
-
                         if variant_obj:
-                            amount = variant_obj.price  # AUTO OVERRIDE PRICE
-
-                    
-                        student_count = paid_fees.values('student').distinct().count()
-                        fee_per_student = None
-
-                        
-                        amount = paid_fees.aggregate(total=Sum('amount_paid'))['total'] or 0
+                            amount = variant_obj.price * quantity
 
                 entries.append(FinancialReportEntry(
                     report=report,
@@ -268,9 +285,9 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                     society_student_count=student_count,
                     society_fee_per_student=fee_per_student,
                     society_semester=None,
-                    
                     product=product_obj if income_source == 'product' else None,
                     variant=variant_obj if income_source == 'product' else None,
+                    unit_price  = unit_price
                 ))
 
             FinancialReportEntry.objects.bulk_create(entries)
@@ -282,8 +299,7 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                 remarks='Report submitted for approval.',
             )
 
-        return redirect(f"{reverse('reports')}?submitted=1")
-    
+        return redirect(f"{reverse('reports')}?submitted=1")    
 
 
 class SocietyFeePreviewView(RoleRequireMixin, TemplateView):
