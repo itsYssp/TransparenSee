@@ -10,11 +10,14 @@
       <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">{{ user.get_role_display }}</p>
       <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Products</h1>
     </div>
+    {% if user.role == 'president'  %}
     <a href="{% url 'product_create' %}"
       class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
       <i data-lucide="plus" class="w-4 h-4"></i>
       Add Product
     </a>
+    {% endif %}
+    
   </div>
 
   <!-- Summary Cards -->
