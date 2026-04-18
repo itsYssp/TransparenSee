@@ -13,7 +13,7 @@
     <div class="absolute -top-8 -left-8 w-40 h-40 rounded-full border-30 border-white/5 pointer-events-none"></div>
     <p class="text-xs font-bold tracking-widest text-blue-200 uppercase mb-3">Remaining Funds</p>
     <p class="text-5xl font-extrabold text-white tracking-tight">
-      <span class="text-xl font-semibold text-blue-300 align-super mr-1">₱</span>100,000.00
+      <span class="text-xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ balance }}
     </p>
     <div class="mt-4 inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
       <span class="w-2 h-2 rounded-full bg-green-400 shadow shadow-green-400 animate-pulse"></span>
@@ -163,19 +163,35 @@
                   {% if recent_fr.expense_count %}
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
                   {% endif %}
-                </td>
                 <td class="px-5 py-3 text-sm font-mono">
-                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
-                {% if recent_fr.status == 'approved' %}bg-green-100 text-green-700
-                {% elif recent_fr.status == 'rejected' %}bg-red-100 text-red-700
-                {% elif recent_fr.status == 'pending_auditor' %}bg-amber-100 text-amber-700
-                {% elif recent_fr.status == 'pending_president' %}bg-lime-100 text-lime-700
-                {% elif recent_fr.status == 'pending_adviser' %}bg-blue-100 text-blue-700
-                {% elif recent_log.action == 'on_blockchain' %}bg-purple-100 text-purple-700
-                {% else %}bg-gray-100 text-gray-600
-                {% endif %}"> 
-                {{ recent_fr.get_status_display }}
-                </span>
+                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-full tracking-wide
+                  {% if recent_fr.status == 'approved' %}
+                      bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200
+
+                  {% elif recent_fr.status == 'rejected' %}
+                      bg-rose-50 text-rose-700 ring-1 ring-rose-200
+
+                  {% elif recent_fr.status == 'pending_auditor' %}
+                      bg-amber-50 text-amber-700 ring-1 ring-amber-200
+
+                  {% elif recent_fr.status == 'pending_president' %}
+                      bg-sky-50 text-sky-700 ring-1 ring-sky-200
+
+                  {% elif recent_fr.status == 'pending_adviser' %}
+                      bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200
+
+                  {% elif recent_fr.status == 'approved' %}
+                      bg-green-50 text-green-600 ring-1 ring-green-300
+
+                  {% elif recent_fr.status == 'on_blockchain' %}
+                      bg-green-100 text-green-800 ring-1 ring-green-300
+
+                  {% else %}
+                      bg-gray-50 text-gray-600 ring-1 ring-gray-200
+                  {% endif %}">
+                  
+                  {{ recent_fr.get_status_display }}
+              </span>
               </td>
           
             </tr>
@@ -212,21 +228,22 @@
              <tr class="hover:bg-blue-50/40 transition-colors duration-150">
                 <td class="px-5 py-3 text-xs font-semibold ">{{ recent_log.report }}</td>
                 <td class="px-5 py-3 text-sm font-mono">
-                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
-                {% if recent_log.action == 'approved' %}bg-green-100 text-green-700
-                {% elif recent_log.action == 'rejected' %}bg-red-100 text-red-700
-                {% elif 'pending' in recent_log.action %}bg-amber-100 text-amber-700
-                {% elif recent_log.action == 'on_blockchain' %}bg-purple-100 text-purple-700
-                {% else %}bg-gray-100 text-gray-600
-                {% endif %}"> 
-                {{ recent_log.action }}
-                </span>
+                  <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
+                  {% if recent_log.action == 'approved' %}bg-green-100 text-green-700
+                  {% elif recent_log.action == 'rejected' %}bg-red-100 text-red-700
+                  {% elif 'pending' in recent_log.action %}bg-amber-100 text-amber-700
+                  {% elif recent_log.action == 'blockchain' %}bg-green-100 text-green-800 ring-1 ring-green-300
+                  {% else %}bg-gray-100 text-gray-600
+                  {% endif %}"> 
+                  {{ recent_log.action }}
+                  </span>
               </td>
               <td class="px-5 py-3 text-sm font-mono">
                 <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
                 {% if recent_log.action_by.role == 'treasurer' %}bg-blue-100 text-blue-700
-                {% elif recent_log.action_by.role == 'auditor' %}bg-green-100 text-green-700
+                {% elif recent_log.action_by.role == 'auditor' %}bg-yellow-100 text-yellow-700
                 {% elif recent_log.action_by.role == 'president' %}bg-amber-100 text-amber-700
+                {% elif recent_log.action_by.role == 'co_adviser' %}bg-purple-100 text-purple-700 ring-1 ring-purple-300
                 {% elif recent_log.action_by.role == 'adviser' %}bg-purple-100 text-purple-700
                 {% else %}bg-gray-100 text-gray-600
                 {% endif %}"> 

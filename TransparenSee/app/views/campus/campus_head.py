@@ -23,7 +23,7 @@ class OrganizationListView(RoleRequireMixin, ListView):
 
         role_template = {
             "head": "app/heads/sidebar.html",
-            "campus_admin ": "app/campus_admin/sidebar.html", 
+            "campus_admin": "app/campus_admin/sidebar.html", 
         }
 
         context["base_template"] = role_template.get(user.role,  'app/base.html')

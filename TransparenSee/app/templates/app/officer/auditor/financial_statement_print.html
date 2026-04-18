@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ request.GET.statement_title|default:"Financial Statement" }}</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #5a6478;
+      --line: #d8deea;
+      --soft: #f4f7fb;
+      --brand: #0f3d75;
+      --green: #157347;
+      --red: #c0392b;
+      --amber: #8a6d1d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: #eef2f8;
+    }
+    .toolbar {
+      max-width: 1180px;
+      margin: 0 auto 18px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .toolbar button {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .sheet {
+      max-width: 1180px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(23, 32, 51, 0.08);
+    }
+    .header {
+      background: linear-gradient(135deg, #0f3d75, #194f96);
+      color: white;
+      padding: 28px 32px;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .header h1 {
+      margin: 4px 0 0;
+      font-size: 28px;
+      line-height: 1.15;
+    }
+    .header p {
+      margin: 4px 0 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+    }
+    .meta {
+      text-align: right;
+      min-width: 220px;
+      font-size: 13px;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      border-bottom: 1px solid var(--line);
+    }
+    .summary .card {
+      padding: 18px 20px;
+      border-right: 1px solid var(--line);
+    }
+    .summary .card:last-child {
+      border-right: 0;
+    }
+    .summary .label {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .summary .value {
+      margin-top: 6px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .section {
+      padding: 24px 28px;
+    }
+    .section h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+    .section p {
+      margin: 0 0 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    thead th {
+      background: var(--soft);
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+    .num { text-align: right; white-space: nowrap; }
+    .verified { color: var(--green); font-weight: 700; }
+    .mismatch { color: var(--red); font-weight: 700; }
+    .pending { color: var(--amber); font-weight: 700; }
+    .footer-note {
+      padding: 0 28px 28px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .toolbar {
+        display: none;
+      }
+      .sheet {
+        max-width: none;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button type="button" onclick="window.print()">Print / Save PDF</button>
+    <button type="button" onclick="window.close()">Close</button>
+  </div>
+
+  <div class="sheet">
+    <div class="header">
+      <div>
+        <p>TransparenSee Financial Statement</p>
+        <h1>{{ request.GET.statement_title|default:"Financial Statement" }}</h1>
+        <p>{{ organization.name }} • {{ period.label }}</p>
+      </div>
+      <div class="meta">
+        <div>Prepared by: {{ prepared_by }}</div>
+        <div>Generated: {{ generated_at|date:"F d, Y h:i A" }}</div>
+        <div>Period: {{ period.start_date }} to {{ period.end_date }}</div>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="card">
+        <div class="label">Reports</div>
+        <div class="value">{{ report_count }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Line Items</div>
+        <div class="value">{{ record_count }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Total Income</div>
+        <div class="value">PHP {{ total_income|floatformat:2 }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Total Expenses</div>
+        <div class="value">PHP {{ total_expense |floatformat:2 }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Net Balance</div>
+        <div class="value">PHP {{ net_total|floatformat:2 }}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Source Reports</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Status</th>
+            <th>Academic Year</th>
+            <th class="num">Income</th>
+            <th class="num">Expense</th>
+            <th class="num">Net</th>
+            <th>Blockchain</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in report_summaries %}
+          <tr>
+            <td>{{ report.title }}</td>
+            <td>{{ report.status }}</td>
+            <td>{{ report.academic_year }}</td>
+            <td class="num">PHP {{ report.income|floatformat:2 }}</td>
+            <td class="num">PHP {{ report.expense|floatformat:2 }}</td>
+            <td class="num">PHP {{ report.net|floatformat:2 }}</td>
+            <td>
+              {% if report.blockchain_verified is True %}
+              <span class="verified">Verified</span>
+              {% elif report.blockchain_verified is False %}
+              <span class="mismatch">Hash mismatch</span>
+              {% else %}
+              <span class="pending">Not yet on blockchain</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">No source reports found for this period.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Statement Details</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th class="num">Qty</th>
+            <th class="num">Unit Price</th>
+            <th class="num">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+          <tr>
+            <td>{{ entry.report_title }}</td>
+            <td>{{ entry.date }}</td>
+            <td>{{ entry.entry_type }}</td>
+            <td>{{ entry.category }}</td>
+            <td>{{ entry.description }}</td>
+            <td class="num">{{ entry.quantity }}</td>
+            <td class="num">PHP {{ entry.unit_price|floatformat:2 }}</td>
+            <td class="num">PHP {{ entry.amount|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8">No detailed entries found for this period.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer-note">
+      Current organization balance: PHP {{ current_balance|floatformat:2 }}.
+      If you open this page in a browser print dialog, choose "Save as PDF" as the destination to export a PDF copy.
+    </div>
+  </div>
+
+  {% if auto_print %}
+  <script>
+    window.addEventListener('load', () => {
+      window.print();
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

@@ -200,6 +200,9 @@
 
                   {% elif recent_fr.status == 'pending_adviser' %}
                       bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200
+                    
+                  {% elif recent_fr.status == 'approved' %}
+                      bg-green-50 text-green-800 ring-1 ring-green-300
 
                   {% elif recent_fr.status == 'on_blockchain' %}
                       bg-green-100 text-green-800 ring-1 ring-green-300
@@ -275,22 +278,23 @@
              <tr class="hover:bg-blue-50/40 transition-colors duration-150">
                 <td class="px-5 py-3 text-xs font-semibold ">{{ recent_log.report }}</td>
                 <td class="px-5 py-3 text-sm font-mono">
-                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
-                {% if recent_log.action == 'approved' %}bg-green-100 text-green-700
-                {% elif recent_log.action == 'rejected' %}bg-red-100 text-red-700
-                {% elif 'pending' in recent_log.action %}bg-amber-100 text-amber-700
-                {% elif recent_log.action == 'on_blockchain' %}bg-purple-100 text-purple-700
-                {% else %}bg-gray-100 text-gray-600
-                {% endif %}"> 
-                {{ recent_log.action }}
-                </span>
+                  <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
+                  {% if recent_log.action == 'approved' %}bg-green-100 text-green-700
+                  {% elif recent_log.action == 'rejected' %}bg-red-100 text-red-700
+                  {% elif 'pending' in recent_log.action %}bg-amber-100 text-amber-700
+                  {% elif recent_log.action == 'blockchain' %}bg-green-100 text-green-800 ring-1 ring-green-300
+                  {% else %}bg-gray-100 text-gray-600
+                  {% endif %}"> 
+                  {{ recent_log.action }}
+                  </span>
               </td>
               <td class="px-5 py-3 text-sm font-mono">
                 <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
                 {% if recent_log.action_by.role == 'treasurer' %}bg-blue-100 text-blue-700
-                {% elif recent_log.action_by.role == 'auditor' %}bg-green-100 text-green-700
+                {% elif recent_log.action_by.role == 'auditor' %}bg-yellow-100 text-yellow-700
                 {% elif recent_log.action_by.role == 'president' %}bg-amber-100 text-amber-700
                 {% elif recent_log.action_by.role == 'adviser' %}bg-purple-100 text-purple-700
+                {% elif recent_log.action_by.role == 'co_adviser' %}bg-purple-100 text-purple-700 ring-1 ring-purple-300
                 {% else %}bg-gray-100 text-gray-600
                 {% endif %}"> 
                 {{ recent_log.action_by.get_role_display}}

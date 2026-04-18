@@ -149,6 +149,21 @@ class OrganizationAnnouncement(models.Model):
     class Meta:
         ordering = ['-createdAt']
 
+class GlobalAnnouncement(models.Model):
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='global_announcements'
+    )
+    message = models.TextField()
+    createdAt = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-createdAt']
+
+    def __str__(self):
+        return f"{self.author.get_full_name()} - {self.message[:20]}"
+
 class AcademicYear(models.Model):
     SEMESTER_CHOICES = [
         ('1stSem', '1st Semester'),

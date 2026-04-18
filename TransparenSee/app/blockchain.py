@@ -5,6 +5,7 @@ from decimal import Decimal
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from dotenv import load_dotenv
+from .blockchain_utils import build_report_snapshot, generate_report_hash
 
 load_dotenv(override=True)
 
@@ -92,61 +93,43 @@ contract = w3.eth.contract(
 )
 
 
-def record_financial_report_on_blockchain(financial_report) -> dict:
-    """
-    Sends a FinancialReport to the Sepolia blockchain.
-    Returns tx_hash, block_number, and report_hash.
-    Store report_hash in financial_report.blockchain_hash.
-    """
+def record_financial_report_on_blockchain(financial_report):
     if not w3.is_connected():
-        raise ConnectionError("Cannot connect to Sepolia. Check SEPOLIA_URL in .env")
+        raise ConnectionError("No connection to Sepolia")
 
-    
-    report_payload = {
-        "report_id":    financial_report.id,
-        "title":        financial_report.title,
-        "org":          financial_report.organization.name,
-        "academic_year": str(financial_report.academic_year),
-        "total_amount": str(financial_report.total_amount),
-    }
-    report_hash = hashlib.sha256(
-        json.dumps(report_payload, sort_keys=True).encode()
-    ).hexdigest()
 
-    # Convert Decimal to integer cents (avoids float precision issues)
+    snapshot = build_report_snapshot(financial_report)
+    report_hash = generate_report_hash(snapshot)
+
     amount_in_cents = int(financial_report.total_amount * Decimal("100"))
 
-    org_name = financial_report.organization.name
-    title    = financial_report.title
-
-    
     nonce = w3.eth.get_transaction_count(WALLET_ADDRESS)
-    
+
     txn = contract.functions.addTransaction(
-        org_name,
+        financial_report.organization.name,
         amount_in_cents,
         report_hash,
-        title
+        financial_report.title
     ).build_transaction({
-        "from":     WALLET_ADDRESS,
-        "nonce":    nonce,
-        "gas":      300_000,
-        "gasPrice": w3.eth.gas_price,
-        "chainId":  11155111,  
+        "from": WALLET_ADDRESS,
+        "nonce": nonce,
+        "gas": 300000,
+        "gasPrice": w3.to_wei("2", "gwei"),
+        "chainId": 11155111,
     })
 
-    signed_txn = w3.eth.account.sign_transaction(txn, private_key=PRIVATE_KEY)
-    tx_hash    = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+    signed_txn = w3.eth.account.sign_transaction(txn, PRIVATE_KEY)
+    tx_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
 
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 
     if receipt.status != 1:
-        raise RuntimeError(f"Transaction reverted on-chain. TX: {tx_hash.hex()}")
+        raise RuntimeError("Blockchain transaction failed")
 
     return {
-        "tx_hash":      tx_hash.hex(),
+        "tx_hash": tx_hash.hex(),
         "block_number": receipt.blockNumber,
-        "report_hash":  report_hash,
+        "report_hash": report_hash,
     }
 
 
@@ -163,21 +146,10 @@ def get_transaction_count() -> int:
     return contract.functions.getTransactionCount().call()
 
 
-def verify_report_hash(financial_report) -> bool:
-    """
-    Re-computes the SHA-256 hash and compares it to what's stored
-    in financial_report.blockchain_hash.
-    Returns True if the report data has NOT been tampered with.
-    """
-    report_payload = {
-        "report_id":    financial_report.id,
-        "title":        financial_report.title,
-        "org":          financial_report.organization.name,
-        "academic_year": str(financial_report.academic_year),
-        "total_amount": str(financial_report.total_amount),
-    }
-    current_hash = hashlib.sha256(
-        json.dumps(report_payload, sort_keys=True).encode()
-    ).hexdigest()
+def verify_report_hash(financial_report):
+    from .blockchain_utils import build_report_snapshot, generate_report_hash
+
+    snapshot = build_report_snapshot(financial_report)
+    current_hash = generate_report_hash(snapshot)
 
     return current_hash == financial_report.blockchain_hash

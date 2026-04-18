@@ -1,0 +1,371 @@
+{% extends "app/officer/auditor/sidebar.html" %}
+{% load static %}
+{% block con %}
+
+<div class="px-6 py-6 flex flex-col gap-6 bg-base-200/30">
+  <div class="flex items-center gap-3">
+    <a href="{% url 'reports' %}" class="btn btn-sm btn-ghost btn-circle border border-base-300">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i>
+    </a>
+    <div>
+      <p class="text-xs font-bold tracking-widest text-base-content/40 uppercase mb-0.5">Reports</p>
+      <h1 class="text-2xl font-extrabold tracking-tight">Generate Financial Statement</h1>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-[420px_minmax(0,1fr)] gap-6">
+    <div class="card bg-base-100 border border-base-200 shadow-sm">
+      <div class="card-body gap-5">
+        <div>
+          <p class="text-sm font-bold">Period Setup</p>
+          <p class="text-xs text-base-content/50 mt-1">
+            Pull full details from the database and verify source reports against blockchain where available.
+          </p>
+        </div>
+
+        <div class="form-control gap-2">
+          <label class="label py-0">
+            <span class="label-text text-xs font-bold uppercase tracking-wider">Statement Type</span>
+          </label>
+          <select id="period_type" class="select select-bordered select-sm w-full">
+            <option value="">Select period</option>
+            <option value="monthly">Monthly</option>
+            <option value="semestral">Semestral</option>
+            <option value="yearly">Yearly</option>
+            <option value="event">Specific Event</option>
+          </select>
+        </div>
+
+        <div id="fields-monthly" class="period-fields hidden">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-control gap-2">
+              <label class="label py-0"><span class="label-text text-xs font-bold uppercase tracking-wider">Month</span></label>
+              <select id="month" class="select select-bordered select-sm w-full">
+                <option value="">Select month</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            <div class="form-control gap-2">
+              <label class="label py-0"><span class="label-text text-xs font-bold uppercase tracking-wider">Year</span></label>
+              <input id="year" type="number" min="2000" max="2100" value="{{ today_year }}" class="input input-bordered input-sm w-full">
+            </div>
+          </div>
+        </div>
+
+        <div id="fields-semestral" class="period-fields hidden">
+          <div class="grid grid-cols-1 gap-3">
+            <div class="form-control gap-2">
+              <label class="label py-0"><span class="label-text text-xs font-bold uppercase tracking-wider">Semester Record</span></label>
+              <select id="academic_year_period" class="select select-bordered select-sm w-full">
+                <option value="">Select semester record</option>
+                {% for ay in semestral_academic_years %}
+                <option value="{{ ay.pk }}">{{ ay }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="fields-yearly" class="period-fields hidden">
+          <div class="form-control gap-2">
+            <label class="label py-0"><span class="label-text text-xs font-bold uppercase tracking-wider">Academic Year</span></label>
+            <select id="academic_year_yearly" class="select select-bordered select-sm w-full">
+              <option value="">Select academic year</option>
+              {% for ay in yearly_academic_years %}
+              <option value="{{ ay }}">{{ ay }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div id="fields-event" class="period-fields hidden">
+          <div class="grid grid-cols-1 gap-3">
+            <div class="form-control gap-2">
+              <label class="label py-0"><span class="label-text text-xs font-bold uppercase tracking-wider">Event Name</span></label>
+              <input id="event_name" type="text" class="input input-bordered input-sm w-full" placeholder="Optional event name">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="form-control gap-2">
+                <label class="label py-0"><span class="label-text text-xs font-bold uppercase tracking-wider">Date From</span></label>
+                <input id="event_date_from" type="date" class="input input-bordered input-sm w-full">
+              </div>
+              <div class="form-control gap-2">
+                <label class="label py-0"><span class="label-text text-xs font-bold uppercase tracking-wider">Date To</span></label>
+                <input id="event_date_to" type="date" class="input input-bordered input-sm w-full">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-control gap-2">
+          <label class="label py-0"><span class="label-text text-xs font-bold uppercase tracking-wider">Statement Title</span></label>
+          <input id="statement_title" type="text" class="input input-bordered input-sm w-full" placeholder="Financial Statement">
+        </div>
+
+        <div id="period-error" class="alert alert-error text-sm hidden"></div>
+        <div id="period-summary" class="alert alert-info text-sm hidden"></div>
+
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="load-btn" class="btn btn-primary btn-sm gap-2">
+            <i data-lucide="database" class="w-4 h-4"></i>
+            Load Statement
+          </button>
+          <button type="button" id="print-btn" class="btn btn-outline btn-sm gap-2" disabled>
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            Print
+          </button>
+          <button type="button" id="pdf-btn" class="btn btn-outline btn-sm gap-2" disabled>
+            <i data-lucide="file-down" class="w-4 h-4"></i>
+            Save PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="flex flex-col gap-2 ">
+          <div class="card bg-base-100 border border-base-200 shadow-sm">
+            <div class="card-body p-5">
+              <p class="text-xs font-bold tracking-widest text-base-content/40 uppercase">Reports</p>
+              <p id="report-count" class="text-2xl font-extrabold mt-1">0</p>
+            </div>
+        </div>
+        <div class="card bg-base-100 border border-base-200 shadow-sm">
+          <div class="card-body p-5">
+            <p class="text-xs font-bold tracking-widest text-base-content/40 uppercase">Line Items</p>
+            <p id="record-count" class="text-2xl font-extrabold mt-1 ">0</p>
+          </div>
+        </div>
+        </div>
+        <div class="card bg-base-100 border border-base-200 shadow-sm">
+          <div class="card-body p-5">
+            <p class="text-xs font-bold tracking-widest text-base-content/40 uppercase">Income</p>
+            <p id="total-income" class="text-2xl font-extrabold text-success mt-1">₱ 0.00</p>
+          </div>
+        </div><div class="card bg-base-100 border border-base-200 shadow-sm">
+          <div class="card-body p-5">
+            <p class="text-xs font-bold tracking-widest text-base-content/40 uppercase">Expense</p>
+            <p id="total-expense" class="text-2xl font-extrabold text-error mt-1">₱ 0.00</p>
+          </div>
+        </div>
+        <div class="card bg-base-100 border border-base-200 shadow-sm">
+          <div class="card-body p-5">
+            <p class="text-xs font-bold tracking-widest text-base-content/40 uppercase">Net Balance</p>
+            <p id="net-total" class="text-2xl font-extrabold ">₱ 0.00</p>
+            <p id="current-balance" class="text-xs text-base-content/50 mt-1">Current org balance: ₱ 0.00</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border border-base-200 shadow-sm">
+        <div class="card-body gap-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-bold">Source Reports</p>
+              <p class="text-xs text-base-content/50">Database details with blockchain verification per report.</p>
+            </div>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-base-200">
+            <table class="table table-sm w-full">
+              <thead class="bg-base-200 text-xs">
+                <tr>
+                  <th>Report</th>
+                  <th>Academic Year</th>
+                  <th class="text-right">Income</th>
+                  <th class="text-right">Expense</th>
+                  <th class="text-right">Net</th>
+                  <th>Blockchain</th>
+                </tr>
+              </thead>
+              <tbody id="source-reports-body">
+                <tr>
+                  <td colspan="7" class="text-center text-base-content/40 py-8">Load a statement to see matching reports.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border border-base-200 shadow-sm">
+        <div class="card-body gap-4">
+          <div>
+            <p class="text-sm font-bold">Statement Details</p>
+            <p id="statement-label" class="text-xs text-base-content/50 mt-1">No period loaded yet.</p>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-base-200">
+            <table class="table table-sm w-full min-w-245">
+              <thead class="bg-base-200 text-xs">
+                <tr>
+                  <th>Report</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th class="text-right">Qty</th>
+                  <th class="text-right">Unit Price</th>
+                  <th class="text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="statement-rows-body">
+                <tr>
+                  <td colspan="8" class="text-center text-base-content/40 py-10">No records loaded yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const periodType = document.getElementById('period_type');
+const periodFields = document.querySelectorAll('.period-fields');
+const loadBtn = document.getElementById('load-btn');
+const printBtn = document.getElementById('print-btn');
+const pdfBtn = document.getElementById('pdf-btn');
+const errorBox = document.getElementById('period-error');
+const summaryBox = document.getElementById('period-summary');
+
+function money(value) {
+  return `₱ ${Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function setPeriodFields() {
+  periodFields.forEach((field) => field.classList.add('hidden'));
+  const target = document.getElementById(`fields-${periodType.value}`);
+  if (target) target.classList.remove('hidden');
+}
+
+function buildParams() {
+  const params = new URLSearchParams({
+    period_type: periodType.value || '',
+    month: document.getElementById('month')?.value || '',
+    year: document.getElementById('year')?.value || '',
+    academic_year: '',
+    academic_year_period: document.getElementById('academic_year_period')?.value || '',
+    academic_year_yearly: document.getElementById('academic_year_yearly')?.value || '',
+    event_name: document.getElementById('event_name')?.value || '',
+    event_date_from: document.getElementById('event_date_from')?.value || '',
+    event_date_to: document.getElementById('event_date_to')?.value || '',
+    statement_title: document.getElementById('statement_title')?.value || '',
+  });
+  return params;
+}
+
+function updateButtons(enabled) {
+  printBtn.disabled = !enabled;
+  pdfBtn.disabled = !enabled;
+}
+
+function renderSummaries(data) {
+  document.getElementById('report-count').textContent = data.report_count || 0;
+  document.getElementById('record-count').textContent = data.record_count || 0;
+  document.getElementById('total-income').textContent = money(data.total_income);
+  document.getElementById('total-expense').textContent = money(data.total_expense);
+  document.getElementById('net-total').textContent = money(data.net_total);
+  document.getElementById('current-balance').textContent = `Current org balance: ${money(data.current_balance)}`;
+  document.getElementById('statement-label').textContent = data.period?.label || 'No period loaded yet.';
+
+  const sourceBody = document.getElementById('source-reports-body');
+  if (!data.report_summaries?.length) {
+    sourceBody.innerHTML = '<tr><td colspan="7" class="text-center text-base-content/40 py-8">No source reports found for this period.</td></tr>';
+  } else {
+    sourceBody.innerHTML = data.report_summaries.map((report) => {
+      let verification = 'Not yet on blockchain';
+      let verificationClass = 'badge-ghost';
+      if (report.blockchain_verified === true) {
+        verification = 'Verified';
+        verificationClass = 'badge-success';
+      } else if (report.blockchain_verified === false) {
+        verification = 'Hash mismatch';
+        verificationClass = 'badge-error';
+      }
+
+      return `
+        <tr>
+          <td class="font-semibold">${report.title}</td>
+          <td>${report.academic_year}</td>
+          <td class="text-right">${money(report.income)}</td>
+          <td class="text-right">${money(report.expense)}</td>
+          <td class="text-right">${money(report.net)}</td>
+          <td><span class="badge ${verificationClass} badge-sm">${verification}</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+}
+
+function renderRows(data) {
+  const rowsBody = document.getElementById('statement-rows-body');
+  if (!data.entries?.length) {
+    rowsBody.innerHTML = '<tr><td colspan="8" class="text-center text-base-content/40 py-10">No detailed entries found for this period.</td></tr>';
+    return;
+  }
+
+  rowsBody.innerHTML = data.entries.map((entry) => `
+    <tr>
+      <td class="font-semibold">${entry.report_title}</td>
+      <td class="whitespace-nowrap">${entry.date}</td>
+      <td><span class="badge badge-sm ${entry.entry_type === 'income' ? 'badge-success' : 'badge-error'}">${entry.entry_type}</span></td>
+      <td>${entry.category}</td>
+      <td>${entry.description}</td>
+      <td class="text-right">${entry.quantity}</td>
+      <td class="text-right">${money(entry.unit_price)}</td>
+      <td class="text-right font-semibold">${money(entry.amount)}</td>
+    </tr>
+  `).join('');
+}
+
+async function loadStatement() {
+  errorBox.classList.add('hidden');
+  summaryBox.classList.add('hidden');
+  updateButtons(false);
+
+  const params = buildParams();
+  const res = await fetch(`{% url 'financial_statement_data' %}?${params.toString()}`);
+  const data = await res.json();
+
+  if (data.period?.error) {
+    errorBox.textContent = data.period.error;
+    errorBox.classList.remove('hidden');
+    renderSummaries({ report_count: 0, record_count: 0, total_income: 0, total_expense: 0 ,net_total: 0, current_balance: data.current_balance || 0, period: { label: 'No period loaded yet.' }, report_summaries: [] });
+    renderRows({ entries: [] });
+    return;
+  }
+
+  summaryBox.textContent = `${data.period.label} • ${data.report_count} report(s) • ${data.record_count} line item(s)`;
+  summaryBox.classList.remove('hidden');
+  renderSummaries(data);
+  renderRows(data);
+  updateButtons(data.record_count > 0);
+}
+
+function openPrint(autoPrint) {
+  const params = buildParams();
+  if (autoPrint) params.set('auto_print', '1');
+  window.open(`{% url 'financial_statement_print' %}?${params.toString()}`, '_blank');
+}
+
+periodType.addEventListener('change', setPeriodFields);
+loadBtn.addEventListener('click', loadStatement);
+printBtn.addEventListener('click', () => openPrint(false));
+pdfBtn.addEventListener('click', () => openPrint(true));
+setPeriodFields();
+</script>
+
+{% endblock con %}

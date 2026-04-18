@@ -1,6 +1,7 @@
 from django.utils import timezone 
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
+from django.http import JsonResponse
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from ...forms import *
 from ..mixins import *
@@ -243,7 +244,7 @@ class ReportDetailView(RoleRequireMixin, DetailView):
 
 class ChatView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/officer_chat.html'
-    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser"]
+    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin"]
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -254,7 +255,95 @@ class ChatView(RoleRequireMixin, TemplateView):
             return user.adviser.organization
         elif hasattr(user, 'head'):
             return getattr(user.head, 'organization', None)
+        elif hasattr(user, 'campus_admin'):
+            return getattr(user.campus_admin, 'organization', None)
         return None
+
+    def can_post_global_announcement(self, user):
+        return user.role in ['head', 'campus_admin']
+
+    def can_post_org_announcement(self, user):
+        return user.role in ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser']
+    
+    def get_user_department(self, user):
+        if hasattr(user, 'heads'):
+            return user.heads.get_department_display()
+        elif hasattr(user, 'campus_admin'):
+            return user.campus_admin.department
+        elif hasattr(user, 'adviser'):
+            return user.adviser.get_department_display()
+        elif hasattr(user, 'co_adviser'):
+            return user.co_adviser.get_department_display()
+        return ''
+
+    def serialize_message(self, msg, current_user):
+        organization_name = ''
+        if msg.user.role in ['treasurer', 'auditor', 'president'] and hasattr(msg.user, 'officer'):
+            organization_name = msg.user.officer.organization.name
+        elif msg.user.role in ['adviser', 'co_adviser'] and hasattr(msg.user, 'adviser'):
+            organization_name = msg.user.adviser.organization.name
+
+        return {
+            "id": msg.id,
+            "is_self": msg.user_id == current_user.id,
+            "author": msg.user.get_full_name() or msg.user.username,
+            "role": msg.user.get_role_display(),
+            "organization": organization_name,
+            "message": msg.message,
+            "time": timezone.localtime(msg.createdAt).strftime("%H:%M"),
+            "avatar": msg.user.profile_image.url if getattr(msg.user, 'profile_image', None) else '',
+        }
+
+    def serialize_org_announcement(self, announcement):
+        organization_name = announcement.organization.name if announcement.organization else 'Organization'
+        logo_url = ''
+        if getattr(announcement.organization, 'logo', None):
+            try:
+                logo_url = announcement.organization.logo.url
+            except ValueError:
+                logo_url = ''
+
+        return {
+            "id": announcement.id,
+            "scope": "organization",
+            "organization": organization_name,
+            "author": announcement.author.get_full_name() or announcement.author.username,
+            "message": announcement.message,
+            "time": timezone.localtime(announcement.createdAt).strftime("%b %d, %Y %H:%M"),
+            "logo": logo_url,
+        }
+
+    def serialize_global_announcement(self, announcement):
+        return {
+            "id": announcement.id,
+            "scope": "global",
+            "author": announcement.author.get_full_name() or announcement.author.username,
+            "role": announcement.author.get_role_display(),
+            "department": self.get_user_department(announcement.author),
+            "message": announcement.message,
+            "time": timezone.localtime(announcement.createdAt).strftime("%b %d, %Y %H:%M"),
+        }
+
+    def get_feed_payload(self, user):
+        org = self.get_organization(user)
+        global_messages = GlobalChat.objects.select_related("user").order_by("createdAt")[:50]
+        global_announcements = GlobalAnnouncement.objects.select_related("author").order_by("-createdAt")[:20]
+        if org:
+            announcements = OrganizationAnnouncement.objects.filter(
+                organization=org
+            ).select_related("author", "organization").order_by("-createdAt")[:20]
+        else:
+            announcements = OrganizationAnnouncement.objects.none()
+
+        return {
+            "global_messages": [self.serialize_message(msg, user) for msg in global_messages],
+            "organization_announcements": [self.serialize_org_announcement(item) for item in announcements],
+            "global_announcements": [self.serialize_global_announcement(item) for item in global_announcements],
+            "permissions": {
+                "can_post_global_announcement": self.can_post_global_announcement(user),
+                "can_post_org_announcement": bool(org and self.can_post_org_announcement(user)),
+            }
+        }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -270,7 +359,7 @@ class ChatView(RoleRequireMixin, TemplateView):
         if org:
             context["announcements"] = OrganizationAnnouncement.objects.filter(
                 organization=org
-            ).select_related("author").order_by("-createdAt")
+            ).select_related("author").order_by("createdAt")
         else:
             context["announcements"] = OrganizationAnnouncement.objects.none()
 
@@ -281,10 +370,15 @@ class ChatView(RoleRequireMixin, TemplateView):
             "adviser": "app/adviser/sidebar.html",
             "co_adviser": "app/adviser/sidebar.html",
             "head": "app/heads/sidebar.html",
+            "campus_admin": "app/campus_admin/sidebar.html",
         }
         context["base_template"] = role_templates.get(user.role, "app/base.html")
         context["chat_form"] = GlobalChatForm()
         context["announcement_form"] = AnnouncementForm()
+        context["global_announcement_form"] = GlobalAnnouncementForm()
+        context["can_post_global_announcement"] = self.can_post_global_announcement(user)
+        context["can_post_org_announcement"] = bool(org and self.can_post_org_announcement(user))
+        context["global_announcements"] = GlobalAnnouncement.objects.select_related("author").order_by("-createdAt")[:20]
         return context
 
     def post(self, request, *args, **kwargs):
@@ -292,7 +386,6 @@ class ChatView(RoleRequireMixin, TemplateView):
         user = request.user
         org = self.get_organization(user)
 
-        
         if tab == "global_chat":
             form = GlobalChatForm(request.POST)
             if form.is_valid():
@@ -300,9 +393,11 @@ class ChatView(RoleRequireMixin, TemplateView):
                 chat.user = user
                 chat.save()
             else:
-                print(form.errors)
+                return JsonResponse({"ok": False, "errors": form.errors}, status=400)
 
         elif tab == "organization_announcement":
+            if not org or not self.can_post_org_announcement(user):
+                return JsonResponse({"ok": False, "errors": {"message": ["Not allowed to post organization announcements."]}}, status=403)
             form = AnnouncementForm(request.POST)
             if form.is_valid():
                 ann = form.save(commit=False)
@@ -310,9 +405,31 @@ class ChatView(RoleRequireMixin, TemplateView):
                 ann.organization = org
                 ann.save()
             else:
-                print(form.errors)
+                return JsonResponse({"ok": False, "errors": form.errors}, status=400)
+
+        elif tab == "global_announcement":
+            if not self.can_post_global_announcement(user):
+                return JsonResponse({"ok": False, "errors": {"message": ["Not allowed to post global announcements."]}}, status=403)
+            form = GlobalAnnouncementForm(request.POST)
+            if form.is_valid():
+                ann = form.save(commit=False)
+                ann.author = user
+                ann.save()
+            else:
+                return JsonResponse({"ok": False, "errors": form.errors}, status=400)
+
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"ok": True, "feed": self.get_feed_payload(user)})
 
         return redirect(f"{request.path}?type={tab}")
+
+
+class ChatFeedView(RoleRequireMixin, TemplateView):
+    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin"]
+
+    def get(self, request, *args, **kwargs):
+        payload = ChatView().get_feed_payload(request.user)
+        return JsonResponse(payload)
 
 class OrgPublicProfileView(DetailView):
     model = Organization

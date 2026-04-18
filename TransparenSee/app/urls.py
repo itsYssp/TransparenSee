@@ -11,6 +11,7 @@ urlpatterns = [
     path('student/profile/', StudentProfileView.as_view(), name='student_profile'),
     path('password-change/', auth_views.PasswordChangeView.as_view(template_name='app/student/student_profile.html',success_url='/profile/'), name='password_change'),
     path('chat', ChatView.as_view(), name='chat'),
+    path('chat/feed/', ChatFeedView.as_view(), name='chat_feed'),
     path('officer/treasurer/', TreasurerDashboardView.as_view(), name='treasurer_dashboard'),
     path('treasurer/society-fee/',SocietyFeeView.as_view(),name='treasurer_society_fee'),
     path('treasurer/society-fee/',SocietyFeeView.as_view(),name='treasurer_society_fee_create'),
@@ -22,6 +23,10 @@ urlpatterns = [
     path('reports/<int:pk>/approve/', ApproveReportView.as_view(), name='report_approve'),
     path('reports/<int:pk>/blockchain/', RecordBlockchainView.as_view(), name='record_blockchain'),
     path('officer/auditor/', AuditorDashboardView.as_view(), name='auditor_dashboard'),
+    path('print/', GenerateFinancialStatementView.as_view(), name='generate_fs'),
+    path('print/data/', FinancialStatementDataView.as_view(), name='financial_statement_data'),
+    path('print/preview/', PrintableFinancialStatementView.as_view(), name='financial_statement_print'),
+    path('blockchain/financial-records/',BlockchainFinancialRecordsView.as_view(),name="financial_records"),
     path('officer/president/', PresidentDashboardView.as_view(), name='president_dashboard'),
     path('product-create', ProductCreateView.as_view(), name='product_create'),
     path('product-preview/', ProductPreviewView.as_view(), name='product_preview'),
@@ -45,7 +50,6 @@ urlpatterns = [
     path('superadmin/create-campus-admin', CreateCampusAdminView.as_view(), name='superadmin_create_campus_admin'),
     path('', LandingPage.as_view(), name='landing_page'),
 
-    
 ]
 
 if settings.DEBUG:
