@@ -1,4 +1,5 @@
-from django.utils import timezone 
+from django.utils import timezone
+from django.shortcuts import render
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse
@@ -8,6 +9,7 @@ from ..mixins import *
 from django.db.models import Sum, Q, Count 
 from ...blockchain import verify_report_hash
 from itertools import groupby  
+
 
 
 
@@ -253,8 +255,8 @@ class ChatView(RoleRequireMixin, TemplateView):
             return user.adviser.organization
         elif hasattr(user, 'co_adviser'):
             return user.adviser.organization
-        elif hasattr(user, 'head'):
-            return getattr(user.head, 'organization', None)
+        elif hasattr(user, 'heads'):
+            return getattr(user.heads, 'organization', None)
         elif hasattr(user, 'campus_admin'):
             return getattr(user.campus_admin, 'organization', None)
         return None
@@ -494,7 +496,6 @@ class ProductListView(ListView, RoleRequireMixin):
             return self.request.user.adviser.organization
         elif hasattr(user, 'co_adviser'):
             return self.request.user.adviser.organization
-        
         return None
         
 
@@ -508,3 +509,69 @@ class ProductListView(ListView, RoleRequireMixin):
         )
         return context
     
+class BlockchainRecordsView(RoleRequireMixin, TemplateView):
+    template_name = 'app/blockchain_records.html'
+    role_required = ["treasurer","auditor", "president", "adviser", "co_adviser","head", "campus_admin"]
+
+    def get_organization(self, user):
+        if hasattr(user, 'officer'):
+            return user.officer.organization
+        elif hasattr(user, 'adviser'):
+            return user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
+            return user.adviser.organization
+        elif hasattr(user, 'heads'):
+            return None
+        elif hasattr(user,'campus_admin'):
+            return None
+        return None
+    
+    role_templates = {
+        "treasurer": "app/officer/treasurer/sidebar.html",
+        "auditor": "app/officer/auditor/sidebar.html",
+        "president": "app/officer/president/sidebar.html",
+        "adviser": "app/adviser/sidebar.html",
+        "co_adviser": "app/adviser/sidebar.html",
+        "head": "app/heads/sidebar.html",
+        "campus_admin": "app/campus_admin/sidebar.html",
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
+        return context
+    
+
+    def get(self, request):
+        context = self.get_context_data()
+        user = self.request.user
+        org = self.get_organization(user)
+
+        reports = FinancialReport.objects.filter( 
+                status='on_blockchain'
+        ).prefetch_related('entries').order_by('-blockchain_recorded_at')
+        
+        if org:
+            reports = FinancialReport.objects.filter(
+                organization=org,
+                status='on_blockchain',
+            ).prefetch_related('entries').order_by('-blockchain_recorded_at')
+            
+
+        for report in reports:
+            report.total_income  = report.entries.filter(entry_type='income').aggregate(t=Sum('amount'))['t'] or 0
+            report.total_expense = report.entries.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
+            report.net           = report.total_income - report.total_expense
+
+        total_income  = sum(r.total_income for r in reports)
+        total_expense = sum(r.total_expense for r in reports)
+
+        context.update({
+            'reports':        reports,
+            'total_income':   total_income,
+            'total_expense':  total_expense,
+            'academic_years': AcademicYear.objects.order_by('-academic_year'),
+        })
+
+        return render(request, self.template_name, context)

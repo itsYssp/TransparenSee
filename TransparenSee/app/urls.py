@@ -48,6 +48,7 @@ urlpatterns = [
     path('superadmin/', SuperAdminView.as_view(), name='superadmin_dashboard'),
     path('superadmin/user-role', UserRolesView.as_view(), name='superadmin_user_role'),
     path('superadmin/create-campus-admin', CreateCampusAdminView.as_view(), name='superadmin_create_campus_admin'),
+    path('blockchain-records/', BlockchainRecordsView.as_view(), name='blockchain_records'),
     path('', LandingPage.as_view(), name='landing_page'),
 
 ]
