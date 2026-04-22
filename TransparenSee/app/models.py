@@ -20,7 +20,10 @@ class Organization(models.Model):
     ]
     ORG_CATEGORY = [
         ('academic', 'Academic'),
-        ('non_academic', 'Non-Academic')
+        ('non_academic', 'Non-Academic'),
+        ('performing_arts', 'Performing Arts'),
+        ('student_council', 'Student Council'),
+        ('student_publication', 'Student Publication'),
     ]
     name = models.CharField(max_length=100)
     logo = models.ImageField(upload_to='organization/logos', blank=True, null=True) 

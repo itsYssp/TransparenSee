@@ -12,9 +12,6 @@ from django.db import transaction
 from django.http import JsonResponse
 from decimal import Decimal
 
-
-
-
 class TreasurerDashboardView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/dashboard.html'
     role_required = 'treasurer'
@@ -39,17 +36,37 @@ class TreasurerDashboardView(RoleRequireMixin, TemplateView):
         return context
     
 
-
 class SocietyFeeView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/society_fee.html'
-    role_required = 'treasurer'
+    role_required = ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser']
+
+    role_templates = {
+        'treasurer': 'app/officer/treasurer/sidebar.html',
+        'auditor': 'app/officer/auditor/sidebar.html',
+        'president': 'app/officer/president/sidebar.html',
+        'adviser': 'app/adviser/sidebar.html',
+        'co_adviser': 'app/adviser/sidebar.html',
+    }
 
     def get_organization(self):
-        return self.request.user.officer.organization
+        user = self.request.user
+        if hasattr(user, 'officer'):
+            return user.officer.organization
+        elif hasattr(user, 'adviser'):
+            return user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
+            return user.adviser.organization
+        return None
 
+    def get_context_data(self, **kwargs):
+        user = self.request.user
+        context = super().get_context_data(**kwargs)
+        context["base_template"] = self.role_templates.get(user.role, 'app/base.html') 
+        return context
+    
     def get(self, request, *args, **kwargs):
+        context = self.get_context_data()
         org = self.get_organization()
-        
 
         fees = SocietyFee.objects.filter(
             organization=org
@@ -96,7 +113,7 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             student__organization=org
         ).select_related('student').order_by('first_name')
 
-        return render(request, self.template_name, {
+        context.update({
             'society_fees': page_obj,
             'page_obj': page_obj,
             'students': students,
@@ -110,6 +127,8 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             'paid_percent': paid_percent,
             'unpaid_percent': unpaid_percent,
         })
+
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')

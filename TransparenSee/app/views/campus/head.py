@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from accounts.models import CustomUser
+from django.db.models import Count, Sum, Q
 from ...forms import *
 from ..mixins import *
 
@@ -14,7 +15,11 @@ class HeadDashBoardView(RoleRequireMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['verified_financial_report_count'] = FinancialReport.objects.filter(status='on_blockchain').count()
         context['pending_financial_report_count'] = FinancialReport.objects.exclude(status__in=['rejected',"on_blockchain"]).count()
-        context['verified_financial_reports'] = FinancialReport.objects.filter(status='on_blackchain')[:3]
+        context['recent_financial_reports'] = FinancialReport.objects.exclude(status='rejected').annotate(
+            income_count=Count('entries', filter=Q(entries__entry_type='income')),
+            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
+        ).order_by('-created_at')[:3]
+        context['recent_approval_logs'] = ReportApprovalLog.objects.order_by('-created_at')[:3]
         context["latest_ay"] = AcademicYear.objects.order_by("-academic_year", "-semester").first()
         context["total_organizations"] = Organization.objects.count()
         context["total_users"] = CustomUser.objects.count()

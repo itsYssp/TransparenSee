@@ -103,7 +103,6 @@ class ReportListView(ListView):
             'organization', 'created_by', 'academic_year'
         ).prefetch_related('entries')
 
-       
         if hasattr(user, 'officer'):
             qs = qs.filter(organization=user.officer.organization)
         elif hasattr(user, 'adviser'):
@@ -128,7 +127,7 @@ class ReportListView(ListView):
         expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
         )
 
-        # ✅ ADD ORDERING HERE
+        
         qs = qs.order_by('-created_at')
 
         return qs
@@ -511,7 +510,7 @@ class ProductListView(ListView, RoleRequireMixin):
     
 class BlockchainRecordsView(RoleRequireMixin, TemplateView):
     template_name = 'app/blockchain_records.html'
-    role_required = ["treasurer","auditor", "president", "adviser", "co_adviser","head", "campus_admin"]
+    role_required = ["treasurer","auditor", "president", "adviser", "co_adviser","head", "campus_admin", "admin" ] 
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -520,10 +519,6 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
             return user.adviser.organization
         elif hasattr(user, 'co_adviser'):
             return user.adviser.organization
-        elif hasattr(user, 'heads'):
-            return None
-        elif hasattr(user,'campus_admin'):
-            return None
         return None
     
     role_templates = {
@@ -534,6 +529,7 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
         "co_adviser": "app/adviser/sidebar.html",
         "head": "app/heads/sidebar.html",
         "campus_admin": "app/campus_admin/sidebar.html",
+        "admin": "app/superadmin/sidebar.html"
     }
 
     def get_context_data(self, **kwargs):

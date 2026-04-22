@@ -1,4 +1,4 @@
-{% extends "app/campus_admin/sidebar.html" %} {% load static %} {% block con %}
+{% extends "app/heads/sidebar.html" %} {% load static %} {% block con %}
 
 <div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 items-center">
 
@@ -219,7 +219,7 @@
       {% endif %}
 
       <div class="flex items-center justify-end gap-3">
-        <a href="{% url 'campus_admin_user_role' %}"
+        <a href="{% url 'head_user_role' %}"
           class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
           Cancel
         </a>

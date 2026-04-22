@@ -50,7 +50,7 @@
               <li>
                 <a href="{% url 'blockchain_records' %}"
                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    {% if request.resolver_match.url_name == 'adviser_blockchain' %}
+                    {% if request.resolver_match.url_name == 'blockchain_records' %}
                       bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
                     {% else %}
                       text-gray-600 hover:bg-gray-50 hover:text-gray-900
@@ -86,7 +86,8 @@
               </li>
 
               <li>
-                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                <a href ="{% url 'treasurer_society_fee' %}" 
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
                     {% if request.resolver_match.url_name == 'adviser_society_fee' %}
                       bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
                     {% else %}
@@ -108,18 +109,6 @@
                     >
                   <i data-lucide="message-circle-more" class="w-4 h-4 shrink-0"></i>
                   Community
-                </a>
-              </li>
-
-              <li>
-                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    {% if request.resolver_match.url_name == 'adviser_members' %}
-                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
-                    {% else %}
-                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
-                    {% endif %}">
-                  <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
-                  Members
                 </a>
               </li>
 

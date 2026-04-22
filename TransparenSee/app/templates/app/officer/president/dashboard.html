@@ -276,7 +276,7 @@
         <tbody class="divide-y divide-gray-50">
           {% for recent_log in recent_approval_logs %}
              <tr class="hover:bg-blue-50/40 transition-colors duration-150">
-                <td class="px-5 py-3 text-xs font-semibold ">{{ recent_log.report }}</td>
+                <td class="px-5 py-3 text-xs font-semibold ">{{ recent_log.report.title }}</td>
                 <td class="px-5 py-3 text-sm font-mono">
                   <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
                   {% if recent_log.action == 'approved' %}bg-green-100 text-green-700

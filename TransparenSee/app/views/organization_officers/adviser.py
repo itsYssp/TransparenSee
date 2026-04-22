@@ -5,6 +5,7 @@ from ...blockchain import record_financial_report_on_blockchain
 from django.shortcuts import get_object_or_404, redirect 
 from ...models import *
 from django.contrib import messages
+from django.db.models import Count, Q, Sum
 
 class AdviserDashboardView(RoleRequireMixin, TemplateView):
     template_name = 'app/adviser/dashboard.html'
@@ -16,7 +17,18 @@ class AdviserDashboardView(RoleRequireMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         org = self.get_organization()
-        context["balance"] =  org.balance
+        recent_approval_logs = ReportApprovalLog.objects.filter(report__organization=org).order_by('-created_at')[:3]
+        context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status__in=['rejected', 'approved', 'on_blockchain']).count()
+        context["approved_financial_reports"] = FinancialReport.objects.filter(organization=org, status='on_blockchain').count()
+        context["flagged_financial_reports"] = FinancialReport.objects.filter(organization=org, status='rejected').count()
+        context['recent_financial_reports'] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').annotate(
+            income_count=Count('entries', filter=Q(entries__entry_type='income')),
+            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
+        ).order_by('-created_at')[:3]
+        context["society_fee_amount"] = org.society_fee_amount
+        context["recent_approval_logs"] = recent_approval_logs
+        context["organization"] = org
+        context['balance'] = org.balance
         return context
     
 

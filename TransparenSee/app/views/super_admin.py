@@ -7,9 +7,19 @@ from ..forms import *
 from ..models import *
 from .mixins import *
 
+
 class SuperAdminView(RoleRequireMixin, TemplateView):
     role_required = 'admin'
     template_name = 'app/superadmin/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["total_user"] = CustomUser.objects.count()
+        context['total_org'] = Organization.objects.count()
+        context['total_on_blockchain'] = FinancialReport.objects.filter(status='on_blockchain').count()
+        
+        return context
+    
 
 class UserRolesView(RoleRequireMixin,ListView ):
     model = CustomUser
