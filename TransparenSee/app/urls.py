@@ -49,6 +49,23 @@ urlpatterns = [
     path('superadmin/user-role', UserRolesView.as_view(), name='superadmin_user_role'),
     path('superadmin/create-campus-admin', CreateCampusAdminView.as_view(), name='superadmin_create_campus_admin'),
     path('blockchain-records/', BlockchainRecordsView.as_view(), name='blockchain_records'),
+    path('members/', MembersView.as_view(), name='members'),
+    path(
+        "members/import/",
+        BulkImportStudentsView.as_view(),
+        name="bulk_import_students",
+    ),
+    path(
+        "members/import/template/",
+        DownloadStudentTemplateView.as_view(),
+        name="student_import_template",
+    ),
+    path("members/import/clear-credentials/",
+    ClearImportCredentialsView.as_view(),
+    name="clear_import_credentials",),
+    path("clear-import-preview/", ClearImportPreviewView.as_view(), name="clear_import_preview"),
+    path("confirm-import/", ConfirmImportStudentsView.as_view(), name="confirm_import_students"),
+
     path('', LandingPage.as_view(), name='landing_page'),
 
 ]

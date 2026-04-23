@@ -34,6 +34,8 @@
     </div>
   </div>
 
+  {% if user.role != 'student' %}{% endif %}
+
   <div id="global-chat-panel" class="flex flex-col flex-1 min-h-0 overflow-hidden">
     <div id="messages" class="flex-1 overflow-y-auto px-6 py-4 space-y-3"></div>
 

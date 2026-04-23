@@ -9,9 +9,12 @@ from ..mixins import *
 from django.db.models import Sum, Q, Count 
 from ...blockchain import verify_report_hash
 from itertools import groupby  
-
-
-
+import openpyxl
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.views import View
+from django.utils.crypto import get_random_string
+from django.db import transaction
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
     role_required = ['auditor', 'president', 'adviser', 'co_adviser']
@@ -245,15 +248,17 @@ class ReportDetailView(RoleRequireMixin, DetailView):
 
 class ChatView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/officer_chat.html'
-    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin"]
+    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin", "student"]
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
             return user.officer.organization
         elif hasattr(user, 'adviser'):
             return user.adviser.organization
+        elif hasattr(user, 'student'):
+            return user.student.organization
         elif hasattr(user, 'co_adviser'):
-            return user.adviser.organization
+            return user.co_adviser.organization  # FIX: was user.adviser.organization (wrong relation)
         elif hasattr(user, 'heads'):
             return getattr(user.heads, 'organization', None)
         elif hasattr(user, 'campus_admin'):
@@ -265,7 +270,10 @@ class ChatView(RoleRequireMixin, TemplateView):
 
     def can_post_org_announcement(self, user):
         return user.role in ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser']
-    
+
+    def is_student(self, user):
+        return user.role == 'student'
+
     def get_user_department(self, user):
         if hasattr(user, 'heads'):
             return user.heads.get_department_display()
@@ -327,8 +335,31 @@ class ChatView(RoleRequireMixin, TemplateView):
 
     def get_feed_payload(self, user):
         org = self.get_organization(user)
+        student = self.is_student(user)
+
+        # Students only see their org's announcements — no global chat, no global announcements
+        if student:
+            if org:
+                announcements = OrganizationAnnouncement.objects.filter(
+                    organization=org
+                ).select_related("author", "organization").order_by("-createdAt")[:20]
+            else:
+                announcements = OrganizationAnnouncement.objects.none()
+
+            return {
+                "global_messages": [],
+                "organization_announcements": [self.serialize_org_announcement(item) for item in announcements],
+                "global_announcements": [],
+                "permissions": {
+                    "can_post_global_announcement": False,
+                    "can_post_org_announcement": False,  # students read-only
+                }
+            }
+
+        # Officers / advisers / heads / campus_admin — full feed
         global_messages = GlobalChat.objects.select_related("user").order_by("createdAt")[:50]
         global_announcements = GlobalAnnouncement.objects.select_related("author").order_by("-createdAt")[:20]
+
         if org:
             announcements = OrganizationAnnouncement.objects.filter(
                 organization=org
@@ -350,36 +381,52 @@ class ChatView(RoleRequireMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         org = self.get_organization(user)
-
-        context["global_messages"] = GlobalChat.objects.select_related(
-            "user"
-        ).order_by("createdAt")[:50]
+        student = self.is_student(user)
 
         context['user_role'] = user.role
+        context["is_student"] = student
+        context["can_post_global_announcement"] = self.can_post_global_announcement(user)
+        context["can_post_org_announcement"] = bool(org and self.can_post_org_announcement(user))
 
-        if org:
-            context["announcements"] = OrganizationAnnouncement.objects.filter(
-                organization=org
-            ).select_related("author").order_by("createdAt")
+        if student:
+            # Students only see their own org's announcements
+            context["global_messages"] = GlobalChat.objects.none()
+            context["global_announcements"] = GlobalAnnouncement.objects.none()
+            if org:
+                context["announcements"] = OrganizationAnnouncement.objects.filter(
+                    organization=org
+                ).select_related("author").order_by("createdAt")
+            else:
+                context["announcements"] = OrganizationAnnouncement.objects.none()
         else:
-            context["announcements"] = OrganizationAnnouncement.objects.none()
+            # Officers and above see everything
+            context["global_messages"] = GlobalChat.objects.select_related(
+                "user"
+            ).order_by("createdAt")[:50]
+            context["global_announcements"] = GlobalAnnouncement.objects.select_related(
+                "author"
+            ).order_by("-createdAt")[:20]
+            if org:
+                context["announcements"] = OrganizationAnnouncement.objects.filter(
+                    organization=org
+                ).select_related("author").order_by("createdAt")
+            else:
+                context["announcements"] = OrganizationAnnouncement.objects.none()
 
         role_templates = {
-            "treasurer": "app/officer/treasurer/sidebar.html",
-            "auditor": "app/officer/auditor/sidebar.html",
-            "president": "app/officer/president/sidebar.html",
-            "adviser": "app/adviser/sidebar.html",
-            "co_adviser": "app/adviser/sidebar.html",
-            "head": "app/heads/sidebar.html",
+            "treasurer":    "app/officer/treasurer/sidebar.html",
+            "student":      "app/student/sidebar.html",
+            "auditor":      "app/officer/auditor/sidebar.html",
+            "president":    "app/officer/president/sidebar.html",
+            "adviser":      "app/adviser/sidebar.html",
+            "co_adviser":   "app/adviser/sidebar.html",
+            "head":         "app/heads/sidebar.html",
             "campus_admin": "app/campus_admin/sidebar.html",
         }
         context["base_template"] = role_templates.get(user.role, "app/base.html")
         context["chat_form"] = GlobalChatForm()
         context["announcement_form"] = AnnouncementForm()
         context["global_announcement_form"] = GlobalAnnouncementForm()
-        context["can_post_global_announcement"] = self.can_post_global_announcement(user)
-        context["can_post_org_announcement"] = bool(org and self.can_post_org_announcement(user))
-        context["global_announcements"] = GlobalAnnouncement.objects.select_related("author").order_by("-createdAt")[:20]
         return context
 
     def post(self, request, *args, **kwargs):
@@ -426,11 +473,12 @@ class ChatView(RoleRequireMixin, TemplateView):
 
 
 class ChatFeedView(RoleRequireMixin, TemplateView):
-    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin"]
+    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin", "student"]
 
     def get(self, request, *args, **kwargs):
         payload = ChatView().get_feed_payload(request.user)
         return JsonResponse(payload)
+
 
 class OrgPublicProfileView(DetailView):
     model = Organization
@@ -438,12 +486,13 @@ class OrgPublicProfileView(DetailView):
     context_object_name = "org"
 
     role_template = {
-       "treasurer": "app/officer/treasurer/sidebar.html",
-        "auditor": "app/officer/auditor/sidebar.html",
-        "president": "app/officer/president/sidebar.html",
-        "adviser": "app/adviser/sidebar.html",
+        "treasurer":  "app/officer/treasurer/sidebar.html",
+        "auditor":    "app/officer/auditor/sidebar.html",
+        "president":  "app/officer/president/sidebar.html",
+        "adviser":    "app/adviser/sidebar.html",
         "co_adviser": "app/adviser/sidebar.html",
-        "head": "app/heads/sidebar.html",
+        "head":       "app/heads/sidebar.html",
+        "student":    "app/student/sidebar.html",
     }
 
     def get_context_data(self, **kwargs):
@@ -451,14 +500,8 @@ class OrgPublicProfileView(DetailView):
         org = self.object
         user = self.request.user
 
-        officers = Officer.objects.filter(
-            organization=org
-        ).select_related("user")
-
-        advisers = Adviser.objects.filter(
-            organization=org
-        ).select_related("user")
-
+        officers = Officer.objects.filter(organization=org).select_related("user")
+        advisers = Adviser.objects.filter(organization=org).select_related("user")
         announcements = OrganizationAnnouncement.objects.filter(
             organization=org
         ).select_related("author")[:5]
@@ -471,7 +514,6 @@ class OrgPublicProfileView(DetailView):
         context["total_advisers"] = advisers.count()
         context["announcements"] = announcements
         return context
-    
 
 class ProductListView(ListView, RoleRequireMixin):
     model = Product
@@ -571,3 +613,299 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
         })
 
         return render(request, self.template_name, context)
+    
+class MembersView(RoleRequireMixin, TemplateView):
+    template_name = "app/officer/members.html"
+    role_required = ['president', 'treasurer', 'auditor', 'adviser', 'co_adviser']
+
+    def get_organization(self):
+        user = self.request.user
+        if hasattr(user, 'officer'):
+            return user.officer.organization
+        if hasattr(user, 'adviser'):
+            return user.adviser.organization
+        return None
+    
+    role_templates = {
+        'treasurer': 'app/officer/treasurer/sidebar.html',
+        'auditor': 'app/officer/auditor/sidebar.html',
+        'president': 'app/officer/president/sidebar.html',
+        'co_adviser': 'app/co_adviser/sidebar.html',
+        'adviser': 'app/adviser/sidebar.html',
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        org = self.get_organization()
+        user = self.request.user
+        context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
+        context["students"] = CustomUser.objects.filter(student__organization=org)
+        return context
+
+class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
+
+    def post(self, request, *args, **kwargs):
+        excel_file = request.FILES.get("excel_file")
+
+        if not excel_file:
+            messages.error(request, "No file uploaded.")
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+
+        if not excel_file.name.endswith(".xlsx"):
+            messages.error(request, "Only .xlsx files are supported.")
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+
+        try:
+            wb = openpyxl.load_workbook(excel_file, data_only=True)
+            ws = wb.active
+        except Exception:
+            messages.error(request, "Invalid Excel file.")
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+
+        preview_data = []
+        error_rows   = []
+        seen_emails      = set()
+        seen_student_ids = set()
+
+        rows = list(ws.iter_rows(min_row=2, values_only=True))
+
+        for idx, row in enumerate(rows, start=2):
+            if not any(row):
+                continue
+
+            try:
+                first_name     = str(row[0]).strip() if row[0] is not None else ""
+                last_name      = str(row[1]).strip() if row[1] is not None else ""
+                email          = str(row[2]).strip() if row[2] is not None else ""
+                student_id_raw = row[3]
+                program        = str(row[4]).strip() if row[4] is not None else ""
+                year_raw       = row[5]
+                section        = str(row[6]).strip() if row[6] is not None else ""
+                status         = str(row[7]).strip() if row[7] is not None else ""
+                
+            except IndexError:
+                error_rows.append(f"Row {idx}: Not enough columns.")
+                continue
+
+            missing = []
+            if not first_name:     missing.append("first_name")
+            if not last_name:      missing.append("last_name")
+            if not email:          missing.append("email")
+            if not student_id_raw: missing.append("student_id")
+            if not program:        missing.append("program")
+            if not year_raw:       missing.append("year")
+            if not section:        missing.append("section")
+            if not status:         missing.append("status")
+
+            if missing:
+                error_rows.append(f"Row {idx}: Missing {', '.join(missing)}")
+                continue
+
+
+            try:
+                student_id = int(float(student_id_raw))
+            except (ValueError, TypeError):
+                error_rows.append(f"Row {idx}: Invalid student_id '{student_id_raw}'")
+                continue
+
+
+            try:
+                year = int(float(year_raw))
+                if year not in (1, 2, 3, 4):
+                    raise ValueError
+            except (ValueError, TypeError):
+                error_rows.append(f"Row {idx}: Year must be 1-4")
+                continue
+
+            valid_programs = [p[0] for p in Student.PROGRAM_CHOICE]
+            if program not in valid_programs:
+                error_rows.append(f"Row {idx}: Invalid program '{program}'")
+                continue
+
+            if CustomUser.objects.filter(email=email).exists():
+                error_rows.append(f"Row {idx}: Email already exists '{email}'")
+                continue
+
+
+            if email in seen_emails:
+                error_rows.append(f"Row {idx}: Duplicate email in file '{email}'")
+                continue
+
+            if Student.objects.filter(student_id=student_id).exists():
+                error_rows.append(f"Row {idx}: Student ID already exists '{student_id}'")
+                continue
+
+            if student_id in seen_student_ids:
+                error_rows.append(f"Row {idx}: Duplicate student_id in file '{student_id}'")
+                continue
+
+            seen_emails.add(email)
+            seen_student_ids.add(student_id)
+
+            preview_data.append({
+                "first_name": first_name,
+                "last_name":  last_name,
+                "email":      email,
+                "student_id": student_id,
+                "program":    program,
+                "year":       year,
+                "section":    section,
+                "status":     status,
+                
+            })
+
+        if not preview_data:
+            messages.error(request, "No valid rows found.")
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+
+        request.session["import_preview"] = preview_data
+        request.session["import_errors"]  = error_rows
+
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+
+
+class ConfirmImportStudentsView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        data = request.session.get("import_preview", [])
+
+        if not data:
+            messages.error(request, "No data to import.")
+            return redirect("members")
+        organization = None
+        try:
+            organization = request.user.officer.organization
+        except AttributeError:
+            pass
+
+        created_credentials = []
+        created_count       = 0
+
+        try:
+            with transaction.atomic():
+                for row in data:
+                    temp_password = "TransparenSee"
+
+                    user = CustomUser.objects.create_user(
+                        username=row["email"],
+                        email=row["email"],
+                        first_name=row["first_name"],
+                        last_name=row["last_name"],
+                        password=temp_password,
+                        role="student",
+                    )
+
+                    Student.objects.create(
+                        user=user,
+                        student_id=row["student_id"],
+                        program=row["program"],
+                        year=row["year"],
+                        section=row["section"],
+                        status=row["status"],
+                        organization=organization, 
+                    )
+
+                    created_credentials.append({
+                        "name":     user.get_full_name(),
+                        "email":    row["email"],
+                        "password": temp_password,
+                    })
+
+                    created_count += 1
+
+        except Exception as exc:
+            messages.error(request, f"Import failed: {exc}")
+            return redirect("members")
+
+        request.session["import_credentials"] = created_credentials
+        request.session.pop("import_preview", None)
+        request.session.pop("import_errors",  None)
+
+        messages.success(request, f"{created_count} student(s) imported successfully.")
+        return redirect("members")
+
+
+class DownloadStudentTemplateView(LoginRequiredMixin, TemplateView):
+    """Returns a pre-formatted Excel template the president can fill in."""
+
+    def get(self, request, *args, **kwargs):
+        import io
+        from django.http import HttpResponse
+        from openpyxl.styles import Font, PatternFill, Alignment
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Students"
+
+        headers = [
+            "first_name",
+            "last_name",
+            "email",
+            "student_id",
+            "program",
+            "year (1-4)",
+            "section",
+            "status",
+        ]
+
+        header_font  = Font(bold=True, color="FFFFFF")
+        header_fill  = PatternFill("solid", start_color="1D4ED8")
+        center_align = Alignment(horizontal="center", vertical="center")
+
+        for col_idx, header in enumerate(headers, start=1):
+            cell           = ws.cell(row=1, column=col_idx, value=header)
+            cell.font      = header_font
+            cell.fill      = header_fill
+            cell.alignment = center_align
+
+        sample = ["Juan", "Dela Cruz", "juan.delacruz@school.edu", 20240001, "BSIT", 2, "A", "active"]
+        for col_idx, val in enumerate(sample, start=1):
+            ws.cell(row=2, column=col_idx, value=val)
+
+        col_widths = [14, 14, 30, 14, 10, 12, 10, 12]
+        for col_idx, width in enumerate(col_widths, start=1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = width
+
+        ws_note = wb.create_sheet("Program Codes")
+        ws_note["A1"] = "Valid Program Codes"
+        ws_note["A1"].font = Font(bold=True)
+        programs = [
+            ("BSIT",     "Bachelor of Science in Information Technology"),
+            ("BSCS",     "Bachelor of Science in Computer Science"),
+            ("BSP",      "Bachelor of Science in Psychology"),
+            ("BSED-MTH", "Bachelor of Secondary Education - Mathematics"),
+            ("BSED-ENG", "Bachelor of Secondary Education - English"),
+            ("BSHM",     "Bachelor of Science in Hospitality Management"),
+            ("BSC",      "Bachelor of Science in Criminology"),
+            ("BSBA-MM",  "Bachelor of Science in Business Administration - Marketing Management"),
+            ("BSBA-HR",  "Bachelor of Science in Business Administration - Human Resource Management"),
+        ]
+        for row_idx, (code, label) in enumerate(programs, start=2):
+            ws_note.cell(row=row_idx, column=1, value=code)
+            ws_note.cell(row=row_idx, column=2, value=label)
+        ws_note.column_dimensions["A"].width = 12
+        ws_note.column_dimensions["B"].width = 65
+
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+
+        response = HttpResponse(
+            buf.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = 'attachment; filename="student_import_template.xlsx"'
+        return response
+
+
+class ClearImportCredentialsView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        request.session.pop("import_credentials", None)
+        return JsonResponse({"ok": True})
+
+
+class ClearImportPreviewView(LoginRequiredMixin, View):
+    def post(self, request):
+        request.session.pop("import_preview", None)
+        request.session.pop("import_errors", None)
+        return JsonResponse({"ok": True})
