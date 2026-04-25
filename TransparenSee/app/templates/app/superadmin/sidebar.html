@@ -56,8 +56,9 @@
               </li>
 
               <li>
-                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    {% if request.resolver_match.url_name == 'superadmin_organizations' %}
+                <a href="{% url 'organizations' %}" 
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'organizations' %}
                       bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
                     {% else %}
                       text-gray-600 hover:bg-gray-50 hover:text-gray-900
@@ -82,8 +83,9 @@
 
 
               <li>
-                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    {% if request.resolver_match.url_name == 'superadmin_audit_logs' %}
+                <a href='{% url "logs" %}' 
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'logs' %}
                       bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
                     {% else %}
                       text-gray-600 hover:bg-gray-50 hover:text-gray-900

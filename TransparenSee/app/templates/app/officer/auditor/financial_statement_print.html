@@ -134,6 +134,34 @@
       color: var(--muted);
       font-size: 11px;
     }
+    .receipt-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .receipt-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: white;
+      break-inside: avoid;
+    }
+    .receipt-card img {
+      width: 100%;
+      height: auto;
+      max-height: 42vh;
+      object-fit: contain;
+      display: block;
+      background: white;
+    }
+    .receipt-card .meta-copy {
+      padding: 12px 14px 14px;
+    }
+    .receipt-card .meta-copy p {
+      margin: 4px 0 0;
+      font-size: 11px;
+      color: var(--muted);
+    }
     @media print {
       body {
         background: white;
@@ -147,6 +175,16 @@
         border: 0;
         border-radius: 0;
         box-shadow: none;
+      }
+      .receipt-grid {
+        gap: 12px;
+      }
+      .receipt-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .receipt-card img {
+        max-height: 40vh;
       }
     }
   </style>
@@ -272,10 +310,27 @@
       </table>
     </div>
 
-    <div class="footer-note">
-      Current organization balance: PHP {{ current_balance|floatformat:2 }}.
-      If you open this page in a browser print dialog, choose "Save as PDF" as the destination to export a PDF copy.
+    <div class="section">
+      <h2>Receipt Images</h2>
+      {% if receipt_images %}
+      <div class="receipt-grid">
+        {% for receipt in receipt_images %}
+        <div class="receipt-card">
+          <img src="{{ receipt.image_url }}" alt="Receipt for {{ receipt.category }}">
+          <div class="meta-copy">
+            <strong>{{ receipt.category }}</strong>
+            <p>{{ receipt.date }} | {{ receipt.report_title }}</p>
+            <p>{{ receipt.description }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p>No receipt images found for this statement.</p>
+      {% endif %}
     </div>
+
+    
   </div>
 
   {% if auto_print %}

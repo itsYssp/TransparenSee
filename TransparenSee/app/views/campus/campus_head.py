@@ -7,7 +7,7 @@ class OrganizationListView(RoleRequireMixin, ListView):
     model = Organization
     template_name = 'app/organizations.html'
     context_object_name = 'organizations'
-    role_required = ['campus_admin', 'head']
+    role_required = ['campus_admin', 'head', 'admin']
     paginate_by = 10
 
     def get_queryset(self):
@@ -23,6 +23,7 @@ class OrganizationListView(RoleRequireMixin, ListView):
 
         role_template = {
             "head": "app/heads/sidebar.html",
+            "admin": "app/superadmin/sidebar.html",
             "campus_admin": "app/campus_admin/sidebar.html", 
         }
 
@@ -41,7 +42,7 @@ class OrganizationDetailView(RoleRequireMixin, DetailView):
     model = Organization
     template_name = 'app/organization_detail.html'
     context_object_name = 'org'
-    role_required = ['campus_admin', 'head']
+    role_required = ['campus_admin', 'head', 'admin']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -50,6 +51,7 @@ class OrganizationDetailView(RoleRequireMixin, DetailView):
 
         role_template = {
             "head": "app/heads/sidebar.html",
+            "admin": "app/superadmin/sidebar.html",
             "campus_admin ": "app/campus_admin/sidebar.html", 
         }
 

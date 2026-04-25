@@ -278,8 +278,8 @@
                 {% if recent_log.action_by.role == 'treasurer' %}bg-blue-100 text-blue-700
                 {% elif recent_log.action_by.role == 'auditor' %}bg-yellow-100 text-yellow-700
                 {% elif recent_log.action_by.role == 'president' %}bg-amber-100 text-amber-700
-                {% elif recent_log.action_by.role == 'co_adviser' %}bg-purple-100 text-purple-700 ring-1 ring-purple-300
-                {% elif recent_log.action_by.role == 'adviser' %}bg-purple-100 text-purple-700
+                {% elif recent_log.action_by.role == 'co_adviser' %}bg-purple-100 text-purple-700 
+                {% elif recent_log.action_by.role == 'adviser' %}bg-purple-100 text-purple-700 ring-1 ring-purple-300
                 {% else %}bg-gray-100 text-gray-600
                 {% endif %}"> 
                 {{ recent_log.action_by.get_role_display}}

@@ -228,9 +228,42 @@
           </div>
         </div>
       </div>
+      <div class="card bg-base-100 border border-base-200 shadow-sm">
+        <div class="card-body gap-4">
+          <div>
+            <p class="text-sm font-bold">Receipt Images</p>
+            <p class="text-xs text-base-content/50 mt-1">Attached receipt images from the reports included in this statement.</p>
+          </div>
+          <div id="statement-receipts" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="border border-dashed border-base-300 rounded-xl p-8 text-center text-sm text-base-content/40">
+              No receipt images loaded yet.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<dialog id="statement-receipt-modal" class="modal">
+  <div class="modal-box max-w-4xl rounded-2xl border border-base-300 p-0 overflow-hidden">
+    <div class="flex items-center justify-between border-b border-base-300 bg-base-100 px-6 py-4">
+      <div>
+        <p id="statement-receipt-date" class="text-xs font-bold uppercase tracking-wide text-base-content/40"></p>
+        <h3 id="statement-receipt-title" class="text-lg font-bold">Receipt Preview</h3>
+        <p id="statement-receipt-description" class="mt-1 text-sm text-base-content/60"></p>
+        <p id="statement-receipt-report" class="mt-1 text-xs font-medium text-primary"></p>
+      </div>
+      <button type="button" onclick="closeStatementReceiptModal()" class="rounded-lg p-2 text-base-content/60 hover:bg-base-200 hover:text-base-content">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div class="bg-base-200 p-4">
+      <img id="statement-receipt-image" alt="Receipt preview" class="max-h-[70vh] w-full rounded-xl object-contain bg-white" />
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
 
 <script>
 const periodType = document.getElementById('period_type');
@@ -331,6 +364,67 @@ function renderRows(data) {
   `).join('');
 }
 
+function renderReceipts(data) {
+  const receiptsWrap = document.getElementById('statement-receipts');
+  if (!data.receipt_images?.length) {
+    receiptsWrap.innerHTML = '<div class="border border-dashed border-base-300 rounded-xl p-8 text-center text-sm text-base-content/40 md:col-span-2 xl:col-span-3">No receipt images found for this statement.</div>';
+    return;
+  }
+
+  receiptsWrap.innerHTML = data.receipt_images.map((receipt) => `
+    <button
+      type="button"
+      data-image-url="${escapeHtml(receipt.image_url)}"
+      data-date="${escapeHtml(receipt.date)}"
+      data-title="${escapeHtml(receipt.category)}"
+      data-description="${escapeHtml(receipt.description)}"
+      data-report-title="${escapeHtml(receipt.report_title)}"
+      onclick="openStatementReceiptModalFromButton(this)"
+      class="block w-full overflow-hidden rounded-2xl border border-base-200 bg-base-100 text-left hover:border-primary/40 hover:shadow-sm transition-all">
+      <img src="${receipt.image_url}" alt="Receipt for ${receipt.category}" class="h-48 w-full object-cover bg-base-200" />
+      <div class="p-4">
+        <p class="text-[11px] font-bold uppercase tracking-wide text-base-content/40">${receipt.date}</p>
+        <p class="mt-1 text-sm font-semibold">${receipt.category}</p>
+        <p class="mt-1 text-xs text-base-content/60">${receipt.description}</p>
+        <p class="mt-2 text-xs font-medium text-primary">${receipt.report_title}</p>
+      </div>
+    </button>
+  `).join('');
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function openStatementReceiptModalFromButton(button) {
+  openStatementReceiptModal(
+    button.dataset.imageUrl,
+    button.dataset.date,
+    button.dataset.title,
+    button.dataset.description,
+    button.dataset.reportTitle,
+  );
+}
+
+function openStatementReceiptModal(imageUrl, date, title, description, reportTitle) {
+  document.getElementById('statement-receipt-image').src = imageUrl;
+  document.getElementById('statement-receipt-date').textContent = date || '';
+  document.getElementById('statement-receipt-title').textContent = title || 'Receipt Preview';
+  document.getElementById('statement-receipt-description').textContent = description || '';
+  document.getElementById('statement-receipt-report').textContent = reportTitle || '';
+  document.getElementById('statement-receipt-modal').showModal();
+}
+
+function closeStatementReceiptModal() {
+  const image = document.getElementById('statement-receipt-image');
+  image.removeAttribute('src');
+  document.getElementById('statement-receipt-modal').close();
+}
+
 async function loadStatement() {
   errorBox.classList.add('hidden');
   summaryBox.classList.add('hidden');
@@ -345,6 +439,7 @@ async function loadStatement() {
     errorBox.classList.remove('hidden');
     renderSummaries({ report_count: 0, record_count: 0, total_income: 0, total_expense: 0 ,net_total: 0, current_balance: data.current_balance || 0, period: { label: 'No period loaded yet.' }, report_summaries: [] });
     renderRows({ entries: [] });
+    renderReceipts({ receipt_images: [] });
     return;
   }
 
@@ -352,6 +447,7 @@ async function loadStatement() {
   summaryBox.classList.remove('hidden');
   renderSummaries(data);
   renderRows(data);
+  renderReceipts(data);
   updateButtons(data.record_count > 0);
 }
 

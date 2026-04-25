@@ -1,0 +1,102 @@
+{% extends base_template %} 
+{% load static %}
+{% block con %}
+    <div class="px-6 py-6 flex flex-col gap-6 bg-gray">
+        <div class="flex flex-col">
+            <p class='text-xs font-bold text-gray-400 tracking-widest uppercase mb-0.5'>{{ user.get_role_display }}</p>
+            <h1 class='text-2xl font-extrabold text-gray-900 tracking-tight'>Logs</h1>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="flex rounded-lg items-center justify-center bg-blue-50 w-7 h-7">
+                        <i data-lucide="history" class='w-3.5 h-3.5 text-blue-700'></i>
+                    </div>
+                    <p class='font-bold text-gray-800 text-sm'>Logs</p>
+                </div>
+                
+                <span class="text-xs text-gray-400 font-medium ">{{ logs_count }} record{{ logs|pluralize }}</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-xs text-bold text-gray-400 tracking-widest uppercase w-10 ">#</th>
+                            <th class="px-4 py-3 text-xs text-bold text-gray-400 tracking-widest text-left uppercase">Title</th>
+                            <th class="px-4 py-3 text-xs text-bold text-gray-400 tracking-widest text-left uppercase">Action By</th>
+                            <th class="px-4 py-3 text-xs text-bold text-gray-400 tracking-widest text-left uppercase">Position</th>
+                            <th class="px-4 py-3 text-xs text-bold text-gray-400 tracking-widest text-left uppercase">Org/Dept</th>
+                            <th class="px-4 py-3 text-xs text-bold text-gray-400 tracking-widest text-left uppercase">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class='divide-y divide-gray-100'>
+                        {% for log in logs %}
+                        <tr class="border border-gray-50 hover:bg-gray-50 transition-colors  ">
+                            <td class="px-4 py-3 text-xs font-mono text-gray-400 tracking-tight">{{ forloop.counter }}</td>
+                            <td class="px-4 py-3.5 text-sm font-bold text-gray-900 tracking-tight text-left">{{ log.report.title }}</td>
+                            <td class="px-4 py-3.5 text-sm font-semibold text-gray-900 tracking-tight text-left">{{ log.action_by.get_full_name}}</td>
+                            <td class="px-4 py-3.5 text-sm font-mono text-gray-900 tracking-tight text-left"> 
+                                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
+                                    {% if log.action_by.role == 'treasurer' %}bg-blue-100 text-blue-700
+                                    {% elif log.action_by.role == 'auditor' %}bg-yellow-100 text-yellow-700
+                                    {% elif log.action_by.role == 'president' %}bg-amber-100 text-amber-700
+                                    {% elif log.action_by.role == 'co_adviser' %}bg-purple-100 text-purple-700 
+                                    {% elif log.action_by.role == 'adviser' %}bg-purple-100 text-purple-700 ring-1 ring-purple-300
+                                    {% else %}bg-gray-100 text-gray-600
+                                    {% endif %}"> 
+                                    {{ log.action_by.get_role_display}}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3.5 ">
+                                <div class="flex items-center gap-2 ">
+                                    <img src="{% if log.report.organization.logo %} {{ log.report.organization.logo.url }} {% endif %} " alt="" class="w-5 h-5">
+                                    <p class="text-xs font-medium text-gray-900 tracking-tight text-left">{{ log.report.organization }}</p>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3.5 ">
+                                <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
+                                    {% if log.action == 'approved' %}bg-green-100 text-green-700
+                                    {% elif log.action == 'rejected' %}bg-red-100 text-red-700
+                                    {% elif 'pending' in log.action %}bg-amber-100 text-amber-700
+                                    {% elif log.action == 'blockchain' %}bg-green-100 text-green-800 ring-1 ring-green-300
+                                    {% else %}bg-blue-100 text-blue-600
+                                    {% endif %}"> 
+                                    {{ log.action }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>1
+            {% if is_paginated %}
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
+                <div>
+                    Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} reports
+                </div>
+                <div class="flex gap-2">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+                    class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">Prev</a>
+                    {% endif %}
+
+                    {% for num in paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="px-3 py-1 rounded-lg bg-blue-700 text-white font-bold">{{ num }}</span>
+                    {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                        <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+                        class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">{{ num }}</a>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+                    class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">Next</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock con %}

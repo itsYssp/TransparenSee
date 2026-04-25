@@ -322,6 +322,7 @@ class FinancialReportEntry(models.Model):
 
     INCOME_SOURCE_CHOICES = [
         ('society', 'Society Fee'),
+        ('product', 'Product Sale'),
         ('other', 'Other Income'),
     ]
 
@@ -342,6 +343,7 @@ class FinancialReportEntry(models.Model):
     product = models.ForeignKey('Product', null=True, blank=True, on_delete=models.SET_NULL)
     variant = models.ForeignKey('ProductVariant', null=True, blank=True, on_delete=models.SET_NULL)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    receipt_image = models.ImageField(upload_to='financial_reports/receipts/', blank=True, null=True)
 
     class Meta:
         ordering = ['date', 'order']

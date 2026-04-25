@@ -50,6 +50,7 @@ class CustomUser(AbstractUser):
         ('treasurer', 'Treasurer'),
         ('auditor', 'Auditor'),
         ('president', 'President'),
+        ('vice_president', 'Vice-President'),
         ('secretary', 'Secretary'),
         ('student', 'Student'),
         ('head', 'Head')

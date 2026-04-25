@@ -440,6 +440,37 @@
     </div>
   </div>
 
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+          <i data-lucide="images" class="w-3.5 h-3.5 text-blue-600"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-800">Receipt Images</p>
+      </div>
+    </div>
+    <div class="p-5">
+      {% if receipt_entries %}
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {% for entry in receipt_entries %}
+        <button type="button"
+          onclick="openReceiptDetailModal('{{ entry.receipt_image.url }}', '{{ entry.date|escapejs }}', '{{ entry.category|escapejs }}', '{{ entry.description|escapejs }}')"
+          class="block w-full overflow-hidden rounded-2xl border border-gray-200 bg-white text-left hover:border-blue-300 hover:shadow-sm transition-all">
+          <img src="{{ entry.receipt_image.url }}" alt="Receipt for {{ entry.category }}" class="h-48 w-full object-cover bg-gray-100">
+          <div class="p-4">
+            <p class="text-xs font-bold uppercase tracking-wide text-gray-400">{{ entry.date }}</p>
+            <p class="mt-1 text-sm font-semibold text-gray-900">{{ entry.category }}</p>
+            <p class="mt-1 text-xs text-gray-500">{{ entry.description }}</p>
+          </div>
+        </button>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-sm text-gray-400 italic text-center">No receipt images attached to this report.</p>
+      {% endif %}
+    </div>
+  </div>
+
     <!-- Approval Log -->
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-100">
@@ -532,6 +563,25 @@
     </div>
   </div>
 
+  <dialog id="receipt-detail-modal" class="modal">
+    <div class="modal-box max-w-4xl rounded-2xl border border-gray-200 p-0 overflow-hidden">
+      <div class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+        <div>
+          <p id="receipt-detail-date" class="text-xs font-bold uppercase tracking-wide text-gray-400"></p>
+          <h3 id="receipt-detail-title" class="text-lg font-bold text-gray-900">Receipt Preview</h3>
+          <p id="receipt-detail-description" class="mt-1 text-sm text-gray-500"></p>
+        </div>
+        <button type="button" onclick="closeReceiptDetailModal()" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="bg-gray-100 p-4">
+        <img id="receipt-detail-image" alt="Receipt preview" class="max-h-[70vh] w-full rounded-xl object-contain bg-white" />
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
 
   <script>
     const loadingModal = document.getElementById('loadingModal');
@@ -545,6 +595,20 @@
     window.addEventListener('load', () => {
       loadingModal.classList.remove('modal-open'); 
     });
+
+    function openReceiptDetailModal(imageUrl, date, title, description) {
+      document.getElementById('receipt-detail-image').src = imageUrl;
+      document.getElementById('receipt-detail-date').textContent = date || '';
+      document.getElementById('receipt-detail-title').textContent = title || 'Receipt Preview';
+      document.getElementById('receipt-detail-description').textContent = description || '';
+      document.getElementById('receipt-detail-modal').showModal();
+    }
+
+    function closeReceiptDetailModal() {
+      const image = document.getElementById('receipt-detail-image');
+      image.removeAttribute('src');
+      document.getElementById('receipt-detail-modal').close();
+    }
   </script>
 
 

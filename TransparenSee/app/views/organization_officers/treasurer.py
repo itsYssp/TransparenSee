@@ -38,12 +38,13 @@ class TreasurerDashboardView(RoleRequireMixin, TemplateView):
 
 class SocietyFeeView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/society_fee.html'
-    role_required = ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser']
+    role_required = ['treasurer', 'auditor','vice_president', 'president', 'adviser', 'co_adviser']
 
     role_templates = {
         'treasurer': 'app/officer/treasurer/sidebar.html',
         'auditor': 'app/officer/auditor/sidebar.html',
         'president': 'app/officer/president/sidebar.html',
+        'vice_president': 'app/officer/vice_president/sidebar.html',
         'adviser': 'app/adviser/sidebar.html',
         'co_adviser': 'app/adviser/sidebar.html',
     }
@@ -212,12 +213,13 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
         descriptions   = request.POST.getlist('description[]')
         amounts        = request.POST.getlist('amount[]')
         entry_types    = request.POST.getlist('entry_type[]')
+        row_keys       = request.POST.getlist('row_key[]')
         income_sources = request.POST.getlist('income_source[]')
         society_ay_ids = request.POST.getlist('society_academic_year[]')
         product_ids    = request.POST.getlist('product_id[]')
         variant_ids    = request.POST.getlist('variant_id[]')
         quantities     = request.POST.getlist('quantity[]')  
-        unit_prices     = request.POST.getlist('unit_price[]')
+        unit_prices    = request.POST.getlist('unit_price[]')
 
         if not any(d.strip() for d in dates):
             messages.error(request, 'At least one entry is required.')
@@ -241,6 +243,8 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                 category    = categories[i]
                 description = descriptions[i]
                 amount      = amounts[i]
+                row_key     = row_keys[i] if i < len(row_keys) else ''
+                receipt_image = request.FILES.get(f'receipt_image__{row_key}') if row_key else None
                 
 
                 if not (date and amount):
@@ -306,7 +310,8 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                     society_semester=None,
                     product=product_obj if income_source == 'product' else None,
                     variant=variant_obj if income_source == 'product' else None,
-                    unit_price  = unit_price
+                    unit_price=unit_price,
+                    receipt_image=receipt_image,
                 ))
 
             FinancialReportEntry.objects.bulk_create(entries)

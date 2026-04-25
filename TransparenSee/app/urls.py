@@ -65,7 +65,7 @@ urlpatterns = [
     name="clear_import_credentials",),
     path("clear-import-preview/", ClearImportPreviewView.as_view(), name="clear_import_preview"),
     path("confirm-import/", ConfirmImportStudentsView.as_view(), name="confirm_import_students"),
-
+    path("logs/", LogsView.as_view(), name='logs'),
     path('', LandingPage.as_view(), name='landing_page'),
 
 ]

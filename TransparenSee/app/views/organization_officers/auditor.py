@@ -188,6 +188,7 @@ class StatementPeriodMixin:
         payload = {
             "period": period,
             "entries": [],
+            "receipt_images": [],
             "report_summaries": [],
             "total_income": 0.0,
             "total_expense": 0.0,
@@ -252,6 +253,7 @@ class StatementPeriodMixin:
             })
 
         rows = []
+        receipt_images = []
         for entry in entries:
             rows.append({
                 "report_id": entry.report_id,
@@ -265,12 +267,22 @@ class StatementPeriodMixin:
                 "unit_price": float(entry.unit_price or 0),
                 "amount": float(entry.amount or 0),
             })
+            if entry.receipt_image:
+                receipt_images.append({
+                    "report_id": entry.report_id,
+                    "report_title": entry.report.title,
+                    "date": entry.date.strftime("%Y-%m-%d"),
+                    "category": entry.category,
+                    "description": entry.description,
+                    "image_url": request.build_absolute_uri(entry.receipt_image.url),
+                })
 
         total_income = sum(row["amount"] for row in rows if row["entry_type"] == 'income')
         total_expense = sum(row["amount"] for row in rows if row["entry_type"] == 'expense')
 
         payload.update({
             "entries": rows,
+            "receipt_images": receipt_images,
             "report_summaries": summaries,
             "total_income": total_income,
             "total_expense": total_expense,

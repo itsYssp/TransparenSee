@@ -296,7 +296,7 @@
         <div class="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-50 max-h-56 overflow-y-auto">
           {% for entry in report.entries.all %}
           <div class="flex items-center gap-3 px-4 py-2.5">
-            <span class="w-2 h-2 rounded-full flex-shrink-0 {% if entry.entry_type == 'income' %}bg-green-500{% else %}bg-red-400{% endif %}"></span>
+            <span class="w-2 h-2 rounded-full shrink-0 {% if entry.entry_type == 'income' %}bg-green-500{% else %}bg-red-400{% endif %}"></span>
             <div class="flex-1 min-w-0">
               <p class="text-xs font-semibold text-gray-800">{{ entry.category }}</p>
               <p class="text-xs text-gray-400 truncate">{{ entry.description }}</p>

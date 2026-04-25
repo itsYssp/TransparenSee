@@ -17,7 +17,7 @@ from django.utils.crypto import get_random_string
 from django.db import transaction
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
-    role_required = ['auditor', 'president', 'adviser', 'co_adviser']
+    role_required = ['auditor', 'president', 'adviser', 'co_adviser' ]
 
     def post(self, request, pk):
         report = get_object_or_404(FinancialReport, pk=pk)
@@ -95,7 +95,8 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
 
         return redirect('report_detail', pk=pk)
 
-class ReportListView(ListView):
+class ReportListView(RoleRequireMixin, ListView):
+    role_required = ['treasurer', 'auditor', 'vice_president', 'president', 'adviser', 'co_adviser']
     model = FinancialReport
     template_name = 'app/officer/treasurer/report_list.html'
     paginate_by = 10
@@ -142,8 +143,6 @@ class ReportListView(ListView):
             return user.adviser.organization
         elif hasattr(user, 'co_adviser'):
             return user.adviser.organization
-        elif hasattr(user, 'campus_admin'):
-            return getattr(user.campus_admin, 'organization', None)
         return None
 
     def get_context_data(self, **kwargs):
@@ -155,6 +154,7 @@ class ReportListView(ListView):
             "treasurer": "app/officer/treasurer/sidebar.html",
             "auditor": "app/officer/auditor/sidebar.html",
             "president": "app/officer/president/sidebar.html",
+            "vice_president": "app/officer/president/sidebar.html",
             "adviser": "app/adviser/sidebar.html",
             "co_adviser": "app/adviser/sidebar.html",
         }
@@ -180,7 +180,7 @@ class ReportDetailView(RoleRequireMixin, DetailView):
     model = FinancialReport
     template_name = 'app/officer/report_details.html'
     context_object_name = 'report'
-    role_required = ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser']
+    role_required = ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser', 'vice_president']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -229,12 +229,14 @@ class ReportDetailView(RoleRequireMixin, DetailView):
             "treasurer":  "app/officer/treasurer/sidebar.html",
             "auditor":    "app/officer/auditor/sidebar.html",
             "president":  "app/officer/president/sidebar.html",
+            "vice_president":  "app/officer/president/sidebar.html",
             "adviser":    "app/adviser/sidebar.html",
             "co_adviser": "app/adviser/sidebar.html",
         }
 
         total_income  = entries.filter(entry_type='income').aggregate(t=Sum('amount'))['t'] or 0
         total_expense = entries.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
+        receipt_entries = entries.exclude(receipt_image='').exclude(receipt_image__isnull=True)
 
         context['base_template']       = role_templates.get(user.role, "app/base.html")
         context['grouped_entries']     = grouped_entries
@@ -242,13 +244,14 @@ class ReportDetailView(RoleRequireMixin, DetailView):
         context['total_income']        = total_income
         context['total_expense']       = total_expense
         context['net_total']           = total_income - total_expense
+        context['receipt_entries']     = receipt_entries
         context['blockchain_verified'] = verify_report_hash(report) if report.blockchain_hash else None
 
         return context
 
 class ChatView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/officer_chat.html'
-    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin", "student"]
+    role_required = ["treasurer", "auditor", "president","vice_president", "adviser", "head", "co_adviser", "campus_admin", "student"]
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -258,11 +261,7 @@ class ChatView(RoleRequireMixin, TemplateView):
         elif hasattr(user, 'student'):
             return user.student.organization
         elif hasattr(user, 'co_adviser'):
-            return user.co_adviser.organization  # FIX: was user.adviser.organization (wrong relation)
-        elif hasattr(user, 'heads'):
-            return getattr(user.heads, 'organization', None)
-        elif hasattr(user, 'campus_admin'):
-            return getattr(user.campus_admin, 'organization', None)
+            return user.co_adviser.organization 
         return None
 
     def can_post_global_announcement(self, user):
@@ -418,6 +417,7 @@ class ChatView(RoleRequireMixin, TemplateView):
             "student":      "app/student/sidebar.html",
             "auditor":      "app/officer/auditor/sidebar.html",
             "president":    "app/officer/president/sidebar.html",
+            "vice_president":    "app/officer/president/sidebar.html",
             "adviser":      "app/adviser/sidebar.html",
             "co_adviser":   "app/adviser/sidebar.html",
             "head":         "app/heads/sidebar.html",
@@ -489,6 +489,7 @@ class OrgPublicProfileView(DetailView):
         "treasurer":  "app/officer/treasurer/sidebar.html",
         "auditor":    "app/officer/auditor/sidebar.html",
         "president":  "app/officer/president/sidebar.html",
+        "vice_president":  "app/officer/president/sidebar.html",
         "adviser":    "app/adviser/sidebar.html",
         "co_adviser": "app/adviser/sidebar.html",
         "head":       "app/heads/sidebar.html",
@@ -519,13 +520,14 @@ class ProductListView(ListView, RoleRequireMixin):
     model = Product
     template_name = 'app/officer/product_list.html'
     context_object_name = 'products'
-    role_required = ["treasurer", "auditor", "president", "adviser", "co_adviser"]
+    role_required = ["treasurer", "auditor", "president", "adviser", "co_adviser", 'vice_president']
     paginate_by = 10
 
     role_templates = {
         'treasurer' : 'app/officer/treasurer/sidebar.html',
         'auditor' : 'app/officer/auditor/sidebar.html',
         'president' : 'app/officer/president/sidebar.html',
+        'vice_president' : 'app/officer/president/sidebar.html',
         'adviser' : 'app/adviser/sidebar.html',
         'co_adviser' : 'app/adviser/sidebar.html',
     }
@@ -552,7 +554,7 @@ class ProductListView(ListView, RoleRequireMixin):
     
 class BlockchainRecordsView(RoleRequireMixin, TemplateView):
     template_name = 'app/blockchain_records.html'
-    role_required = ["treasurer","auditor", "president", "adviser", "co_adviser","head", "campus_admin", "admin" ] 
+    role_required = ["treasurer","auditor", "president", "vice_president", "adviser", "co_adviser","head", "campus_admin", "admin" ] 
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -567,6 +569,7 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
         "treasurer": "app/officer/treasurer/sidebar.html",
         "auditor": "app/officer/auditor/sidebar.html",
         "president": "app/officer/president/sidebar.html",
+        "vice_president": "app/officer/president/sidebar.html",
         "adviser": "app/adviser/sidebar.html",
         "co_adviser": "app/adviser/sidebar.html",
         "head": "app/heads/sidebar.html",
@@ -616,7 +619,7 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
     
 class MembersView(RoleRequireMixin, TemplateView):
     template_name = "app/officer/members.html"
-    role_required = ['president', 'treasurer', 'auditor', 'adviser', 'co_adviser']
+    role_required = ['president', 'treasurer', 'auditor', 'adviser', 'co_adviser', 'vice_president']
 
     def get_organization(self):
         user = self.request.user
@@ -630,6 +633,7 @@ class MembersView(RoleRequireMixin, TemplateView):
         'treasurer': 'app/officer/treasurer/sidebar.html',
         'auditor': 'app/officer/auditor/sidebar.html',
         'president': 'app/officer/president/sidebar.html',
+        'vice_president': 'app/officer/president/sidebar.html',
         'co_adviser': 'app/co_adviser/sidebar.html',
         'adviser': 'app/adviser/sidebar.html',
     }
@@ -909,3 +913,47 @@ class ClearImportPreviewView(LoginRequiredMixin, View):
         request.session.pop("import_preview", None)
         request.session.pop("import_errors", None)
         return JsonResponse({"ok": True})
+    
+class LogsView(RoleRequireMixin, ListView):
+    role_required = ['treasurer', 'auditor', 'president', 'vice_president', 'co_adviser', 'adviser', 'head', 'campus_admin', 'admin']
+    template_name = 'app/logs.html'
+    paginate_by = 10
+    model = ReportApprovalLog
+    context_object_name = 'logs'
+
+    def get_organization(self):
+        user = self.request.user
+        if hasattr(user, 'officer'):
+            return user.officer.organization
+        elif hasattr(user, 'adviser'):
+            return user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
+            return user.adviser.organization
+        return None
+    
+    role_templates = {
+        'treasurer': 'app/officer/treasurer/sidebar.html',
+        'auditor': 'app/officer/auditor/sidebar.html',
+        'president': 'app/officer/president/sidebar.html',
+        'vice_president': 'app/officer/president/sidebar.html',
+        'head': 'app/heads/sidebar.html',
+        'campus_admin': 'app/campus_admin/sidebar.html',
+        'admin': 'app/superadmin/sidebar.html',
+    }
+    
+    def get_queryset(self):
+        user = self.request.user
+        org = self.get_organization()
+        if hasattr(user, 'officer'):
+            return ReportApprovalLog.objects.filter(report__organization=org)
+        return ReportApprovalLog.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
+        context['logs_count'] = self.get_queryset().count()
+
+        return context
+    
