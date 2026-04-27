@@ -27,6 +27,7 @@ urlpatterns = [
     path('print/data/', FinancialStatementDataView.as_view(), name='financial_statement_data'),
     path('print/preview/', PrintableFinancialStatementView.as_view(), name='financial_statement_print'),
     path('blockchain/financial-records/',BlockchainFinancialRecordsView.as_view(),name="financial_records"),
+    path('officer/secretary/', SecretaryHomepageView.as_view(), name='secretary_homepage'),
     path('officer/president/', PresidentDashboardView.as_view(), name='president_dashboard'),
     path('product-create', ProductCreateView.as_view(), name='product_create'),
     path('product-preview/', ProductPreviewView.as_view(), name='product_preview'),

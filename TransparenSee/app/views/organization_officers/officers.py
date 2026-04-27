@@ -251,7 +251,7 @@ class ReportDetailView(RoleRequireMixin, DetailView):
 
 class ChatView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/officer_chat.html'
-    role_required = ["treasurer", "auditor", "president","vice_president", "adviser", "head", "co_adviser", "campus_admin", "student"]
+    role_required = ["treasurer", "auditor", "secretary" ,"president","vice_president", "adviser", "head", "co_adviser", "campus_admin", "student"]
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -268,7 +268,7 @@ class ChatView(RoleRequireMixin, TemplateView):
         return user.role in ['head', 'campus_admin']
 
     def can_post_org_announcement(self, user):
-        return user.role in ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser']
+        return user.role in ['treasurer', 'auditor', 'president', 'adviser', 'co_adviser', 'secretary']
 
     def is_student(self, user):
         return user.role == 'student'
@@ -286,7 +286,7 @@ class ChatView(RoleRequireMixin, TemplateView):
 
     def serialize_message(self, msg, current_user):
         organization_name = ''
-        if msg.user.role in ['treasurer', 'auditor', 'president'] and hasattr(msg.user, 'officer'):
+        if msg.user.role in ['treasurer', 'auditor', 'president', 'secretary'] and hasattr(msg.user, 'officer'):
             organization_name = msg.user.officer.organization.name
         elif msg.user.role in ['adviser', 'co_adviser'] and hasattr(msg.user, 'adviser'):
             organization_name = msg.user.adviser.organization.name
@@ -416,6 +416,7 @@ class ChatView(RoleRequireMixin, TemplateView):
             "treasurer":    "app/officer/treasurer/sidebar.html",
             "student":      "app/student/sidebar.html",
             "auditor":      "app/officer/auditor/sidebar.html",
+            "secretary":      "app/officer/secretary/sidebar.html",
             "president":    "app/officer/president/sidebar.html",
             "vice_president":    "app/officer/president/sidebar.html",
             "adviser":      "app/adviser/sidebar.html",
@@ -473,7 +474,7 @@ class ChatView(RoleRequireMixin, TemplateView):
 
 
 class ChatFeedView(RoleRequireMixin, TemplateView):
-    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin", "student"]
+    role_required = ["treasurer", "auditor", "president", "adviser", "head", "co_adviser", "campus_admin", "student","secretary"]
 
     def get(self, request, *args, **kwargs):
         payload = ChatView().get_feed_payload(request.user)
@@ -488,6 +489,7 @@ class OrgPublicProfileView(DetailView):
     role_template = {
         "treasurer":  "app/officer/treasurer/sidebar.html",
         "auditor":    "app/officer/auditor/sidebar.html",
+        "secretary":    "app/officer/secretary/sidebar.html",
         "president":  "app/officer/president/sidebar.html",
         "vice_president":  "app/officer/president/sidebar.html",
         "adviser":    "app/adviser/sidebar.html",
@@ -520,12 +522,13 @@ class ProductListView(ListView, RoleRequireMixin):
     model = Product
     template_name = 'app/officer/product_list.html'
     context_object_name = 'products'
-    role_required = ["treasurer", "auditor", "president", "adviser", "co_adviser", 'vice_president']
+    role_required = ["treasurer", "auditor", "president", "adviser", "co_adviser", 'vice_president','secretary']
     paginate_by = 10
 
     role_templates = {
         'treasurer' : 'app/officer/treasurer/sidebar.html',
         'auditor' : 'app/officer/auditor/sidebar.html',
+        "secretary":    "app/officer/secretary/sidebar.html",
         'president' : 'app/officer/president/sidebar.html',
         'vice_president' : 'app/officer/president/sidebar.html',
         'adviser' : 'app/adviser/sidebar.html',
@@ -554,7 +557,7 @@ class ProductListView(ListView, RoleRequireMixin):
     
 class BlockchainRecordsView(RoleRequireMixin, TemplateView):
     template_name = 'app/blockchain_records.html'
-    role_required = ["treasurer","auditor", "president", "vice_president", "adviser", "co_adviser","head", "campus_admin", "admin" ] 
+    role_required = ["treasurer","auditor", "president", "vice_president", "adviser", "co_adviser","head", "campus_admin", "admin", 'secretary' ] 
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -574,7 +577,9 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
         "co_adviser": "app/adviser/sidebar.html",
         "head": "app/heads/sidebar.html",
         "campus_admin": "app/campus_admin/sidebar.html",
-        "admin": "app/superadmin/sidebar.html"
+        "admin": "app/superadmin/sidebar.html",
+        "secretary":    "app/officer/secretary/sidebar.html",
+
     }
 
     def get_context_data(self, **kwargs):
@@ -619,7 +624,7 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
     
 class MembersView(RoleRequireMixin, TemplateView):
     template_name = "app/officer/members.html"
-    role_required = ['president', 'treasurer', 'auditor', 'adviser', 'co_adviser', 'vice_president']
+    role_required = ['president', 'treasurer', 'auditor', 'adviser', 'co_adviser', 'vice_president', 'secretary']
 
     def get_organization(self):
         user = self.request.user
@@ -636,6 +641,7 @@ class MembersView(RoleRequireMixin, TemplateView):
         'vice_president': 'app/officer/president/sidebar.html',
         'co_adviser': 'app/co_adviser/sidebar.html',
         'adviser': 'app/adviser/sidebar.html',
+        "secretary":    "app/officer/secretary/sidebar.html",
     }
 
     def get_context_data(self, **kwargs):
@@ -915,7 +921,7 @@ class ClearImportPreviewView(LoginRequiredMixin, View):
         return JsonResponse({"ok": True})
     
 class LogsView(RoleRequireMixin, ListView):
-    role_required = ['treasurer', 'auditor', 'president', 'vice_president', 'co_adviser', 'adviser', 'head', 'campus_admin', 'admin']
+    role_required = ['treasurer', 'auditor', 'president', 'vice_president', 'co_adviser', 'adviser', 'head', 'campus_admin', 'admin', 'secretary']
     template_name = 'app/logs.html'
     paginate_by = 10
     model = ReportApprovalLog
@@ -939,6 +945,8 @@ class LogsView(RoleRequireMixin, ListView):
         'head': 'app/heads/sidebar.html',
         'campus_admin': 'app/campus_admin/sidebar.html',
         'admin': 'app/superadmin/sidebar.html',
+        "secretary":    "app/officer/secretary/sidebar.html",
+
     }
     
     def get_queryset(self):

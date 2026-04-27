@@ -19,6 +19,8 @@ class HomeTemplateView(TemplateView):
                 return redirect(reverse_lazy('adviser_dashboard'))
             elif user.role == 'president':
                 return redirect(reverse_lazy('president_dashboard'))
+            elif user.role == 'secretary':
+                return redirect(reverse_lazy('secretary_homepage'))
             elif user.role == 'campus_admin':
                 return redirect(reverse_lazy('campus_admin_dashboard'))
             elif user.role == 'head':

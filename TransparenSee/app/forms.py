@@ -146,6 +146,41 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ['name', 'description', 'is_active']
 
+
+class AccomplishmentReportForm(forms.ModelForm):
+    class Meta:
+        model = AccomplismentReport
+        fields = ['title', 'desciption', 'report_file']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['title'].widget.attrs.update({
+            'class': 'input input-bordered w-full bg-white',
+            'placeholder': 'Enter report title',
+        })
+        self.fields['desciption'].widget.attrs.update({
+            'class': 'textarea textarea-bordered w-full min-h-28 bg-white',
+            'placeholder': 'Summarize the accomplishment report',
+        })
+        self.fields['report_file'].widget.attrs.update({
+            'class': 'file-input file-input-bordered w-full bg-white',
+            'accept': 'application/pdf,.pdf',
+        })
+        self.fields['report_file'].required = True
+        self.fields['report_file'].label = 'Accomplishment Report PDF'
+
+    def clean_report_file(self):
+        report_file = self.cleaned_data.get('report_file')
+        if not report_file:
+            raise forms.ValidationError('Please upload a PDF file.')
+
+        filename = report_file.name.lower()
+        content_type = getattr(report_file, 'content_type', '')
+        if not filename.endswith('.pdf') or (content_type and content_type != 'application/pdf'):
+            raise forms.ValidationError('Only PDF files are allowed.')
+
+        return report_file
+
 from django import forms
 from .models import AcademicYear
 

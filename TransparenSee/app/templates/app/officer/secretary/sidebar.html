@@ -38,15 +38,15 @@
             <ul class="space-y-0.5">
 
               <li>
-                <a href="{% url 'auditor_dashboard' %}"
+                <a href="{% url 'secretary_homepage' %}"
                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    {% if request.resolver_match.url_name == 'auditor_dashboard' %}
+                    {% if request.resolver_match.url_name == 'secretary_homepage' %}
                       bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
                     {% else %}
                       text-gray-600 hover:bg-gray-50 hover:text-gray-900
                     {% endif %}">
-                  <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
-                  Dashboard
+                  <i data-lucide="clipboard-check" class="w-4 h-4 shrink-0"></i>
+                  Accomplishment Report
                 </a>
               </li>
 
@@ -60,32 +60,6 @@
                     {% endif %}">
                   <i data-lucide="link" class="w-4 h-4 shrink-0"></i>
                   Blockchain Records
-                </a>
-              </li>
-
-              <li>
-                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    {% if request.resolver_match.url_name == 'reports' %}
-                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
-                    {% else %}
-                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
-                    {% endif %}"
-                    href="{% url 'reports' %}">
-                  <i data-lucide="clipboard-list" class="w-4 h-4 shrink-0"></i>
-                  Audit Final Report
-                </a>
-              </li>
-              
-              <li>
-                <a href="{% url 'generate_fs'  %}" 
-                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    {% if request.resolver_match.url_name == 'financial_statement_generator' %}
-                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
-                    {% else %}
-                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
-                    {% endif %}">
-                  <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>
-                  Financial Statement
                 </a>
               </li>
 

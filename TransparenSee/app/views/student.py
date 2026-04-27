@@ -32,18 +32,20 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
         org = None
         if hasattr(user, 'student'):
             org = user.student.organization
+        
+        context['accomplishment_report'] = AccomplismentReport.objects.filter(organization=org)
 
-        # Fetch blockchain transactions
+      
         try:
             transactions = self.contract.functions.getTransactions().call()
         except Exception as e:
             transactions = []
             print("Error fetching transactions:", e)
 
-        # Remove duplicates based on report hash (assuming hash is index 0 or adjust)
+        
         unique_transactions = {}
         for tx in transactions:
-            report_hash = tx[4]  # adjust index depending on your struct
+            report_hash = tx[4]  
             if report_hash not in unique_transactions:
                 unique_transactions[report_hash] = tx
 
@@ -53,14 +55,14 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
         for t in transactions:
             tx_list.append({
                 "organization": t[0],
-                "amount":       t[1] / 100,   # convert cents back to pesos
+                "amount":       t[1] / 100,  
                 "sender":       t[2],
                 "timestamp":    datetime.fromtimestamp(t[3]).strftime('%Y-%m-%d %H:%M:%S'),
                 "report_hash":  t[4],
                 "title":        t[5],
             })
 
-        # Filter to only show this student's organization transactions
+        
         if org:
             org_tx_list = [t for t in tx_list if t['organization'] == org.name]
         else:
@@ -69,7 +71,7 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
         context['transactions'] = org_tx_list
         context['tx_count']     = len(org_tx_list)
 
-        # Financial reports — only approved/on_blockchain visible to students
+
         if org:
             context['financial_reports'] = FinancialReport.objects.filter(
                 organization=org,

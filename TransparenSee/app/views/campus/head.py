@@ -92,7 +92,7 @@ class HeadUserRoleView(RoleRequireMixin, ListView):
         user_type = self.request.GET.get("type", "advisers")
 
         if user_type == "officers":
-            roles = ["president", "treasurer", "auditor"]
+            roles = ["president", "treasurer", "auditor", 'secretary']
         elif user_type == "advisers":
             roles = ["adviser", "co_adviser"]
         else:

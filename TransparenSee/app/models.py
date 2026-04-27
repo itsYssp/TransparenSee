@@ -413,3 +413,17 @@ class ProductVariant(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.size or ''} {self.color or ''}".strip()
+
+class AccomplismentReport(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='accomplishment_report')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='secretary')
+    title = models.CharField(max_length=100)
+    desciption = models.TextField()
+    report_file = models.FileField(upload_to='accomplishment_reports/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.organization}"
