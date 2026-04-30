@@ -77,7 +77,7 @@
               </li>
               <li>
                 <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                    {% if request.resolver_match.url_name == 'society_fee' %}
+                    {% if request.resolver_match.url_name == 'treasurer_society_fee' %}
                       bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
                     {% else %}
                       text-gray-600 hover:bg-gray-50 hover:text-gray-900
@@ -85,6 +85,19 @@
                     href="{% url 'treasurer_society_fee' %}">
                   <i data-lucide="banknote-arrow-up" class="w-4 h-4 shrink-0"></i>
                   Society Fee
+                </a>
+              </li>
+
+              <li>
+                <a href='{% url "accomplishment_report" %}' 
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    {% if request.resolver_match.url_name == 'president_reports' %}
+                      bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
+                    {% else %}
+                      text-gray-600 hover:bg-gray-50 hover:text-gray-900
+                    {% endif %}">
+                  <i data-lucide="clipboard" class="w-4 h-4 shrink-0"></i>
+                  Reports
                 </a>
               </li>
 
@@ -148,7 +161,8 @@
             <ul class="space-y-0.5">
 
               <li>
-                <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                <a href="{% url 'officer_profile' %}" 
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
                     {% if request.resolver_match.url_name == 'officer_settings' %}
                       bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700
                     {% else %}

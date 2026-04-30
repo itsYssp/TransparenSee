@@ -261,6 +261,16 @@
           </div>
           <div class="flex items-center justify-between">
             <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Co-Adviser
+            </span>
+            {% if report.co_adviser_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.co_adviser_approved_by.get_full_name }} · {{ report.co_adviser_approved_at|date:"M d, Y" }}</span>
+            {% else %}
+            <span class="text-gray-300">—</span>
+            {% endif %}
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
               <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Adviser
             </span>
             {% if report.adviser_approved_by %}

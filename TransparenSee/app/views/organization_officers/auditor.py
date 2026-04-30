@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.views.generic import TemplateView
 
 from ...blockchain import get_all_transactions, verify_report_hash
-from ...models import AcademicYear, FinancialReport, FinancialReportEntry, Product, ReportApprovalLog
+from ...models import *
 from ..mixins import RoleRequireMixin
 
 
@@ -22,6 +22,28 @@ class AuditorDashboardView(RoleRequireMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         org = self.get_organization()
+        reports = FinancialReport.objects.filter(
+            organization=org,
+            status__in=['approved', 'on_blockchain']
+        )
+
+        total_income = reports.aggregate(
+            total=Sum('entries__amount', filter=Q(entries__entry_type='income'))
+        )['total'] or 0
+
+        total_expense = reports.aggregate(
+            total=Sum('entries__amount', filter=Q(entries__entry_type='expense'))
+        )['total'] or 0
+
+        expense_percent = round(total_expense / total_income * 100,2) if total_income > 0 else 0
+        total = (total_income or 0) + (total_expense or 0)
+
+        income_percent = round(total_income / total * 100,2) if total > 0 else 0
+        
+        context['total_expense'] = total_expense 
+        context['expense_percent'] = expense_percent
+        context['total_income'] = total_income 
+        context['income_percent'] = income_percent
         recent_approval_logs = ReportApprovalLog.objects.filter(report__organization=org).order_by('-created_at')[:3]
         context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status__in=['rejected', 'approved', 'on_blockchain']).count()
         context["approved_financial_reports"] = FinancialReport.objects.filter(organization=org, status='on_blockchain').count()
@@ -38,6 +60,55 @@ class AuditorDashboardView(RoleRequireMixin, TemplateView):
 
 
 class StatementPeriodMixin:
+    @staticmethod
+    def _display_name(user):
+        if not user:
+            return "Not assigned"
+        return user.get_full_name() or user.username
+
+    def _build_assignatories(self, organization, request):
+        officers = Officer.objects.filter(
+            organization=organization,
+            user__role__in=['treasurer', 'auditor', 'president'],
+        ).select_related('user')
+        officer_map = {officer.user.role: officer for officer in officers}
+
+        advisers = Adviser.objects.filter(
+            organization=organization,
+            user__role__in=['co_adviser', 'adviser'],
+        ).select_related('user')
+        adviser_map = {adviser.user.role: adviser for adviser in advisers}
+
+        signatories = []
+        for role, label in (
+            ('treasurer', 'Treasurer'),
+            ('auditor', 'Auditor'),
+            ('president', 'President'),
+        ):
+            officer = officer_map.get(role)
+            signatories.append({
+                "role": label,
+                "name": self._display_name(officer.user if officer else None),
+                "signature_url": (
+                    request.build_absolute_uri(officer.signature.url)
+                    if officer and officer.signature
+                    else None
+                ),
+            })
+
+        for role, label in (
+            ('co_adviser', 'Co-Adviser'),
+            ('adviser', 'Adviser'),
+        ):
+            adviser = adviser_map.get(role)
+            signatories.append({
+                "role": label,
+                "name": self._display_name(adviser.user if adviser else None),
+                "signature_url": None,
+            })
+
+        return signatories
+    
     @staticmethod
     def _academic_year_bounds(academic_year):
         if not academic_year:
@@ -107,11 +178,11 @@ class StatementPeriodMixin:
                     return context
                 start_year, end_year = bounds
                 if academic_year.semester == '1stSem':
-                    start_date = date(start_year, 8, 1)
-                    end_date = date(start_year, 12, 31)
+                    start_date = date(start_year, 9, 1)
+                    end_date = date(start_year, 1, 31)
                 else:
-                    start_date = date(end_year, 1, 1)
-                    end_date = date(end_year, 5, 31)
+                    start_date = date(end_year, 2, 1)
+                    end_date = date(end_year, 6, 30)
                 label = str(academic_year)
                 context.update({
                     "label": label,
@@ -243,13 +314,14 @@ class StatementPeriodMixin:
             summaries.append({
                 "id": report.id,
                 "title": report.title,
-                "status": report.status,
+                "status": report.get_status_display(),
                 "academic_year": str(report.academic_year) if report.academic_year else "—",
                 "blockchain_hash": report.blockchain_hash or "",
                 "blockchain_verified": blockchain_verified,
                 "income": total_income,
                 "expense": total_expense,
                 "net": total_income - total_expense,
+
             })
 
         rows = []
@@ -293,7 +365,7 @@ class StatementPeriodMixin:
         return payload
 
 
-class GenerateFinancialStatementView(RoleRequireMixin, TemplateView):
+class GenerateFinancialStatementView(RoleRequireMixin, StatementPeriodMixin, TemplateView):
     template_name = 'app/officer/auditor/generate_fs.html'
     role_required = 'auditor'
 
@@ -310,6 +382,10 @@ class GenerateFinancialStatementView(RoleRequireMixin, TemplateView):
         ).prefetch_related('variants')
         context['organization'] = organization
         context['today_year'] = date.today().year
+        context['prepared_by'] = self.request.user.get_full_name() or self.request.user.username
+        context['generated_at'] = datetime.now()
+        context['auto_print'] = self.request.GET.get('auto_print') == '1'
+        context['assignatories'] = self._build_assignatories(organization, self.request)
         return context
 
 
@@ -341,6 +417,7 @@ class PrintableFinancialStatementView(RoleRequireMixin, StatementPeriodMixin, Te
         context['prepared_by'] = self.request.user.get_full_name() or self.request.user.username
         context['generated_at'] = datetime.now()
         context['auto_print'] = self.request.GET.get('auto_print') == '1'
+        context['assignatories'] = self._build_assignatories(organization, self.request) 
         return context
 
 

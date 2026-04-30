@@ -15,6 +15,8 @@ from django.shortcuts import redirect
 from django.views import View
 from django.utils.crypto import get_random_string
 from django.db import transaction
+from django.contrib.auth import update_session_auth_hash
+from ...models import *
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
     role_required = ['auditor', 'president', 'adviser', 'co_adviser' ]
@@ -942,6 +944,8 @@ class LogsView(RoleRequireMixin, ListView):
         'auditor': 'app/officer/auditor/sidebar.html',
         'president': 'app/officer/president/sidebar.html',
         'vice_president': 'app/officer/president/sidebar.html',
+        'adviser': 'app/adviser/sidebar.html',
+        'co_adviser': 'app/adviser/sidebar.html',
         'head': 'app/heads/sidebar.html',
         'campus_admin': 'app/campus_admin/sidebar.html',
         'admin': 'app/superadmin/sidebar.html',
@@ -963,5 +967,106 @@ class LogsView(RoleRequireMixin, ListView):
         context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
         context['logs_count'] = self.get_queryset().count()
 
+        return context
+
+class OfficerProfileView(RoleRequireMixin, TemplateView):
+    template_name = 'app/officer/officer_profile.html'
+    role_required = ['treasurer', 'auditor', 'secretary', 'vice_president', 'president']
+
+    role_templates = {
+        'treasurer': 'app/officer/treasurer/sidebar.html',
+        'auditor': 'app/officer/auditor/sidebar.html',
+        'vice_president': 'app/officer/vice_president/sidebar.html',
+        'president': 'app/officer/president/sidebar.html',
+        'secretary': 'app/officer/secretary/sidebar.html',
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+
+        if action == 'change_password':
+            old_password = request.POST.get('old_password', '').strip()
+            new_password1 = request.POST.get('new_password1', '').strip()
+            new_password2 = request.POST.get('new_password2', '').strip()
+
+            if not old_password:
+                messages.error(request, 'Current password is required.')
+            elif not new_password1:
+                messages.error(request, 'New password is required.')
+            elif not new_password2:
+                messages.error(request, 'Please confirm your new password.')
+            elif not request.user.check_password(old_password):
+                messages.error(request, 'Current password is incorrect.')
+            elif new_password1 != new_password2:
+                messages.error(request, 'New passwords do not match.')
+            elif len(new_password1) < 8:
+                messages.error(request, 'Password must be at least 8 characters.')
+            else:
+                request.user.set_password(new_password1)
+                request.user.save()
+                update_session_auth_hash(request, request.user)
+                messages.success(request, 'Password changed successfully.')
+            return redirect(request.path)
+
+        officer, _ = Officer.objects.get_or_create(user=request.user)
+        form = OfficerForm(request.POST, request.FILES, instance=officer)
+
+        if form.is_valid():
+            form.save()
+            user = request.user
+            user.profile_image = request.POST.get('profile_image', user.profile_image)
+            user.first_name = request.POST.get('first_name', user.first_name)
+            user.last_name = request.POST.get('last_name', user.last_name)
+            user.username = request.POST.get('username', user.username)
+            user.email = request.POST.get('email', user.email)
+            if 'profile_image' in request.FILES:
+                user.profile_image = request.FILES['profile_image']
+            user.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect(request.path)
+
+        return self.render_to_response(self.get_context_data(form=form))
+    
+class AccomplishmentReportView(RoleRequireMixin, ListView):
+    template_name = 'app/officer/accomplishment_report.html'
+    role_required = ['treasurer', 'auditor', 'president', 'vice_president', 'co_adviser', 'adviser', 'head', 'campus_admin', 'admin', 'secretary']
+    model = AccomplishmentReport
+
+    role_templates = {
+        'treasurer': 'app/officer/treasurer/sidebar.html',
+        'auditor': 'app/officer/auditor/sidebar.html',
+        'president': 'app/officer/president/sidebar.html',
+        'vice_president': 'app/officer/president/sidebar.html',
+        'adviser': 'app/adviser/sidebar.html',
+        'co_adviser': 'app/adviser/sidebar.html',
+        'head': 'app/heads/sidebar.html',
+        'campus_admin': 'app/campus_admin/sidebar.html',
+        'admin': 'app/superadmin/sidebar.html',
+        "secretary":    "app/officer/secretary/sidebar.html",
+
+    }
+
+    def get_organization(self):
+        user = self.request.user
+        if hasattr(user, 'officer'):
+            return user.officer.organization
+        elif hasattr(user, 'adviser'):
+            return user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
+            return user.adviser.organization
+        return None
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = self.get_organization()
+        context['accomplishment_report'] = AccomplishmentReport.objects.filter(organization=org)
+        context['base_template'] = self.role_templates.get(user.role, 'app/base.html')
         return context
     

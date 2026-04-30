@@ -261,25 +261,25 @@
     <form method="POST" action="{% url 'treasurer_society_fee_create' %}" class="flex flex-col gap-3">
       {% csrf_token %}
 
+      <!-- FIX 1: Added top-full to anchor dropdown below input -->
       <div class="form-control relative">
-  <label class="label pb-1">
-    <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Student</span>
-  </label>
-  <input
-    type="text"
-    id="student_search"
-    placeholder="Type student name or Student ID..."
-    class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
-    autocomplete="off"
-    oninput="searchStudent(this.value)"
-  />
-  <input type="hidden" name="student" id="student_id_input" required />
+        <label class="label pb-1">
+          <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Student</span>
+        </label>
+        <input
+          type="text"
+          id="student_search"
+          placeholder="Type student name or Student ID..."
+          class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+          autocomplete="off"
+        />
+        <input type="hidden" name="student" id="student_id_input" required />
 
-  <!-- Search results dropdown -->
-  <div id="student_results"
-    class="hidden absolute z-50 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto w-full">
-  </div>
-</div>
+        <!-- FIX 1: Added top-full so dropdown anchors correctly below the input -->
+        <div id="student_results"
+          class="hidden absolute z-50 top-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto w-full">
+        </div>
+      </div>
 
       <div class="form-control relative">
         <label class="label pb-1">
@@ -350,9 +350,7 @@
       </div>
 
       <div class="modal-action mt-2">
-        <form method="dialog">
-        <button type="button" onclick="document.getElementById('add_fee_modal').close()"  class="btn btn-ghost btn-sm">Cancel</button>
-        </form>
+        <button type="button" onclick="document.getElementById('add_fee_modal').close()" class="btn btn-ghost btn-sm">Cancel</button>
         <button type="submit" class="btn btn-primary btn-sm px-6">Add Record</button>
       </div>
     </form>
@@ -371,12 +369,10 @@
       <input type="hidden" name="action" value="update">
       <input type="hidden" name="fee_id" id="update_fee_id">
 
-      <!-- Replace the text input in Update Fee Modal -->
       <div class="form-control">
         <label class="label pb-1">
           <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Academic Year</span>
         </label>
-
         <select name="academic_year" id="update_academic_year" 
           class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
           {% for ay in academic_years %}
@@ -387,19 +383,19 @@
         {% endfor %}
         </select>
       </div>
+
       <div class="form-control">
         <label class="label pb-1">
           <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Semester</span>
         </label>
-        
         <select name="semester" id="update_semester" 
-        class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
-    {% for value, display in semester %}
-        <option value="{{ value }}" {% if semester == value %}selected{% endif %}>
-            {{ display }}
-        </option>
-    {% endfor %}
-</select>
+          class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500" required>
+          {% for value, display in semester %}
+            <option value="{{ value }}" {% if semester == value %}selected{% endif %}>
+              {{ display }}
+            </option>
+          {% endfor %}
+        </select>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
@@ -443,10 +439,7 @@
       </div>
 
       <div class="modal-action mt-2">
-        <form method="dialog">
-            <button type="button" onclick="document.getElementById('update_fee_modal').close()" 
-    class="btn btn-ghost btn-sm">Cancel</button>
-        </form>
+        <button type="button" onclick="document.getElementById('update_fee_modal').close()" class="btn btn-ghost btn-sm">Cancel</button>
         <button type="submit" class="btn btn-primary btn-sm px-6">Save Changes</button>
       </div>
     </form>
@@ -471,9 +464,7 @@
       <input type="hidden" name="action" value="delete">
       <input type="hidden" name="fee_id" id="delete_fee_id">
       <div class="modal-action mt-0">
-        <form method="dialog">
-          <button type="button" onclick="document.getElementById('delete_fee_modal').close()"  class="btn btn-ghost btn-sm">Cancel</button>
-        </form>
+        <button type="button" onclick="document.getElementById('delete_fee_modal').close()" class="btn btn-ghost btn-sm">Cancel</button>
         <button type="submit" class="btn btn-error btn-sm px-6">Delete</button>
       </div>
     </form>
@@ -618,8 +609,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-
 <script>
+  // FIX 2: Safe student data — no inline JS string injection risk
   const students = [
     {% for student in students %}
     {
@@ -630,60 +621,81 @@
     {% endfor %}
   ];
 
-  function searchStudent(query) {
+  // FIX 3: Attach input listener via JS (not oninput attribute), use event delegation for results
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('student_search');
     const resultsBox = document.getElementById('student_results');
     const hiddenInput = document.getElementById('student_id_input');
 
-    if (!query.trim()) {
-      resultsBox.classList.add('hidden');
-      hiddenInput.value = '';
-      return;
-    }
+    if (!searchInput) return;
 
+    searchInput.addEventListener('input', function () {
+      const query = this.value.trim();
 
-    const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(query.toLowerCase()) ||
-    s.student_id.toLowerCase().includes(query.toLowerCase())
-  );
+      if (!query) {
+        resultsBox.classList.add('hidden');
+        hiddenInput.value = '';
+        return;
+      }
 
-    resultsBox.innerHTML = filtered.map(s => `
-      <div
-        onclick="selectStudent('${s.id}', '${s.name}', '${s.student_id}')"
-        class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
-      >
-        <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-          <span class="text-xs font-bold text-blue-700">${s.name.charAt(0)}</span>
-        </div>
-        <div>
-          <p class="text-sm font-semibold text-gray-800">${s.name}</p>
-          <p class="text-xs text-gray-400">${s.student_id}</p>
-        </div>
-      </div>
-    `).join('');
+      const filtered = students.filter(s =>
+        s.name.toLowerCase().includes(query.toLowerCase()) ||
+        s.student_id.toLowerCase().includes(query.toLowerCase())
+      );
 
-    resultsBox.classList.remove('hidden');
-  }
+      if (filtered.length === 0) {
+        resultsBox.innerHTML = `
+          <div class="px-4 py-3 text-xs text-gray-400 italic">No students found</div>
+        `;
+      } else {
+        // FIX 4: Use data-* attributes instead of inline onclick strings
+        // — prevents breakage when names contain apostrophes or quotes
+        resultsBox.innerHTML = filtered.map(s => `
+          <div
+            data-id="${s.id}"
+            data-name="${s.name.replace(/"/g, '&quot;')}"
+            data-sid="${s.student_id}"
+            class="student-result flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+          >
+            <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+              <span class="text-xs font-bold text-blue-700">${s.name.charAt(0).toUpperCase()}</span>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-800">${s.name}</p>
+              <p class="text-xs text-gray-400">${s.student_id}</p>
+            </div>
+          </div>
+        `).join('');
 
-  function selectStudent(id, name, studentId) {
-    document.getElementById('student_search').value = `${name} — ${studentId}`;
-    document.getElementById('student_id_input').value = id;
-    document.getElementById('student_results').classList.add('hidden');
-  }
+        // Attach click listeners after rendering
+        resultsBox.querySelectorAll('.student-result').forEach(el => {
+          el.addEventListener('click', function () {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            const sid = this.dataset.sid;
+            searchInput.value = sid ? `${name} — ${sid}` : name;
+            hiddenInput.value = id;
+            resultsBox.classList.add('hidden');
+          });
+        });
+      }
 
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    const search = document.getElementById('student_search');
-    const results = document.getElementById('student_results');
-    if (search && results && !search.contains(e.target) && !results.contains(e.target)) {
-      results.classList.add('hidden');
-    }
+      resultsBox.classList.remove('hidden');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+        resultsBox.classList.add('hidden');
+      }
+    });
   });
 
   function openUpdateModal(feeId, amount, amountPaid, status, academicYearId) {
     document.getElementById('update_fee_id').value = feeId;
     document.getElementById('update_amount').value = amount;
     document.getElementById('update_amount_paid').value = amountPaid;
-    document.getElementById('update_academic_year').value = academicYearId; // now sets by ID
+    document.getElementById('update_academic_year').value = academicYearId;
     document.getElementById('update_status').value = status;
     document.getElementById('update_fee_modal').showModal();
   }
@@ -767,61 +779,56 @@
   }
 
   async function downloadReceiptPDF() {
-  const btn = document.querySelector('[onclick="downloadReceiptPDF()"]');
-  const originalHTML = btn.innerHTML;
-  btn.innerHTML = 'Generating...';
-  btn.disabled = true;
-
-  const receipt = document.getElementById('receipt-content');
-
-  try {
+    const btn = document.querySelector('[onclick="downloadReceiptPDF()"]');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = 'Generating...';
+    btn.disabled = true;
 
     const receipt = document.getElementById('receipt-content');
-    const receiptWidth = receipt.offsetWidth;
-    const receiptHeight = receipt.offsetHeight;
 
-    const dataUrl = await htmlToImage.toPng(receipt, {
-      backgroundColor: '#ffffff',
-      pixelRatio: 2,
-      width: receiptWidth,
-      height: receiptHeight,
-      style: {
-        transform: 'scale(1)',
-        transformOrigin: 'top left',
-        width: receiptWidth + 'px',
-        height: receiptHeight + 'px',
-      }
-    });
+    try {
+      const receiptWidth = receipt.offsetWidth;
+      const receiptHeight = receipt.offsetHeight;
 
-    const { jsPDF } = window.jspdf;
+      const dataUrl = await htmlToImage.toPng(receipt, {
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        width: receiptWidth,
+        height: receiptHeight,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+          width: receiptWidth + 'px',
+          height: receiptHeight + 'px',
+        }
+      });
 
-    // Match PDF page size exactly to receipt dimensions (in mm)
-    const pxToMm = px => px * 0.264583;
-    const pdfWidth = pxToMm(receiptWidth);
-    const pdfHeight = pxToMm(receiptHeight);
+      const { jsPDF } = window.jspdf;
+      const pxToMm = px => px * 0.264583;
+      const pdfWidth = pxToMm(receiptWidth);
+      const pdfHeight = pxToMm(receiptHeight);
 
-    const pdf = new jsPDF({
-      orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
-      unit: 'mm',
-      format: [pdfWidth, pdfHeight]  // custom page size = exact receipt size
-    });
+      const pdf = new jsPDF({
+        orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+        unit: 'mm',
+        format: [pdfWidth, pdfHeight]
+      });
 
       pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
+      const name = document.getElementById('receipt-student-name').textContent
+        .toLowerCase().replace(/\s+/g, '-');
+      pdf.save(`receipt-${document.getElementById('receipt-no').textContent.replace('#', '')}-${name}.pdf`);
 
-    const name = document.getElementById('receipt-student-name').textContent
-      .toLowerCase().replace(/\s+/g, '-');
-    pdf.save(`receipt-${document.getElementById('receipt-no').textContent.replace('#', '')}-${name}.pdf`);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      alert('PDF generation failed. See console for details.');
+    }
 
-  } catch (err) {
-    console.error('PDF generation failed:', err);
-    alert('PDF generation failed. See console for details.');
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
+    lucide.createIcons();
   }
-
-  btn.innerHTML = originalHTML;
-  btn.disabled = false;
-  lucide.createIcons();
-}
 </script>
 
 {% endblock con %}

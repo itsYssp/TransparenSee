@@ -33,7 +33,7 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
         if hasattr(user, 'student'):
             org = user.student.organization
         
-        context['accomplishment_report'] = AccomplismentReport.objects.filter(organization=org)
+        context['accomplishment_report'] = AccomplishmentReport.objects.filter(organization=org)
 
       
         try:

@@ -129,7 +129,12 @@ class GlobalAnnouncementForm(forms.ModelForm):
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
-        fields = ['year', 'program', 'section']
+        fields = ['student_id','year', 'program', 'section']
+
+class OfficerForm(forms.ModelForm):
+    class Meta:
+        model = Officer
+        fields = ['student_id','year', 'program', 'section','signature'] 
 
 class OrganizationForm(forms.ModelForm):
     program = forms.ChoiceField(choices=Organization.PROGRAM_CHOICE,required=True)
@@ -137,8 +142,6 @@ class OrganizationForm(forms.ModelForm):
     class Meta:
         model = Organization
         fields = ['name', 'logo','description', 'program', 'category']
-
-
 
 
 class ProductForm(forms.ModelForm):
@@ -149,7 +152,7 @@ class ProductForm(forms.ModelForm):
 
 class AccomplishmentReportForm(forms.ModelForm):
     class Meta:
-        model = AccomplismentReport
+        model = AccomplishmentReport
         fields = ['title', 'desciption', 'report_file']
 
     def __init__(self, *args, **kwargs):

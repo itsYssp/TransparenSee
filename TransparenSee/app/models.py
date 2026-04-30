@@ -37,8 +37,6 @@ class Organization(models.Model):
     def __str__(self):
         return self.name
     
-    
-
 class Student(models.Model):
     PROGRAM_CHOICE = [
         ("BSIT", "Bachelor of Science in Information Technology"),
@@ -98,7 +96,7 @@ class Officer(models.Model):
     year = models.IntegerField(choices=YEAR_CHOICES)
     section = models.CharField( max_length=10)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
-    
+    signature = models.ImageField( upload_to='signatures/officers', blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.user.role}"
@@ -109,6 +107,8 @@ class Adviser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='adviser' )
     employee_id = models.CharField(max_length=20, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True)
+    signature = models.ImageField( upload_to='signatures/advisers', blank=True, null=True)
+
 
     def __str__(self):
         return f'{self.user.get_full_name()} - Adviser'
@@ -120,6 +120,7 @@ class CampusAdmin(models.Model):
     employee_id = models.CharField(max_length=20, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True)
     campus = models.CharField(max_length=100, blank=True, null=True)
+    
 
     def __str__(self):
         return f'{self.user.get_full_name()} - Campus Admin'
@@ -414,7 +415,7 @@ class ProductVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.size or ''} {self.color or ''}".strip()
 
-class AccomplismentReport(models.Model):
+class AccomplishmentReport(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='accomplishment_report')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='secretary')
     title = models.CharField(max_length=100)

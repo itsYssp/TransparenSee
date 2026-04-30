@@ -17,6 +17,29 @@ class PresidentDashboardView(RoleRequireMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         org = self.get_organization(user)
+
+        reports = FinancialReport.objects.filter(
+            organization=org,
+            status__in=['approved', 'on_blockchain']
+        )
+
+        total_income = reports.aggregate(
+            total=Sum('entries__amount', filter=Q(entries__entry_type='income'))
+        )['total'] or 0
+
+        total_expense = reports.aggregate(
+            total=Sum('entries__amount', filter=Q(entries__entry_type='expense'))
+        )['total'] or 0
+
+        expense_percent = round(total_expense / total_income * 100,2) if total_income > 0 else 0
+        total = (total_income or 0) + (total_expense or 0)
+
+        income_percent = round(total_income / total * 100,2) if total > 0 else 0
+        
+        context['total_expense'] = total_expense 
+        context['expense_percent'] = expense_percent
+        context['total_income'] = total_income 
+        context['income_percent'] = income_percent
         
         context["society_fee_amount"] = org.society_fee_amount
         recent_approval_log = ReportApprovalLog.objects.filter(report__organization = org).order_by('-created_at')[:5]

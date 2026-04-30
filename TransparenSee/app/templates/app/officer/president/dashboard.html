@@ -3,7 +3,7 @@
 <div class="px-6 py-6 flex flex-col gap-6 bg-gray-50">
 
   <div>
-    <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">President</p>
+    <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">{{ user.role }}</p>
     <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Dashboard</h1>
   </div>
 
@@ -36,12 +36,12 @@
         </a>
       </div>
       <p class="text-3xl font-extrabold text-gray-900 tracking-tight">
-        <span class="text-lg font-semibold text-gray-400 mr-0.5">₱</span>30,000.45
+        <span class="text-lg font-semibold text-gray-400 mr-0.5">₱</span>{{ total_income }}
       </p>
       <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div class="h-full bg-green-500 rounded-full" style="width: 30%"></div>
+        <div class="h-full bg-green-500 rounded-full" style="width: {{ income_percent }}%"></div>
       </div>
-      <p class="text-xs text-gray-400">30% of target collected</p>
+      <p class="text-xs text-gray-400">{{ income_percent }}% of target collected</p>
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
@@ -57,12 +57,12 @@
         </a>
       </div>
       <p class="text-3xl font-extrabold text-gray-900 tracking-tight">
-        <span class="text-lg font-semibold text-gray-400 mr-0.5">₱</span>15,000.23
+        <span class="text-lg font-semibold text-gray-400 mr-0.5">₱</span>{{ total_expense }}
       </p>
       <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div class="h-full bg-red-400 rounded-full" style="width: 15%"></div>
+        <div class="h-full bg-red-400 rounded-full" style="width: {{ expense_percent }}%"></div>
       </div>
-      <p class="text-xs text-gray-400">15% of total funds spent</p>
+      <p class="text-xs text-gray-400">{{ expense_percent }}% of total funds spent</p>
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
