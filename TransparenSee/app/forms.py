@@ -4,7 +4,8 @@ from accounts.models import CustomUser
 from .models import *
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Product, ProductVariant
+from .models import Product, ProductVariant, AcademicYear
+from django import forms
 
 
 class OfficerCreationForm(UserCreationForm):
@@ -134,7 +135,12 @@ class StudentForm(forms.ModelForm):
 class OfficerForm(forms.ModelForm):
     class Meta:
         model = Officer
-        fields = ['student_id','year', 'program', 'section','signature'] 
+        fields = ['student_id','year', 'program', 'section','signature']
+
+class AdviserForm(forms.ModelForm):
+    class Meta:
+        model = Adviser
+        fields = ['employee_id','department','signature']  
 
 class OrganizationForm(forms.ModelForm):
     program = forms.ChoiceField(choices=Organization.PROGRAM_CHOICE,required=True)
@@ -184,8 +190,7 @@ class AccomplishmentReportForm(forms.ModelForm):
 
         return report_file
 
-from django import forms
-from .models import AcademicYear
+
 
 
 PERIOD_TYPE_CHOICES = [

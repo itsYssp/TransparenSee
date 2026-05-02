@@ -67,7 +67,12 @@ class Student(models.Model):
     section = models.CharField( max_length=10)
     status = models.CharField(choices=STATUS_CHOCIES)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
-    
+    other_organization = models.ManyToManyField(
+        Organization,
+        related_name='other_students',
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name}'

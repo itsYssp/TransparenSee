@@ -17,6 +17,8 @@ from django.utils.crypto import get_random_string
 from django.db import transaction
 from django.contrib.auth import update_session_auth_hash
 from ...models import *
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
     role_required = ['auditor', 'president', 'adviser', 'co_adviser' ]
@@ -628,6 +630,16 @@ class MembersView(RoleRequireMixin, TemplateView):
     template_name = "app/officer/members.html"
     role_required = ['president', 'treasurer', 'auditor', 'adviser', 'co_adviser', 'vice_president', 'secretary']
 
+    role_templates = {
+        'treasurer':      'app/officer/treasurer/sidebar.html',
+        'auditor':        'app/officer/auditor/sidebar.html',
+        'president':      'app/officer/president/sidebar.html',
+        'vice_president': 'app/officer/president/sidebar.html',
+        'co_adviser':     'app/co_adviser/sidebar.html',
+        'adviser':        'app/adviser/sidebar.html',
+        'secretary':      'app/officer/secretary/sidebar.html',
+    }
+
     def get_organization(self):
         user = self.request.user
         if hasattr(user, 'officer'):
@@ -635,24 +647,103 @@ class MembersView(RoleRequireMixin, TemplateView):
         if hasattr(user, 'adviser'):
             return user.adviser.organization
         return None
-    
-    role_templates = {
-        'treasurer': 'app/officer/treasurer/sidebar.html',
-        'auditor': 'app/officer/auditor/sidebar.html',
-        'president': 'app/officer/president/sidebar.html',
-        'vice_president': 'app/officer/president/sidebar.html',
-        'co_adviser': 'app/co_adviser/sidebar.html',
-        'adviser': 'app/adviser/sidebar.html',
-        "secretary":    "app/officer/secretary/sidebar.html",
-    }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         org = self.get_organization()
         user = self.request.user
-        context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
-        context["students"] = CustomUser.objects.filter(student__organization=org)
+        context['base_template'] = self.role_templates.get(user.role, 'app/base.html')
+
+        if org.category == 'academic':
+            students_qs = CustomUser.objects.filter(
+                student__organization=org
+            ).order_by('-date_joined')
+        else:
+            students_qs = CustomUser.objects.filter(
+                student__other_organization=org
+            ).order_by('-date_joined')
+
+        paginator = Paginator(students_qs, 10)
+        page_number = self.request.GET.get('page', 1)
+        context['students'] = paginator.get_page(page_number)
+        context['page_obj'] = paginator.get_page(page_number)
+
         return context
+
+
+@login_required
+def search_students_ajax(request):
+    q = request.GET.get('q', '').strip()
+
+    # get org from officer or adviser
+    org = None
+    if hasattr(request.user, 'officer'):
+        org = request.user.officer.organization
+    elif hasattr(request.user, 'adviser'):
+        org = request.user.adviser.organization
+
+    qs = CustomUser.objects.filter(role='student').filter(
+        Q(first_name__icontains=q) |
+        Q(last_name__icontains=q)  |
+        Q(email__icontains=q)      |
+        Q(student__student_id__icontains=q)
+    ).select_related('student')[:10]
+
+    # already primary members
+    primary_ids = set(
+        Student.objects.filter(organization=org).values_list('user_id', flat=True)
+    )
+    # already in other_organization M2M
+    other_ids = set(
+        Student.objects.filter(other_organization=org).values_list('user_id', flat=True)
+    )
+
+    results = []
+    for u in qs:
+        if not hasattr(u, 'student'):
+            continue
+        results.append({
+            'id':             u.student.pk,
+            'first_name':     u.first_name,
+            'last_name':      u.last_name,
+            'email':          u.email,
+            'student_id':     str(u.student.student_id),
+            'program':        u.student.program,
+            'already_member': u.pk in primary_ids or u.pk in other_ids,
+        })
+
+    return JsonResponse({'students': results})
+
+
+@login_required
+@login_required
+def add_member_to_org(request):
+    if request.method != 'POST':
+        return redirect('members')
+
+    org = None
+    if hasattr(request.user, 'officer'):
+        org = request.user.officer.organization
+    elif hasattr(request.user, 'adviser'):
+        org = request.user.adviser.organization
+
+    student_ids = request.POST.getlist('student_ids')  # ← getlist for multiple
+    added = 0
+
+    for pk in student_ids:
+        try:
+            student = Student.objects.get(pk=pk)
+            student.other_organization.add(org)
+            added += 1
+        except Student.DoesNotExist:
+            continue
+
+    if added:
+        messages.success(request, f"{added} member{'s' if added > 1 else ''} added successfully.")
+    else:
+        messages.error(request, "No valid students were added.")
+
+    return redirect('members')
 
 class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
 
@@ -794,6 +885,7 @@ class ConfirmImportStudentsView(LoginRequiredMixin, View):
         created_count       = 0
 
         try:
+            csg = Organization.objects.get(category='student_council')      
             with transaction.atomic():
                 for row in data:
                     temp_password = "TransparenSee"
@@ -807,15 +899,18 @@ class ConfirmImportStudentsView(LoginRequiredMixin, View):
                         role="student",
                     )
 
-                    Student.objects.create(
+                    student = Student.objects.create(
                         user=user,
                         student_id=row["student_id"],
                         program=row["program"],
                         year=row["year"],
                         section=row["section"],
                         status=row["status"],
-                        organization=organization, 
+                        organization=organization,
                     )
+
+                    if csg:
+                        student.other_organization.add(csg)
 
                     created_credentials.append({
                         "name":     user.get_full_name(),

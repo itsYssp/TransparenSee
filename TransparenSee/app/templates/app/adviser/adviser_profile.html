@@ -47,10 +47,10 @@
           <div class="badge badge-soft badge-primary text-xs font-bold tracking-wider uppercase px-3 py-1">{{ user.get_role_display }}</div>
 
 
-          {% if user.officer.organization %}
+          {% if user.adviser.organization %}
           <div class="w-full bg-blue-50 rounded-xl px-4 py-3 text-center">
             <p class="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-0.5">Organization</p>
-            <p class="text-sm font-bold text-blue-700">{{ user.officer.organization.name }}</p>
+            <p class="text-sm font-bold text-blue-700">{{ user.adviser.organization.name }}</p>
           </div>
           {% endif %}
    
@@ -182,58 +182,33 @@
             <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
               <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-700"></i>
             </div>
-            <p class="font-bold text-gray-800 text-sm">Academic Information</p>
+            <p class="font-bold text-gray-800 text-sm">Other Information</p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="form-control">
               <label class="label pb-1">
-                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Student ID</span>
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Employee ID</span>
               </label>
               <input
                 type="text"
-                name="student_id"
-                value="{{ user.officer.student_id|default:'' }}"
+                name="employee_id"
+                value="{{ user.adviser.employee_id|default:'' }}"
                 placeholder="e.g. 2021-00123"
                 class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
               />
             </div>
 
 
-            <div class="form-control">
-              <label class="label pb-1">
-                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Program / Course</span>
-              </label>
-              <select name="program" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
-                <option value="" disabled {% if not student.program %}selected{% endif %}>-- Select Program --</option>
-                {% for value, display in user.officer.COURSE_CHOICE %}
-                <option value="{{ value }}" {% if user.officer.program ==  value %}selected{% endif %}>{{ display }}</option>
-                {% endfor %}
-              </select>
-            </div>
 
             <div class="form-control">
               <label class="label pb-1">
-                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Year Level</span>
-              </label>
-
-              <select name="year" class="select select-bordered select-sm w-full bg-gray-50">
-                <option value="" disabled {% if not student.year %}selected{% endif %}>Select year</option>
-                <option value="1" {% if user.officer.year == 1 %}selected{% endif %}>1st Year</option>
-                <option value="2" {% if user.officer.year == 2 %}selected{% endif %}>2nd Year</option>
-                <option value="3" {% if user.officer.year == 3 %}selected{% endif %}>3rd Year</option>
-                <option value="4" {% if user.officer.year == 4 %}selected{% endif %}>4th Year</option>
-              </select>
-            </div>
-
-            <div class="form-control">
-              <label class="label pb-1">
-                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Section</span>
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Department</span>
               </label>
               <input
                 type="text"
-                name="section"
-                value="{{ user.officer.section|default:'' }}"
+                name="department"
+                value="{{ user.adviser.department|default:'' }}"
                 placeholder="e.g. A"
                 class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
               />
@@ -313,8 +288,8 @@
                 </label>
 
                 <div class="flex-1 border-4 border-blue-100 rounded-2xl overflow-hidden flex items-center justify-center">
-                  {% if user.officer.signature %}
-                    <img src="{{ user.officer.signature.url }}"
+                  {% if user.adviser.signature %}
+                    <img src="{{ user.adviser.signature.url }}"
                         class="w-full h-full object-contain"
                         alt="Uploaded Signature">
                   {% else %}

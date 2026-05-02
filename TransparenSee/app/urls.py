@@ -8,6 +8,7 @@ from app import views
 urlpatterns = [
     path('home', HomeTemplateView.as_view(), name='home'),
     path('student/', StudentDashboardView.as_view(), name='student_dashboard'),
+    path('student/organization/<int:pk>/', OtherOrganizationDashboardView.as_view(), name='other_dashboard'),
     path('student/profile/', StudentProfileView.as_view(), name='student_profile'),
     path('password-change/', auth_views.PasswordChangeView.as_view(template_name='app/student/student_profile.html',success_url='/profile/'), name='password_change'),
     path('chat', ChatView.as_view(), name='chat'),
@@ -34,6 +35,7 @@ urlpatterns = [
     path('product-create', ProductCreateView.as_view(), name='product_create'),
     path('product-preview/', ProductPreviewView.as_view(), name='product_preview'),
     path('adviser/', AdviserDashboardView.as_view(), name='adviser_dashboard'),
+    path('adviser/profile/', AdviserProfileView.as_view(), name='adviser_profile'),
     path('campus-admin/', CampusAdminDashboardView.as_view(), name='campus_admin_dashboard'),
     path('campus-admin/user-role/', CampusAdminUserRolesView.as_view(), name='campus_admin_user_role'),
     path("campus-admin/create-head/", CreateHeadView.as_view(), name="campus_admin_create_head"),
@@ -58,6 +60,8 @@ urlpatterns = [
         BulkImportStudentsView.as_view(),
         name="bulk_import_students",
     ),
+    path('members/search-students/',    search_students_ajax,       name='search_students_ajax'),
+    path('members/add-member/',         add_member_to_org,          name='add_member_to_org'),
     path(
         "members/import/template/",
         DownloadStudentTemplateView.as_view(),

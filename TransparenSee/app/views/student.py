@@ -86,6 +86,97 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
         context['active_tab'] = self.request.GET.get('type', 'financial')
         return context
 
+class OtherOrganizationDashboardView(RoleRequireMixin, DetailView):
+    template_name = 'app/student/other_org_dashboard.html'
+    role_required = 'student'
+    model = Organization
+    context_object_name= 'other'
+
+    load_dotenv(override=True)
+    SEPOLIA_URL      = os.getenv("SEPOLIA_URL")
+    CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
+    web3 = Web3(Web3.HTTPProvider(SEPOLIA_URL))
+    web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    contract = web3.eth.contract(address=CONTRACT_ADDRESS, abi=contract_abi)
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        user = self.request.user
+
+        # Get all organizations the student is allowed to see
+        allowed_orgs = set()
+
+        # Their primary organization
+        if hasattr(user, 'student') and user.student.organization:
+            allowed_orgs.add(user.student.organization.pk)
+
+        # Their other organizations
+        if hasattr(user, 'student'):
+            other_org_pks = user.student.other_organization.values_list('pk', flat=True)
+            allowed_orgs.update(other_org_pks)
+
+        if obj.pk not in allowed_orgs:
+            raise PermissionDenied  # returns 403
+
+        return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = self.object
+        
+        context['accomplishment_report'] = AccomplishmentReport.objects.filter(organization=org)
+
+      
+        try:
+            transactions = self.contract.functions.getTransactions().call()
+        except Exception as e:
+            transactions = []
+            print("Error fetching transactions:", e)
+
+        
+        unique_transactions = {}
+        for tx in transactions:
+            report_hash = tx[4]  
+            if report_hash not in unique_transactions:
+                unique_transactions[report_hash] = tx
+
+        transactions = list(unique_transactions.values())
+
+        tx_list = []
+        for t in transactions:
+            tx_list.append({
+                "organization": t[0],
+                "amount":       t[1] / 100,  
+                "sender":       t[2],
+                "timestamp":    datetime.fromtimestamp(t[3]).strftime('%Y-%m-%d %H:%M:%S'),
+                "report_hash":  t[4],
+                "title":        t[5],
+            })
+
+        
+        if org:
+            org_tx_list = [t for t in tx_list if t['organization'] == org.name]
+        else:
+            org_tx_list = []
+
+        context['transactions'] = org_tx_list
+        context['tx_count']     = len(org_tx_list)
+
+
+        if org:
+            context['financial_reports'] = FinancialReport.objects.filter(
+                organization=org,
+                status__in=['approved', 'on_blockchain']
+            ).annotate(
+                total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
+                total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
+            ).order_by('-created_at')
+        else:
+            context['financial_reports'] = FinancialReport.objects.none()
+        context['current_org_pk'] = self.object.pk
+        context['active_tab'] = self.request.GET.get('type', 'financial')
+        return context
 
 
 class StudentProfileView(RoleRequireMixin, TemplateView):

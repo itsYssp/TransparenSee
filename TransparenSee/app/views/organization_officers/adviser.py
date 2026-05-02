@@ -6,6 +6,9 @@ from django.shortcuts import get_object_or_404, redirect
 from ...models import *
 from django.contrib import messages
 from django.db.models import Count, Q, Sum
+from django.contrib.auth import update_session_auth_hash
+from ...forms import AdviserForm
+
 
 class AdviserDashboardView(RoleRequireMixin, TemplateView):
     template_name = 'app/adviser/dashboard.html'
@@ -51,6 +54,7 @@ class AdviserDashboardView(RoleRequireMixin, TemplateView):
         context["recent_approval_logs"] = recent_approval_logs
         context["organization"] = org
         context['balance'] = org.balance
+        context['accomplishment_report'] = AccomplishmentReport.objects.filter(organization=org)[:3]
         return context
     
 
@@ -106,5 +110,65 @@ class RecordBlockchainView(RoleRequireMixin, TemplateView):
             messages.error(request, f"Unexpected error: {str(e)}")
 
         return redirect('report_detail', pk=pk)
+
+class AdviserProfileView(RoleRequireMixin, TemplateView):
+    template_name = 'app/adviser/adviser_profile.html'
+    role_required = ['adviser', 'co_adviser']
+    role_templates = {
+        'adviser': 'app/adviser/sidebar.html',
+        'co_adviser': 'app/adviser/sidebar.html',
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+
+        if action == 'change_password':
+            old_password = request.POST.get('old_password', '').strip()
+            new_password1 = request.POST.get('new_password1', '').strip()
+            new_password2 = request.POST.get('new_password2', '').strip()
+
+            if not old_password:
+                messages.error(request, 'Current password is required.')
+            elif not new_password1:
+                messages.error(request, 'New password is required.')
+            elif not new_password2:
+                messages.error(request, 'Please confirm your new password.')
+            elif not request.user.check_password(old_password):
+                messages.error(request, 'Current password is incorrect.')
+            elif new_password1 != new_password2:
+                messages.error(request, 'New passwords do not match.')
+            elif len(new_password1) < 8:
+                messages.error(request, 'Password must be at least 8 characters.')
+            else:
+                request.user.set_password(new_password1)
+                request.user.save()
+                update_session_auth_hash(request, request.user)
+                messages.success(request, 'Password changed successfully.')
+            return redirect(request.path)
+
+        adviser, _ = Adviser.objects.get_or_create(user=request.user)
+        form = AdviserForm(request.POST, request.FILES, instance=adviser)
+
+        if form.is_valid():
+            form.save()
+            user = request.user
+            user.profile_image = request.POST.get('profile_image', user.profile_image)
+            user.first_name = request.POST.get('first_name', user.first_name)
+            user.last_name = request.POST.get('last_name', user.last_name)
+            user.username = request.POST.get('username', user.username)
+            user.email = request.POST.get('email', user.email)
+            if 'profile_image' in request.FILES:
+                user.profile_image = request.FILES['profile_image']
+            user.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect(request.path)
+
+        return self.render_to_response(self.get_context_data(form=form))
     
 
