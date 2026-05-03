@@ -62,7 +62,7 @@ class TreasurerDashboardView(RoleRequireMixin, TemplateView):
 class SocietyFeeView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/society_fee.html'
     role_required = ['treasurer', 'auditor','vice_president', 'president', 'adviser', 'co_adviser']
-
+    
     role_templates = {
         'treasurer': 'app/officer/treasurer/sidebar.html',
         'auditor': 'app/officer/auditor/sidebar.html',
@@ -96,7 +96,7 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             organization=org
         ).select_related(
             'student', 'student__student', 'academic_year'
-        ).order_by('-created_at')
+        ).order_by('-academic_year__academic_year', '-academic_year__id')
 
         search = request.GET.get('search', '').strip()
         academic_year = request.GET.get('academic_year', '')
@@ -150,6 +150,8 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             'unpaid_count': unpaid_count,
             'paid_percent': paid_percent,
             'unpaid_percent': unpaid_percent,
+            'paginator': paginator,           
+            'is_paginated': paginator.num_pages > 1, 
         })
 
         return render(request, self.template_name, context)
@@ -157,6 +159,46 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         org = self.get_organization()
+
+        if action == 'bulk_create':
+            academic_year_id = request.POST.get('academic_year')
+            semester = request.POST.get('semester')
+            amount = request.POST.get('amount') or org.society_fee_amount
+
+            ay = get_object_or_404(AcademicYear, pk=academic_year_id)
+
+            # Students in this org who already have a record for this AY + semester
+            existing_student_ids = SocietyFee.objects.filter(
+                organization=org,
+                academic_year=ay,
+                semester=semester,
+            ).values_list('student_id', flat=True)
+
+            # All students in org who DON'T have a record yet
+            students_without_record = CustomUser.objects.filter(
+                role='student',
+                student__organization=org,
+            ).exclude(pk__in=existing_student_ids)
+
+            if not students_without_record.exists():
+                messages.info(request, 'All students already have a record for this academic year and semester.')
+                return redirect('treasurer_society_fee')
+
+            records = [
+                SocietyFee(
+                    organization=org,
+                    student=student,
+                    academic_year=ay,
+                    semester=semester,
+                    amount=amount,
+                    amount_paid=0,
+                    status='unpaid',
+                )
+                for student in students_without_record
+            ]
+            SocietyFee.objects.bulk_create(records, ignore_conflicts=True)
+            messages.success(request, f'{len(records)} fee record(s) created successfully.')
+            return redirect('treasurer_society_fee')
         
 
         if action == 'delete':
@@ -175,7 +217,7 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             messages.success(request, 'Updated successfully.')
             return redirect('treasurer_society_fee')
 
-        # CREATE
+        
         academic_year_id = request.POST.get('academic_year')
         student_id = request.POST.get('student')
         semester = request.POST.get('semester')
@@ -204,6 +246,63 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
 
         messages.success(request, 'Added successfully.')
         return redirect('treasurer_society_fee')
+    
+class BulkFeePreviewView(RoleRequireMixin, TemplateView):
+    role_required = 'treasurer'
+
+    def get(self, request):
+        org = request.user.officer.organization
+        academic_year_id = request.GET.get('academic_year')
+        semester = request.GET.get('semester')
+
+        if not academic_year_id or not semester:
+            return JsonResponse({'count': 0, 'total_students': 0})
+
+        ay = AcademicYear.objects.filter(pk=academic_year_id).first()
+        if not ay:
+            return JsonResponse({'error': 'Invalid academic year.'}, status=400)
+
+        all_students = CustomUser.objects.filter(
+            role='student',
+            student__organization=org,
+        ).select_related('student').order_by('first_name')
+
+        existing_ids = set(SocietyFee.objects.filter(
+            organization=org,
+            academic_year=ay,
+            semester=semester,
+        ).values_list('student_id', flat=True))
+
+        students_without = [
+            {
+                'name': s.get_full_name(),
+                'student_id': s.student.student_id if hasattr(s, 'student') else ''
+            }
+            for s in all_students if s.pk not in existing_ids
+        ]
+
+        students_with = [
+            {
+                'name': s.get_full_name(),
+                'student_id': s.student.student_id if hasattr(s, 'student') else ''
+            }
+            for s in all_students if s.pk in existing_ids
+        ]
+
+        return JsonResponse({
+            'count': len(students_without),
+            'total_students': all_students.count(),
+            'existing': len(students_with),
+            'ay_label': str(ay),
+            'fee_amount': str(org.society_fee_amount),
+            'students_without': students_without,   
+            'students_with': students_with,
+            'message': (
+                'All students already have a fee record for this period.'
+                if len(students_without) == 0
+                else f'{len(students_without)} student(s) will receive a new fee record.'
+            ),          
+        })
 
 class CreateFinancialReportView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/create_report.html'
@@ -403,3 +502,41 @@ class ProductPreviewView(RoleRequireMixin, TemplateView):
             'quantity': qty,
             'total': total
         })
+
+class VoluntaryFundsMembersView(RoleRequireMixin, TemplateView):
+    role_required = 'treasurer'
+
+    def get(self, request):
+        org = request.user.officer.organization
+
+        # Primary members (organization field)
+        primary = Student.objects.filter(
+            organization=org
+        ).select_related('user')
+
+        # Non-primary members (other_organization field)
+        others = Student.objects.filter(
+            other_organization=org
+        ).select_related('user')
+
+        # Merge, deduplicate by user pk
+        seen = set()
+        members = []
+        for s in list(primary) + list(others):
+            if s.user.pk not in seen:
+                seen.add(s.user.pk)
+                members.append(s)
+
+        members.sort(key=lambda s: (s.user.last_name, s.user.first_name))
+
+        data = [
+            {
+                'id': m.user.pk,
+                'name': m.user.get_full_name(),
+                'student_id': m.student_id,
+                'program': m.program,
+                'year': m.year,
+            }
+            for m in members
+        ]
+        return JsonResponse({'members': data})

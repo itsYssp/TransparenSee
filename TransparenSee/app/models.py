@@ -329,6 +329,7 @@ class FinancialReportEntry(models.Model):
     INCOME_SOURCE_CHOICES = [
         ('society', 'Society Fee'),
         ('product', 'Product Sale'),
+        ('voluntary', 'Voluntary Funds'),
         ('other', 'Other Income'),
     ]
 
@@ -386,9 +387,7 @@ class Product(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-
     is_active = models.BooleanField(default=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -412,10 +411,9 @@ class ProductVariant(models.Model):
 
     size = models.CharField(max_length=5, choices=SIZE_CHOICES, null=True, blank=True)
     color = models.CharField(max_length=50, null=True, blank=True)
-
     price = models.DecimalField(max_digits=10, decimal_places=2)
-
     is_active = models.BooleanField(default=True)
+    product_img = models.ImageField(upload_to='product_image/', height_field=None, width_field=None, max_length=None)
 
     def __str__(self):
         return f"{self.product.name} - {self.size or ''} {self.color or ''}".strip()
@@ -433,3 +431,22 @@ class AccomplishmentReport(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.organization}"
+class AccomplishmentReportLog(models.Model):
+    ACTION_CHOICES = [
+        ('submitted', 'Submitted')
+    ]
+    report = models.ForeignKey(
+        AccomplishmentReport,
+        on_delete=models.CASCADE,
+        related_name='ar_log'
+    )
+    action_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']

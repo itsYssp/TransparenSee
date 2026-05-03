@@ -66,10 +66,11 @@
 
   <!-- Filters -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-center gap-3">
-    <div class="relative flex-1 min-w-48">
-      <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+    <div class="flex flex-1 min-w-48 items-center">
+      <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400"></i>
       <input type="text" id="search-input" placeholder="Search title or hash..."
-        class="input input-bordered input-sm w-full pl-8 bg-gray-50 focus:bg-white focus:border-blue-500 text-xs" />
+              class="input input-sm bg-transparent border-none outline-none w-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+ />
     </div>
     <select id="ay-filter" class="select select-bordered select-sm bg-gray-50 text-xs">
       <option value="">All Academic Years</option>

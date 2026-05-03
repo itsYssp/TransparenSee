@@ -75,6 +75,7 @@
                   Financial Reports
                 </a>
               </li>
+              {% if user.officer.organization.category == 'academic' %}
               <li>
                 <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
                     {% if request.resolver_match.url_name == 'treasurer_society_fee' %}
@@ -87,6 +88,7 @@
                   Society Fee
                 </a>
               </li>
+              {% endif %}
 
               <li>
                 <a href='{% url "accomplishment_report" %}' 

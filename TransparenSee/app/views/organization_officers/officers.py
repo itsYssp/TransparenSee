@@ -100,7 +100,7 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
         return redirect('report_detail', pk=pk)
 
 class ReportListView(RoleRequireMixin, ListView):
-    role_required = ['treasurer', 'auditor', 'vice_president', 'president', 'adviser', 'co_adviser']
+    role_required = ['treasurer', 'auditor', 'vice_president', 'president', 'adviser', 'co_adviser', 'head', 'campus_admin']
     model = FinancialReport
     template_name = 'app/officer/treasurer/report_list.html'
     paginate_by = 10
@@ -115,8 +115,9 @@ class ReportListView(RoleRequireMixin, ListView):
             qs = qs.filter(organization=user.officer.organization)
         elif hasattr(user, 'adviser'):
             qs = qs.filter(organization=user.adviser.organization)
-        elif hasattr(user, 'campus_admin'):
-            qs = qs  
+        else: 
+            qs = qs
+         
 
 
         search = self.request.GET.get('search', '').strip()
@@ -161,6 +162,8 @@ class ReportListView(RoleRequireMixin, ListView):
             "vice_president": "app/officer/president/sidebar.html",
             "adviser": "app/adviser/sidebar.html",
             "co_adviser": "app/adviser/sidebar.html",
+            "head": "app/heads/sidebar.html",
+            "campus_admin": "app/campus_admin/sidebar.html",
         }
 
         context['base_template'] = role_templates.get(user.role, "app/base.html")
@@ -522,42 +525,108 @@ class OrgPublicProfileView(DetailView):
         context["announcements"] = announcements
         return context
 
-class ProductListView(ListView, RoleRequireMixin):
+class ProductListView(RoleRequireMixin, ListView):
     model = Product
     template_name = 'app/officer/product_list.html'
     context_object_name = 'products'
-    role_required = ["treasurer", "auditor", "president", "adviser", "co_adviser", 'vice_president','secretary']
+    role_required = ["treasurer", "auditor", "president", "adviser", "co_adviser", 'vice_president', 'secretary']
     paginate_by = 10
 
     role_templates = {
-        'treasurer' : 'app/officer/treasurer/sidebar.html',
-        'auditor' : 'app/officer/auditor/sidebar.html',
-        "secretary":    "app/officer/secretary/sidebar.html",
-        'president' : 'app/officer/president/sidebar.html',
-        'vice_president' : 'app/officer/president/sidebar.html',
-        'adviser' : 'app/adviser/sidebar.html',
-        'co_adviser' : 'app/adviser/sidebar.html',
+        'treasurer': 'app/officer/treasurer/sidebar.html',
+        'auditor': 'app/officer/auditor/sidebar.html',
+        'secretary': 'app/officer/secretary/sidebar.html',
+        'president': 'app/officer/president/sidebar.html',
+        'vice_president': 'app/officer/president/sidebar.html',
+        'adviser': 'app/adviser/sidebar.html',
+        'co_adviser': 'app/adviser/sidebar.html',
     }
 
-    def get_organization(self, user):
+    def get_organization(self):
+        user = self.request.user
         if hasattr(user, 'officer'):
-            return self.request.user.officer.organization
+            return user.officer.organization
         elif hasattr(user, 'adviser'):
-            return self.request.user.adviser.organization
-        elif hasattr(user, 'co_adviser'):
-            return self.request.user.adviser.organization
+            return user.adviser.organization
         return None
-        
+
+    def get_queryset(self):
+        org = self.get_organization()
+        qs = Product.objects.filter(organization=org).annotate(
+            variant_count=Count('variants')
+        ).prefetch_related('variants').order_by('-created_at')
+
+        search = self.request.GET.get('search', '').strip()
+        status = self.request.GET.get('status', '')
+
+        if search:
+            qs = qs.filter(name__icontains=search)
+        if status == 'active':
+            qs = qs.filter(is_active=True)
+        elif status == 'inactive':
+            qs = qs.filter(is_active=False)
+
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        org = self.get_organization(user)
-        context["base_template"] = self.role_templates.get(user.role,'app/base.html')
-        context["products"] = Product.objects.filter(organization=org).annotate(
-            variant_count = Count('variants')
-        )
+        context['base_template'] = self.role_templates.get(user.role, 'app/base.html')
+        context['is_paginated'] = context['page_obj'].paginator.num_pages > 1
         return context
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        org = self.get_organization()
+
+        if action == 'update_product':
+            product = get_object_or_404(Product, pk=request.POST.get('product_id'), organization=org)
+            product.name = request.POST.get('name')
+            product.description = request.POST.get('description', '')
+            product.is_active = request.POST.get('is_active') == 'true'
+            product.save()
+
+            # Delete removed variants
+            for vid in request.POST.getlist('delete_variant'):
+                ProductVariant.objects.filter(pk=vid, product=product).delete()
+
+            # Update or create variants
+            for key in request.POST:
+                if key.startswith('variant_price_'):
+                    suffix = key.replace('variant_price_', '')
+                    variant_id = request.POST.get(f'variant_id_{suffix}')
+                    price = request.POST.get(f'variant_price_{suffix}')
+                    size = request.POST.get(f'variant_size_{suffix}')
+                    color = request.POST.get(f'variant_color_{suffix}', '')
+                    is_active = request.POST.get(f'variant_is_active_{suffix}') == 'true'
+                    img = request.FILES.get(f'variant_img_{suffix}')
+
+                    if variant_id:
+                        variant = ProductVariant.objects.filter(pk=variant_id, product=product).first()
+                        if variant:
+                            variant.size = size
+                            variant.color = color
+                            variant.price = price
+                            variant.is_active = is_active
+                            if img:
+                                variant.product_img = img
+                            variant.save()
+                    else:
+                        variant = ProductVariant(
+                            product=product,
+                            size=size,
+                            color=color,
+                            price=price,
+                            is_active=is_active,
+                        )
+                        if img:
+                            variant.product_img = img
+                        variant.save()
+
+            messages.success(request, f'"{product.name}" updated successfully.')
+            return redirect('product_list')
+        messages.error(request, 'Invalid action.')
+        return redirect('product_list')
     
 class BlockchainRecordsView(RoleRequireMixin, TemplateView):
     template_name = 'app/blockchain_records.html'
@@ -716,7 +785,6 @@ def search_students_ajax(request):
 
 
 @login_required
-@login_required
 def add_member_to_org(request):
     if request.method != 'POST':
         return redirect('members')
@@ -727,7 +795,7 @@ def add_member_to_org(request):
     elif hasattr(request.user, 'adviser'):
         org = request.user.adviser.organization
 
-    student_ids = request.POST.getlist('student_ids')  # ← getlist for multiple
+    student_ids = request.POST.getlist('student_ids')
     added = 0
 
     for pk in student_ids:
@@ -885,7 +953,8 @@ class ConfirmImportStudentsView(LoginRequiredMixin, View):
         created_count       = 0
 
         try:
-            csg = Organization.objects.get(category='student_council')      
+            csg = Organization.objects.get(category='student_council')
+            latest = AcademicYear.objects.order_by("-academic_year", '-semester').first()
             with transaction.atomic():
                 for row in data:
                     temp_password = "TransparenSee"
@@ -907,6 +976,18 @@ class ConfirmImportStudentsView(LoginRequiredMixin, View):
                         section=row["section"],
                         status=row["status"],
                         organization=organization,
+                    )
+
+                    
+
+                    SocietyFee.objects.create(
+                        organization = organization,
+                        student = user,
+                        academic_year = latest,
+                        amount = organization.society_fee_amount,
+                        semester = latest.semester,
+                        status = 'unpaid'
+                        
                     )
 
                     if csg:
@@ -1020,7 +1101,7 @@ class ClearImportPreviewView(LoginRequiredMixin, View):
 class LogsView(RoleRequireMixin, ListView):
     role_required = ['treasurer', 'auditor', 'president', 'vice_president', 'co_adviser', 'adviser', 'head', 'campus_admin', 'admin', 'secretary']
     template_name = 'app/logs.html'
-    paginate_by = 10
+    paginate_by = 5
     model = ReportApprovalLog
     context_object_name = 'logs'
 
@@ -1031,38 +1112,67 @@ class LogsView(RoleRequireMixin, ListView):
         elif hasattr(user, 'adviser'):
             return user.adviser.organization
         elif hasattr(user, 'co_adviser'):
-            return user.adviser.organization
+            return user.adviser.organization  
         return None
-    
-    role_templates = {
-        'treasurer': 'app/officer/treasurer/sidebar.html',
-        'auditor': 'app/officer/auditor/sidebar.html',
-        'president': 'app/officer/president/sidebar.html',
-        'vice_president': 'app/officer/president/sidebar.html',
-        'adviser': 'app/adviser/sidebar.html',
-        'co_adviser': 'app/adviser/sidebar.html',
-        'head': 'app/heads/sidebar.html',
-        'campus_admin': 'app/campus_admin/sidebar.html',
-        'admin': 'app/superadmin/sidebar.html',
-        "secretary":    "app/officer/secretary/sidebar.html",
 
+    role_templates = {
+        'treasurer':     'app/officer/treasurer/sidebar.html',
+        'auditor':       'app/officer/auditor/sidebar.html',
+        'president':     'app/officer/president/sidebar.html',
+        'vice_president':'app/officer/president/sidebar.html',
+        'adviser':       'app/adviser/sidebar.html',
+        'co_adviser':    'app/adviser/sidebar.html',
+        'head':          'app/heads/sidebar.html',
+        'campus_admin':  'app/campus_admin/sidebar.html',
+        'admin':         'app/superadmin/sidebar.html',
+        'secretary':     'app/officer/secretary/sidebar.html',
     }
-    
+
     def get_queryset(self):
         user = self.request.user
         org = self.get_organization()
+        qs = ReportApprovalLog.objects.select_related('report__organization', 'action_by')
         if hasattr(user, 'officer'):
-            return ReportApprovalLog.objects.filter(report__organization=org)
-        return ReportApprovalLog.objects.all()
+            qs = qs.filter(report__organization=org)
+        return qs.order_by('-id')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        
-        context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
-        context['logs_count'] = self.get_queryset().count()
+        org = self.get_organization()
+
+        # --- ReportApprovalLog pagination (uses ?page=) ---
+        logs_qs = self.get_queryset()
+        logs_paginator = Paginator(logs_qs, self.paginate_by)
+        logs_page_number = self.request.GET.get('page', 1)
+        logs_page_obj = logs_paginator.get_page(logs_page_number)
+
+        context['logs'] = logs_page_obj
+        context['logs_paginator'] = logs_paginator
+        context['logs_page_obj'] = logs_page_obj
+        context['logs_is_paginated'] = logs_page_obj.has_other_pages()
+        context['logs_count'] = logs_qs.count()
+
+        ar_qs = AccomplishmentReportLog.objects.select_related('report__organization', 'action_by')
+        if org:
+            ar_qs = ar_qs.filter(report__organization=org)
+        ar_qs = ar_qs.order_by('-id')
+
+        ar_paginator = Paginator(ar_qs, self.paginate_by)
+        ar_page_number = self.request.GET.get('ar_page', 1)
+        ar_page_obj = ar_paginator.get_page(ar_page_number)
+
+        context['ar_logs'] = ar_page_obj
+        context['ar_paginator'] = ar_paginator
+        context['ar_page_obj'] = ar_page_obj
+        context['ar_is_paginated'] = ar_page_obj.has_other_pages()
+        context['ar_log_count'] = ar_qs.count()
+
+        context['org'] = org
+        context['base_template'] = self.role_templates.get(user.role, 'app/base.html')
 
         return context
+
 
 class OfficerProfileView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/officer_profile.html'
@@ -1156,12 +1266,19 @@ class AccomplishmentReportView(RoleRequireMixin, ListView):
         elif hasattr(user, 'co_adviser'):
             return user.adviser.organization
         return None
+
+
+   
+        
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         org = self.get_organization()
-        context['accomplishment_report'] = AccomplishmentReport.objects.filter(organization=org)
+        qs = AccomplishmentReport.objects.all()
+        if org:
+            qs = AccomplishmentReport.objects.filter(organization=org)
+        context['accomplishment_report'] = qs
         context['base_template'] = self.role_templates.get(user.role, 'app/base.html')
         return context
     

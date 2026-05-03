@@ -9,7 +9,6 @@ class SecretaryHomepageView(RoleRequireMixin, ListView):
     template_name = 'app/officer/secretary/homepage.html'
     role_required = 'secretary'
     model = AccomplishmentReport
-    
 
     
     def get_context_data(self, **kwargs):
@@ -25,17 +24,22 @@ class SecretaryHomepageView(RoleRequireMixin, ListView):
 
         if organization is None:
             messages.error(request, 'No organization is assigned to this secretary account.')
-            self.object_list = self.get_queryset()
-            return self.render_to_response(self.get_context_data(form=form))
+            return redirect('secretary_homepage')
 
         if form.is_valid():
             report = form.save(commit=False)
             report.organization = organization
             report.created_by = request.user
             report.save()
+
+            AccomplishmentReportLog.objects.create(
+                report=report,
+                action_by=request.user,
+                action='submitted',
+            )
+
             messages.success(request, 'Accomplishment report uploaded successfully.')
             return redirect('secretary_homepage')
 
         messages.error(request, 'Please fix the form errors before submitting.')
-        self.object_list = self.get_queryset()
-        return self.render_to_response(self.get_context_data(form=form))
+        return redirect('secretary_homepage')

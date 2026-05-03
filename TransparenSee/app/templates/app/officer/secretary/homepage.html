@@ -17,16 +17,7 @@
     </div>
   </div>
 
-  <!-- Messages -->
-  {% if messages %}
-    {% for message in messages %}
-      <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
-        {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% else %}bg-green-50 border border-green-200 text-green-700{% endif %}">
-        <i data-lucide="{% if message.tags == 'error' %}circle-alert{% else %}circle-check{% endif %}" class="w-4 h-4 shrink-0"></i>
-        <span>{{ message }}</span>
-      </div>
-    {% endfor %}
-  {% endif %}
+ 
     <div class="flex w-full justify-end">
         <button
         type="button"
@@ -112,6 +103,44 @@
   </div>
 
 </div>
+
+{% for message in messages %}
+  {% if message.tags == 'success' %}
+  <dialog id="success_modal" class="modal modal-middle">
+    <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center gap-4 px-8 py-8">
+        <div class="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+          <i data-lucide="circle-check-big" class="w-8 h-8 text-emerald-500"></i>
+        </div>
+        <div class="text-center">
+          <p class="font-extrabold text-gray-900 text-base tracking-tight">Success</p>
+          <p class="text-sm text-gray-500 mt-1">{{ message }}</p>
+        </div>
+        <button onclick="document.getElementById('success_modal').close()"
+          class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors">Done</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  {% elif message.tags == 'error' %}
+  <dialog id="error_modal" class="modal modal-middle">
+    <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center gap-4 px-8 py-8">
+        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+          <i data-lucide="circle-x" class="w-8 h-8 text-red-500"></i>
+        </div>
+        <div class="text-center">
+          <p class="font-extrabold text-gray-900 text-base tracking-tight">Failed</p>
+          <p class="text-sm text-gray-500 mt-1">{{ message }}</p>
+        </div>
+        <button onclick="document.getElementById('error_modal').close()"
+          class="w-full py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors">Close</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  {% endif %}
+{% endfor %}
 
 <!-- View Report Modals -->
 {% for report in accomplishment_report %}
@@ -258,6 +287,9 @@
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
+
+
+
 <script>
   (function () {
     const fileInput = document.getElementById('{{ form.report_file.id_for_label }}');
@@ -314,5 +346,16 @@
       document.getElementById('upload-report-modal').showModal();
     });
   {% endif %}
+
+
+window.addEventListener('load', function () {
+
+  const successModal = document.getElementById('success_modal');
+  const errorModal = document.getElementById('error_modal');
+
+  if (successModal) successModal.showModal();
+  if (errorModal) errorModal.showModal();
+
+});
 </script>
 {% endblock con %}

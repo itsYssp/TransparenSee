@@ -9,12 +9,21 @@
       <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Society Fee</h1>
     </div>
   {% if user.role == "treasurer" %}
+  <div class="flex items-center gap-2">
+    <button onclick="document.getElementById('bulk_fee_modal').showModal()"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 shadow-sm transition-all duration-200">
+      <i data-lucide="users" class="w-4 h-4"></i>
+      Bulk Add Records
+    </button>
     <button onclick="document.getElementById('add_fee_modal').showModal()"
       class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
       <i data-lucide="plus" class="w-4 h-4"></i>
       Add Fee Record
     </button>
-  {% endif %}
+  </div>
+{% endif %}
+
+  
    </div>
 
   <!-- Summary Cards -->
@@ -97,52 +106,48 @@
 
   <!-- Filters -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-center gap-3">
-    <form method="GET" class="flex flex-wrap items-center gap-3 w-full">
+    <form method="GET" class="flex flex-wrap items-center gap-3 w-full" id="filter-form">
 
-      <div class="flex items-center gap-2 flex-1 min-w-48">
-        <i data-lucide="search" class="w-4 h-4 text-gray-400 shrink-0"></i>
-        <input
-          type="text"
-          name="search"
-          value="{{ request.GET.search }}"
-          placeholder="Search student..."
-          class="input input-sm bg-transparent border-none outline-none w-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
-        />
-      </div>
-      <div class="w-px h-6 bg-gray-200"></div>
+  <div class="flex items-center gap-2 flex-1 min-w-48">
+    <i data-lucide="search" class="w-4 h-4 text-gray-400 shrink-0"></i>
+    <input
+      type="text"
+      name="search"
+      value="{{ request.GET.search }}"
+      placeholder="Search student..."
+      class="input input-sm bg-transparent border-none outline-none w-full text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+      id="search-input"
+    />
+  </div>
+  <div class="w-px h-6 bg-gray-200"></div>
 
-      
-      <select name="status" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
-        <option value="">All Status</option>
-        <option value="unpaid" {% if request.GET.status == 'unpaid' %}selected{% endif %}>Unpaid</option>
-        <option value="partial" {% if request.GET.status == 'partial' %}selected{% endif %}>Partial</option>
-        <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>Paid</option>
-      </select>
+  <select name="status" id="status-select" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
+    <option value="">All Status</option>
+    <option value="unpaid" {% if request.GET.status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+    <option value="partial" {% if request.GET.status == 'partial' %}selected{% endif %}>Partial</option>
+    <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>Paid</option>
+  </select>
 
-      <select name="academic_year" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
-        <option value="">All Years</option>
-        {% for ay in academic_years %}
-            <option value="{{ ay.id }}" 
-                {% if request.GET.academic_year == ay.id|stringformat:"s" %}selected{% endif %}>
-                {{ ay.academic_year }} - {{ ay.get_semester_display }}
-            </option>
-        {% endfor %}
-      </select>
+  <select name="academic_year" id="ay-select" class="select select-sm bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 focus:border-blue-500">
+    <option value="">All Years</option>
+    {% for ay in academic_years %}
+      <option value="{{ ay.id }}" {% if request.GET.academic_year == ay.id|stringformat:"s" %}selected{% endif %}>
+        {{ ay.academic_year }} - {{ ay.get_semester_display }}
+      </option>
+    {% endfor %}
+  </select>
+
+  {% if request.GET.search or request.GET.status or request.GET.academic_year %}
+  <a href="?" class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+    Clear
+  </a>
+  {% endif %}
+
+</form>
 
 
-      <button type="submit" class="flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors">
-        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
-        Filter
-      </button>
-
-      {% if request.GET.search or request.GET.semester or request.GET.academic_year or request.GET.status %}
-      <a href="?" class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
-        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-        Clear
-      </a>
-      {% endif %}
-
-    </form>
+  
   </div>
 
   <!-- Table -->
@@ -233,21 +238,45 @@
     </div>
 
     <!-- Pagination -->
-    <div class="px-5 py-4 border-t border-gray-100 flex justify-center gap-1.5">
-      {% for num in page_obj.paginator.page_range %}
-      {% if num >= 8 %}
-      <a href="?page={{ num }}"
-        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-150
-          {% if page_obj.number == num %}
-            bg-blue-700 text-white shadow-md shadow-blue-700/30
-          {% else %}
-            bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
-          {% endif %}">
-        {{ num }}
-      </a>
+    {% if is_paginated %}
+<div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+  
+  <p class="text-xs text-gray-400">
+    Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} reports
+  </p>
+
+  <div class="flex items-center gap-1.5">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+      class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+      ‹
+    </a>
+    {% endif %}
+
+    {% for num in paginator.page_range %}
+      {% if page_obj.number == num %}
+        <span class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-blue-700 text-white shadow-md shadow-blue-700/30">
+          {{ num }}
+        </span>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+        <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+          {{ num }}
+        </a>
       {% endif %}
-      {% endfor %}
-    </div>
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+      class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+      ›
+    </a>
+    {% endif %}
+  </div>
+
+</div>
+{% endif %}
+</div>
   </div>
 
 </div>
@@ -606,6 +635,188 @@
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
+<dialog id="bulk_fee_modal" class="modal modal-middle">
+  <div class="modal-box rounded-2xl max-w-lg p-0 overflow-auto">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+          <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+        </div>
+        <div>
+          <p class="font-extrabold text-gray-900 text-sm tracking-tight">Bulk Add Fee Records</p>
+          <p class="text-xs text-gray-400">Create records for students with no entry yet</p>
+        </div>
+      </div>
+      <button type="button" onclick="document.getElementById('bulk_fee_modal').close()"
+        class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <form method="POST" class="flex flex-col gap-0" id="bulk_fee_form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="bulk_create" />
+
+      <div class="p-6 flex flex-col gap-4 ">
+
+        <!-- Academic Year -->
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Academic Year</span>
+          </label>
+          <select name="academic_year" id="bulk_ay"
+            class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500"
+            onchange="fetchBulkPreview()" required>
+            <option value="">-- Select Academic Year --</option>
+            {% for ay in academic_years %}
+            <option value="{{ ay.id }}">{{ ay.academic_year }} - {{ ay.get_semester_display }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Semester -->
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Semester</span>
+          </label>
+          <select name="semester" id="bulk_semester"
+            class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500"
+            onchange="fetchBulkPreview()" required>
+            <option value="">-- Select Semester --</option>
+            <option value="1stSem">1st Semester</option>
+            <option value="2ndSem">2nd Semester</option>
+          </select>
+        </div>
+
+        <!-- Amount -->
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Amount Due</span>
+          </label>
+          <input
+            type="number"
+            name="amount"
+            id="bulk_amount"
+            step="0.01"
+            placeholder="Leave blank to use default org fee"
+            class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
+          />
+          <p class="text-xs text-gray-400 mt-1">
+            Default org fee: <span class="font-semibold text-gray-600">₱{{ request.user.officer.organization.society_fee_amount }}</span>
+          </p>
+        </div>
+
+        <!-- Summary Pills -->
+        <div id="bulk-preview" class="hidden flex-col gap-3 ">
+          <div class="flex items-center gap-2">
+            <div class="flex-1 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 flex items-center justify-between">
+              <span class="text-xs font-semibold text-blue-800">To be created</span>
+              <span id="bulk-count" class="text-sm font-extrabold text-blue-700">-</span>
+            </div>
+            <div class="flex-1 rounded-xl border border-green-100 bg-green-50 px-4 py-3 flex items-center justify-between">
+              <span class="text-xs font-semibold text-green-800">Already have record</span>
+              <span id="bulk-existing" class="text-sm font-extrabold text-green-700">-</span>
+            </div>
+            <div class="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between">
+              <span class="text-xs font-semibold text-gray-600">Total</span>
+              <span id="bulk-total-students" class="text-sm font-extrabold text-gray-800">-</span>
+            </div>
+          </div>
+
+          <!-- Tab Toggle -->
+          <div class="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+            <button type="button" id="tab-without"
+              onclick="switchBulkTab('without')"
+              class="flex-1 text-xs font-semibold py-1.5 rounded-lg bg-white text-blue-700 shadow-sm transition-all">
+              Without Record
+            </button>
+            <button type="button" id="tab-with"
+              onclick="switchBulkTab('with')"
+              class="flex-1 text-xs font-semibold py-1.5 rounded-lg text-gray-500 transition-all">
+              Already Have Record
+            </button>
+          </div>
+
+          <!-- Student List -->
+          <div id="bulk-student-list" class="rounded-xl border border-gray-200 overflow-hidden max-h-52 overflow-y-auto divide-y divide-gray-50">
+            <!-- populated by JS -->
+          </div>
+
+        </div>
+
+        <!-- Warning if all already have records -->
+        <div id="bulk-all-done" class="hidden rounded-xl border border-green-100 bg-green-50 px-4 py-3 items-center gap-2">
+          <i data-lucide="circle-check" class="w-4 h-4 text-green-600 shrink-0"></i>
+          <p class="text-xs text-green-700 font-semibold">All students already have a record for this period.</p>
+        </div>
+
+        <!-- Error -->
+        <div id="bulk-error" class="hidden rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-600"></div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
+        <p id="bulk-footer-summary" class="text-xs text-gray-400">Select academic year and semester</p>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="document.getElementById('bulk_fee_modal').close()"
+            class="btn btn-ghost btn-sm">Cancel</button>
+          <button type="submit" id="bulk-submit-btn" disabled
+            class="btn btn-sm px-5 bg-blue-700 hover:bg-blue-800 text-white border-none disabled:opacity-40 disabled:cursor-not-allowed">
+            <i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i>
+            Create Records
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+{% for message in messages %}
+  {% if message.tags == 'success' %}
+  <dialog id="success_modal" class="modal modal-middle">
+    <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center gap-4 px-8 py-8">
+        <div class="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+          <i data-lucide="circle-check-big" class="w-8 h-8 text-emerald-500"></i>
+        </div>
+        <div class="text-center">
+          <p class="font-extrabold text-gray-900 text-base tracking-tight">Success</p>
+          <p class="text-sm text-gray-500 mt-1">{{ message }}</p>
+        </div>
+        <button onclick="document.getElementById('success_modal').close()"
+          class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors">Done</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  <script>document.getElementById('success_modal').showModal();</script>
+
+  {% elif message.tags == 'error' %}
+  <dialog id="error_modal" class="modal modal-middle">
+    <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center gap-4 px-8 py-8">
+        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+          <i data-lucide="circle-x" class="w-8 h-8 text-red-500"></i>
+        </div>
+        <div class="text-center">
+          <p class="font-extrabold text-gray-900 text-base tracking-tight">Failed</p>
+          <p class="text-sm text-gray-500 mt-1">{{ message }}</p>
+        </div>
+        <button onclick="document.getElementById('error_modal').close()"
+          class="w-full py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors">Close</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  <script>document.getElementById('error_modal').showModal();</script>
+
+  {% endif %}
+{% endfor %}
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -829,6 +1040,164 @@
     btn.disabled = false;
     lucide.createIcons();
   }
+
+  const BULK_PREVIEW_URL = "{% url 'bulk_fee_preview' %}";
+
+let bulkStudentData = { without: [], with: [] };
+let activeTab = 'without';
+
+function switchBulkTab(tab) {
+  activeTab = tab;
+
+  const withoutBtn = document.getElementById('tab-without');
+  const withBtn = document.getElementById('tab-with');
+
+  if (tab === 'without') {
+    withoutBtn.classList.add('bg-white', 'text-blue-700', 'shadow-sm');
+    withoutBtn.classList.remove('text-gray-500');
+    withBtn.classList.remove('bg-white', 'text-blue-700', 'shadow-sm');
+    withBtn.classList.add('text-gray-500');
+  } else {
+    withBtn.classList.add('bg-white', 'text-green-700', 'shadow-sm');
+    withBtn.classList.remove('text-gray-500');
+    withoutBtn.classList.remove('bg-white', 'text-blue-700', 'shadow-sm');
+    withoutBtn.classList.add('text-gray-500');
+  }
+
+  renderBulkStudentList();
+}
+
+function renderBulkStudentList() {
+  const list = document.getElementById('bulk-student-list');
+  const students = bulkStudentData[activeTab];
+
+  if (!students.length) {
+    list.innerHTML = `
+      <div class="px-4 py-6 text-center text-xs text-gray-400 italic">No students in this category.</div>
+    `;
+    return;
+  }
+
+  list.innerHTML = students.map((s, i) => `
+    <div class="flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-gray-50 transition-colors">
+      <div class="w-6 h-6 rounded-lg ${activeTab === 'without' ? 'bg-blue-100' : 'bg-green-100'} flex items-center justify-center shrink-0">
+        <span class="text-xs font-bold ${activeTab === 'without' ? 'text-blue-700' : 'text-green-700'}">${s.name.charAt(0).toUpperCase()}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-gray-800 truncate">${s.name}</p>
+        <p class="text-xs text-gray-400">${s.student_id || '—'}</p>
+      </div>
+      ${activeTab === 'without'
+        ? `<span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">Will be created</span>`
+        : `<span class="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-lg">Has record</span>`
+      }
+    </div>
+  `).join('');
+}
+
+async function fetchBulkPreview() {
+  const ay = document.getElementById('bulk_ay').value;
+  const semester = document.getElementById('bulk_semester').value;
+  const previewEl = document.getElementById('bulk-preview');
+  const allDoneEl = document.getElementById('bulk-all-done');
+  const errorEl = document.getElementById('bulk-error');
+  const submitBtn = document.getElementById('bulk-submit-btn');
+  const summaryEl = document.getElementById('bulk-footer-summary');
+
+  // Reset
+  previewEl.classList.add('hidden');
+  previewEl.classList.remove('flex');
+  allDoneEl.classList.add('hidden');
+  allDoneEl.classList.remove('flex');
+  errorEl.classList.add('hidden');
+  submitBtn.disabled = true;
+  summaryEl.textContent = 'Select academic year and semester';
+
+  if (!ay || !semester) return;
+
+  summaryEl.textContent = 'Loading...';
+
+  try {
+    const res = await fetch(
+      `${BULK_PREVIEW_URL}?academic_year=${ay}&semester=${semester}`,
+      { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+    );
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+
+    document.getElementById('bulk-total-students').textContent = data.total_students;
+    document.getElementById('bulk-existing').textContent = data.existing;
+    document.getElementById('bulk-count').textContent = data.count;
+
+    // Store student lists
+    bulkStudentData = {
+      without: data.students_without || [],
+      with: data.students_with || [],
+    };
+
+    if (data.count === 0) {
+      allDoneEl.classList.remove('hidden');
+      allDoneEl.classList.add('flex');
+      summaryEl.textContent = 'Nothing to create';
+      lucide.createIcons();
+      return;
+    }
+
+    activeTab = 'without';
+    switchBulkTab('without');
+    renderBulkStudentList();
+
+    previewEl.classList.remove('hidden');
+    previewEl.classList.add('flex');
+    submitBtn.disabled = data.count === 0;
+    summaryEl.textContent = data.message;
+    lucide.createIcons();
+
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.classList.remove('hidden');
+    summaryEl.textContent = 'Error loading preview';
+  }
+}
+
+const form = document.getElementById('filter-form');
+let searchTimeout;
+
+document.getElementById('search-input').addEventListener('input', function () {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    sessionStorage.setItem('focusField', 'search-input');
+    form.submit();
+  }, 400);
+});
+
+document.getElementById('status-select').addEventListener('change', () => {
+  sessionStorage.setItem('focusField', 'status-select');
+  form.submit();
+});
+
+document.getElementById('ay-select').addEventListener('change', () => {
+  sessionStorage.setItem('focusField', 'ay-select');
+  form.submit();
+});
+
+// Restore focus after reload
+document.addEventListener('DOMContentLoaded', function () {
+  const focusId = sessionStorage.getItem('focusField');
+  if (focusId) {
+    const el = document.getElementById(focusId);
+    if (el) {
+      el.focus();
+      // Place cursor at end of text for search input
+      if (el.tagName === 'INPUT') {
+        const len = el.value.length;
+        el.setSelectionRange(len, len);
+      }
+    }
+    sessionStorage.removeItem('focusField');
+  }
+});
 </script>
 
 {% endblock con %}
