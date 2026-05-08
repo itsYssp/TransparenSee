@@ -19,6 +19,9 @@ from django.contrib.auth import update_session_auth_hash
 from ...models import *
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from ...blockchain import  verify_report_hash
+from ...blockchain_utils import build_report_snapshot, generate_report_hash
+
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
     role_required = ['auditor', 'president', 'adviser', 'co_adviser' ]
@@ -570,8 +573,7 @@ class ProductListView(RoleRequireMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        context['base_template'] = self.role_templates.get(user.role, 'app/base.html')
+        context['base_template'] = self.role_templates.get(self.request.user.role, 'app/base.html')
         context['is_paginated'] = context['page_obj'].paginator.num_pages > 1
         return context
 
@@ -579,58 +581,84 @@ class ProductListView(RoleRequireMixin, ListView):
         action = request.POST.get('action')
         org = self.get_organization()
 
+        # ── DELETE ──────────────────────────────────────────────────
+        if action == 'delete':
+            product = get_object_or_404(Product, pk=request.POST.get('product_id'), organization=org)
+            name = product.name
+            product.delete()  # cascades to variants automatically
+            messages.success(request, f'"{name}" deleted successfully.')
+            return redirect('product_list')
+
+        # ── UPDATE ──────────────────────────────────────────────────
         if action == 'update_product':
             product = get_object_or_404(Product, pk=request.POST.get('product_id'), organization=org)
+
+            # Update product fields
             product.name = request.POST.get('name')
             product.description = request.POST.get('description', '')
             product.is_active = request.POST.get('is_active') == 'true'
             product.save()
 
-            # Delete removed variants
+            # Delete variants that were removed in the modal
             for vid in request.POST.getlist('delete_variant'):
                 ProductVariant.objects.filter(pk=vid, product=product).delete()
 
-            # Update or create variants
-            for key in request.POST:
+            # Collect all variant keys from both POST and FILES
+            all_suffixes = set()
+            for key in list(request.POST.keys()) + list(request.FILES.keys()):
                 if key.startswith('variant_price_'):
-                    suffix = key.replace('variant_price_', '')
-                    variant_id = request.POST.get(f'variant_id_{suffix}')
-                    price = request.POST.get(f'variant_price_{suffix}')
-                    size = request.POST.get(f'variant_size_{suffix}')
-                    color = request.POST.get(f'variant_color_{suffix}', '')
-                    is_active = request.POST.get(f'variant_is_active_{suffix}') == 'true'
-                    img = request.FILES.get(f'variant_img_{suffix}')
+                    all_suffixes.add(key.replace('variant_price_', ''))
 
-                    if variant_id:
-                        variant = ProductVariant.objects.filter(pk=variant_id, product=product).first()
-                        if variant:
-                            variant.size = size
-                            variant.color = color
-                            variant.price = price
-                            variant.is_active = is_active
-                            if img:
-                                variant.product_img = img
-                            variant.save()
-                    else:
-                        variant = ProductVariant(
-                            product=product,
-                            size=size,
-                            color=color,
-                            price=price,
-                            is_active=is_active,
-                        )
+            for suffix in all_suffixes:
+                is_new    = request.POST.get(f'variant_is_new_{suffix}') == 'true'
+                variant_id = request.POST.get(f'variant_id_{suffix}')
+                size      = request.POST.get(f'variant_size_{suffix}')
+                color     = request.POST.get(f'variant_color_{suffix}') or None
+                price     = request.POST.get(f'variant_price_{suffix}')
+                is_active = request.POST.get(f'variant_is_active_{suffix}') == 'true'
+                img       = request.FILES.get(f'variant_img_{suffix}')
+
+                if not price:
+                    continue  # skip malformed rows
+
+                if is_new:
+                    # CREATE new variant
+                    variant = ProductVariant(
+                        product=product,
+                        size=size,
+                        color=color,
+                        price=price,
+                        is_active=is_active,
+                    )
+                    if img:
+                        variant.product_img = img
+                    variant.save()
+
+                elif variant_id:
+                    # UPDATE existing variant
+                    variant = ProductVariant.objects.filter(pk=variant_id, product=product).first()
+                    if variant:
+                        variant.size = size
+                        variant.color = color
+                        variant.price = price
+                        variant.is_active = is_active
                         if img:
-                            variant.product_img = img
+                            variant.product_img = img  # only replace if new file uploaded
                         variant.save()
 
             messages.success(request, f'"{product.name}" updated successfully.')
             return redirect('product_list')
+
+        # ── FALLTHROUGH ─────────────────────────────────────────────
         messages.error(request, 'Invalid action.')
         return redirect('product_list')
     
+
+
 class BlockchainRecordsView(RoleRequireMixin, TemplateView):
     template_name = 'app/blockchain_records.html'
-    role_required = ["treasurer","auditor", "president", "vice_president", "adviser", "co_adviser","head", "campus_admin", "admin", 'secretary' ] 
+    role_required = ["treasurer", "auditor", "president", "vice_president",
+                     "adviser", "co_adviser", "head", "campus_admin", "admin", "secretary"]
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -640,19 +668,18 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
         elif hasattr(user, 'co_adviser'):
             return user.adviser.organization
         return None
-    
-    role_templates = {
-        "treasurer": "app/officer/treasurer/sidebar.html",
-        "auditor": "app/officer/auditor/sidebar.html",
-        "president": "app/officer/president/sidebar.html",
-        "vice_president": "app/officer/president/sidebar.html",
-        "adviser": "app/adviser/sidebar.html",
-        "co_adviser": "app/adviser/sidebar.html",
-        "head": "app/heads/sidebar.html",
-        "campus_admin": "app/campus_admin/sidebar.html",
-        "admin": "app/superadmin/sidebar.html",
-        "secretary":    "app/officer/secretary/sidebar.html",
 
+    role_templates = {
+        "treasurer":      "app/officer/treasurer/sidebar.html",
+        "auditor":        "app/officer/auditor/sidebar.html",
+        "president":      "app/officer/president/sidebar.html",
+        "vice_president": "app/officer/president/sidebar.html",
+        "adviser":        "app/adviser/sidebar.html",
+        "co_adviser":     "app/adviser/sidebar.html",
+        "head":           "app/heads/sidebar.html",
+        "campus_admin":   "app/campus_admin/sidebar.html",
+        "admin":          "app/superadmin/sidebar.html",
+        "secretary":      "app/officer/secretary/sidebar.html",
     }
 
     def get_context_data(self, **kwargs):
@@ -660,37 +687,51 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
         user = self.request.user
         context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
         return context
-    
+
+    # ── DELETE the old compute_report_hash method entirely ──
 
     def get(self, request):
         context = self.get_context_data()
         user = self.request.user
         org = self.get_organization(user)
 
-        reports = FinancialReport.objects.filter( 
-                status='on_blockchain'
+        base_qs = FinancialReport.objects.filter(
+            status='on_blockchain'
         ).prefetch_related('entries').order_by('-blockchain_recorded_at')
-        
+
         if org:
-            reports = FinancialReport.objects.filter(
-                organization=org,
-                status='on_blockchain',
-            ).prefetch_related('entries').order_by('-blockchain_recorded_at')
-            
+            base_qs = base_qs.filter(organization=org)
+
+        reports = list(base_qs)
+
+        trusted_count  = 0
+        tampered_count = 0
 
         for report in reports:
             report.total_income  = report.entries.filter(entry_type='income').aggregate(t=Sum('amount'))['t'] or 0
             report.total_expense = report.entries.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
             report.net           = report.total_income - report.total_expense
 
-        total_income  = sum(r.total_income for r in reports)
-        total_expense = sum(r.total_expense for r in reports)
+            report.is_verified = verify_report_hash(report)  # uses blockchain_utils internally
+
+            if not report.is_verified and report.blockchain_hash:
+                snapshot = build_report_snapshot(report)
+                report.recomputed_hash = generate_report_hash(snapshot)
+            else:
+                report.recomputed_hash = None
+
+            if report.is_verified:
+                trusted_count += 1
+            else:
+                tampered_count += 1
 
         context.update({
             'reports':        reports,
-            'total_income':   total_income,
-            'total_expense':  total_expense,
+            'total_income':   sum(r.total_income  for r in reports),
+            'total_expense':  sum(r.total_expense for r in reports),
             'academic_years': AcademicYear.objects.order_by('-academic_year'),
+            'trusted_count':  trusted_count,
+            'tampered_count': tampered_count,
         })
 
         return render(request, self.template_name, context)

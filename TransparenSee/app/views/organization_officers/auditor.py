@@ -104,7 +104,11 @@ class StatementPeriodMixin:
             signatories.append({
                 "role": label,
                 "name": self._display_name(adviser.user if adviser else None),
-                "signature_url": None,
+                "signature_url": (
+                    request.build_absolute_uri(adviser.signature.url)
+                    if adviser and adviser.signature
+                    else None
+                ),
             })
 
         return signatories

@@ -509,7 +509,12 @@
             {% if log.remarks %}
             <p class="text-xs text-gray-400 mt-0.5">{{ log.remarks }}</p>
             {% else %}
+            {% if log.staus == rejected %}
+            <p class="text-xs text-gray-400 mt-0.5">Rejected by: {{log.action_by.get_role_display}}</p>
+            {% else %}
             <p class="text-xs text-gray-400 mt-0.5">Approve by: {{log.action_by.get_role_display}}</p>
+            {% endif %}
+            
             {% endif %}
           </div>
         </div>

@@ -40,13 +40,14 @@ class PresidentDashboardView(RoleRequireMixin, TemplateView):
         context['expense_percent'] = expense_percent
         context['total_income'] = total_income 
         context['income_percent'] = income_percent
-        
+        context['accomplishment_report'] = AccomplishmentReport.objects.filter(organization=org)[:3]
+        context['accomplishment_report_count'] = AccomplishmentReport.objects.filter(organization=org).count()
+
         context["society_fee_amount"] = org.society_fee_amount
         recent_approval_log = ReportApprovalLog.objects.filter(report__organization = org).order_by('-created_at')[:5]
         context["society_fee_amount"] = org.society_fee_amount
         context["balance"] = org.balance
         context["pending_financial_reports"] = FinancialReport.objects.filter(organization=org).exclude(status__in=['rejected','approved', 'on_blockchain']).count()
-        context["flagged_financial_reports"] = FinancialReport.objects.filter(organization=org, status='rejected').count()
         context["approved_financial_reports"] = FinancialReport.objects.filter(organization=org, status='on_blockchain').count()
         context["recent_approval_logs"] = recent_approval_log
         context['recent_financial_reports'] = FinancialReport.objects.filter(organization=org).exclude(status='rejected').annotate(
@@ -83,7 +84,7 @@ class ProductCreateView(RoleRequireMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['size_choices'] = ProductVariant.SIZE_CHOICES
         return context
-        
+
     def form_valid(self, form):
         product = form.save(commit=False)
         product.organization = self.request.user.officer.organization
@@ -92,20 +93,28 @@ class ProductCreateView(RoleRequireMixin, CreateView):
         sizes   = self.request.POST.getlist('size[]')
         colors  = self.request.POST.getlist('color[]')
         prices  = self.request.POST.getlist('price[]')
+        images  = self.request.FILES.getlist('product_img[]')  # ← was missing entirely
 
         errors = []
 
-        for i in range(len(prices)):  
+        for i in range(len(prices)):
             try:
                 if not prices[i]:
                     continue
 
-                ProductVariant.objects.create(
+                variant = ProductVariant(
                     product=product,
                     size=sizes[i] if i < len(sizes) else None,
                     color=colors[i] if i < len(colors) else None,
                     price=prices[i],
+                    is_active=True,
                 )
+
+                # Only assign image if one was uploaded for this index
+                if i < len(images) and images[i]:
+                    variant.product_img = images[i]
+
+                variant.save()
 
             except Exception as e:
                 errors.append(f"Variant {i+1}: {e}")
@@ -116,4 +125,5 @@ class ProductCreateView(RoleRequireMixin, CreateView):
             context['variant_errors'] = errors
             return self.render_to_response(context)
 
+        messages.success(self.request, f'"{product.name}" created successfully.')
         return redirect('product_list')

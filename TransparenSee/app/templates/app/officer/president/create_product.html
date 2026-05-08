@@ -14,7 +14,8 @@
       </h1>
   </div>
 
-  <form method="POST" class="max-w-3xl mx-auto flex flex-col gap-4">
+  <!-- FIX: enctype="multipart/form-data" is required for file uploads -->
+  <form method="POST" enctype="multipart/form-data" class="max-w-3xl mx-auto flex flex-col gap-4">
     {% csrf_token %}
 
     <!-- Variant errors -->
@@ -92,7 +93,7 @@
             </div>
           </div>
 
-          <button type="button" id="add-variant" class="btn bg-blue-700 text-white btn-sm gap-1  hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+          <button type="button" id="add-variant" class="btn bg-blue-700 text-white btn-sm gap-1 hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
             <i data-lucide='plus' class="w-5 h-5"></i>
             Add Variant
           </button>
@@ -119,7 +120,7 @@
                   <span class="label-text text-xs font-semibold uppercase tracking-wide opacity-50">Size</span>
                 </label>
                 <select name="size[]" class="select select-bordered select-sm w-full">
-                  <option value="">— N/A —</option>
+                  <option value="none">— N/A —</option>
                   {% for val, label in size_choices %}
                     {% if val != 'none' %}
                       <option value="{{ val }}">{{ label }}</option>
@@ -144,6 +145,20 @@
                 <input type="number" name="price[]" placeholder="0.00" step="0.01" min="0" class="input input-bordered input-sm w-full" required />
               </div>
 
+              <!-- Image — spans full row -->
+              <div class="form-control gap-1 col-span-2 sm:col-span-3">
+                <label class="label py-0">
+                  <span class="label-text text-xs font-semibold uppercase tracking-wide opacity-50">Product Image</span>
+                </label>
+                <div class="flex items-center gap-3">
+                  <!-- Live preview thumbnail -->
+                  <div class="img-preview w-12 h-12 rounded-xl border-2 border-dashed border-base-300 overflow-hidden shrink-0 flex items-center justify-center bg-base-100">
+                    <i data-lucide="image" class="w-5 h-5 text-base-content/30 preview-icon"></i>
+                  </div>
+                  <input type="file" name="product_img[]" accept="image/*"
+                    class="file-input file-input-bordered file-input-sm w-full variant-img-input" />
+                </div>
+              </div>
 
             </div>
 
@@ -164,8 +179,8 @@
 
     <!-- Actions -->
     <div class="flex items-center justify-end gap-3 pb-10">
-      <a href="#" class="btn btn-ghost btn-sm">Cancel</a>
-      <button type="submit" class="btn btn-blue-600 btn-sm gap-2">
+      <a href="{% url 'product_list' %}" class="btn btn-ghost btn-sm">Cancel</a>
+      <button type="submit" class="btn btn-sm gap-2 bg-blue-700 hover:bg-blue-800 text-white border-none">
         <i data-lucide="circle-check" class="w-4 h-4"></i>
         Save Product
       </button>
@@ -194,8 +209,25 @@ document.addEventListener('DOMContentLoaded', function () {
   addBtn.addEventListener('click', () => {
     const clone = tmpl.content.cloneNode(true);
     container.appendChild(clone);
+
+    // Wire up image preview for this new row
+    const row = container.lastElementChild;
+    const fileInput = row.querySelector('.variant-img-input');
+    const preview   = row.querySelector('.img-preview');
+
+    fileInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
     refreshUI();
-    container.lastElementChild?.querySelector('input, select')?.focus();
+    lucide.createIcons();
+    row.querySelector('input, select')?.focus();
   });
 
   // Remove variant
@@ -211,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => { form.remove(); refreshUI(); }, 150);
   });
 
+  // Active badge sync
   const toggleCb    = document.querySelector('input[name="is_active"]');
   const activeBadge = document.getElementById('active-badge');
   if (toggleCb && activeBadge) {

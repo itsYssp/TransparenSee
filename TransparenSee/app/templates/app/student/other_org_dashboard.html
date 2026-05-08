@@ -1,299 +1,466 @@
-  {% extends "app/student/sidebar.html" %} {% load static %} {% block con %}
+{% extends "app/student/sidebar.html" %}
+{% load static %}
+{% block con %}
 
-  <div class="px-6 py-6  flex flex-col gap-6 bg-gray-50">
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 ">
 
-    <!-- Header -->
-    <div class="flex items-center gap-3">
-      <img
-        src="{% if object.logo %}{{ object.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
-        alt="{{ object.name }}"
-        class="w-12 h-12 rounded-xl object-cover border border-black/10 shadow-sm"
-      />
-      <p class="text-2xl font-extrabold text-gray-900 tracking-tight">{{ object.name }}</p>
+  <!-- Header -->
+  <div class="flex items-center gap-3">
+    <img
+      src="{% if object.logo %}{{ object.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+      alt="{{ object.name }}"
+      class="w-10 h-10 rounded-xl object-cover border border-gray-200 shadow-sm"
+    />
+    <div>
+      <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Student View</p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">{{ object.name }}</h1>
+    </div>
+  </div>
+
+  <!-- Balance Card Skeleton -->
+  <div id="card-skeleton" class="bg-blue-700 rounded-2xl p-6 shadow-lg">
+    <div class="skeleton h-3 w-28 rounded mb-4 opacity-30"></div>
+    <div class="skeleton h-12 w-48 rounded opacity-30"></div>
+    <div class="mt-4 flex gap-2">
+      <div class="skeleton h-7 w-28 rounded-full opacity-30"></div>
+      <div class="skeleton h-7 w-36 rounded-full opacity-30"></div>
+      <div class="skeleton h-7 w-32 rounded-full opacity-30"></div>
+    </div>
+  </div>
+
+  <!-- Balance Card -->
+  <div id="card-balance" class="hidden bg-blue-700 rounded-2xl p-6 shadow-lg relative overflow-hidden">
+    <div class="absolute inset-0 bg-linear-to-br from-white/10 via-transparent to-transparent pointer-events-none"></div>
+    <div class="absolute -bottom-10 -right-10 w-48 h-48 rounded-full border-36 border-white/5 pointer-events-none"></div>
+    <p class="text-xs font-bold tracking-widest text-blue-200 uppercase mb-2">Organizational Funds</p>
+    <p class="text-5xl font-extrabold text-white tracking-tight">
+      <span class="text-2xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ object.balance|floatformat:2 }}
+    </p>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+        Active Balance
+      </div>
+      <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+        🔗 {{ tx_count }} On-Chain Record{{ tx_count|pluralize }}
+      </div>
+      <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+        📋 {{ accomplishment_report|length }} Accomplishment Record{{ accomplishment_report|pluralize }}
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Tabs -->
+  <div class="flex bg-white border border-gray-200 rounded-xl p-1 gap-1 shadow-sm">
+    <a href="?type=financial"
+      class="flex-1 text-center text-sm font-semibold py-2 rounded-lg transition-all duration-200
+        {% if active_tab != 'accomplishment' %}bg-blue-700 text-white shadow-md{% else %}text-gray-500 hover:bg-blue-50 hover:text-blue-700{% endif %}">
+      Financial Records
+    </a>
+    <a href="?type=accomplishment"
+      class="flex-1 text-center text-sm font-semibold py-2 rounded-lg transition-all duration-200
+        {% if active_tab == 'accomplishment' %}bg-blue-700 text-white shadow-md{% else %}text-gray-500 hover:bg-blue-50 hover:text-blue-700{% endif %}">
+      Accomplishment Report
+    </a>
+  </div>
+
+  {% if active_tab != 'accomplishment' %}
+
+  <!-- Combined Financial + Blockchain Table -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-2 px-6 py-4 border-b border-gray-100">
+      <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+        <i data-lucide="database" class="w-4 h-4 text-blue-700"></i>
+      </div>
+      <p class="font-bold text-gray-800 text-sm">Financial Records</p>
+      <span class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700">
+        {{ financial_reports|length }} record{{ financial_reports|length|pluralize }}
+      </span>
     </div>
 
-  
-  <div id="card-skeleton" class="rounded-2xl p-7 bg-blue-700 relative overflow-hidden shadow-xl shadow-blue-700/30">
-  <div class="skeleton h-3 w-32 rounded mb-3 opacity-40"></div>  
-  <div class="skeleton h-12 w-48 rounded opacity-40"></div>
-  <div class="mt-4 flex gap-2">
-    <div class="skeleton h-7 w-28 rounded-full opacity-40"></div>
-    <div class="skeleton h-7 w-36 rounded-full opacity-40"></div>
+    <!-- Skeleton -->
+    <div id="financial-skeleton" class="flex flex-col gap-3 px-5 py-4">
+      {% for i in "xxxxx" %}
+      <div class="flex gap-4 items-center">
+        <div class="skeleton h-3.5 w-6 rounded"></div>
+        <div class="skeleton h-3.5 flex-1 rounded"></div>
+        <div class="skeleton h-3.5 w-24 rounded"></div>
+        <div class="skeleton h-3.5 w-20 rounded"></div>
+        <div class="skeleton h-3.5 w-20 rounded"></div>
+        <div class="skeleton h-3.5 w-32 rounded"></div>
+        <div class="skeleton h-6 w-28 rounded-full"></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="overflow-x-auto">
+      <table id="financial-table" class="w-full text-sm hidden">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-10"></th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Report</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Blockchain Hash</th>
+            <th class="px-4 py-3 text-right text-xs font-bold tracking-widest text-green-500 uppercase">Income (₱)</th>
+            <th class="px-4 py-3 text-right text-xs font-bold tracking-widest text-red-400 uppercase">Expense (₱)</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
+            <th class="px-4 py-3 w-10"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in financial_reports %}
+          <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
+              onclick="document.getElementById('report-modal-{{ report.pk }}').showModal()">
+
+            <!-- Chain dot -->
+            <td class="px-4 py-3">
+              <div class="flex flex-col items-center gap-0.5">
+                <div class="w-2.5 h-2.5 rounded-full {% if report.status == 'on_blockchain' %}bg-blue-700{% else %}bg-gray-300{% endif %}"></div>
+                {% if not forloop.last %}
+                <div class="w-0.5 h-5 {% if report.status == 'on_blockchain' %}bg-blue-200{% else %}bg-gray-200{% endif %}"></div>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Title + AY -->
+            <td class="px-4 py-3">
+              <p class="font-bold text-gray-900 text-xs">{{ report.title }}</p>
+              {% if report.academic_year %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-500 mt-1">
+                {{ report.academic_year }}
+              </span>
+              {% endif %}
+            </td>
+
+            <!-- Hash -->
+            <td class="px-4 py-3">
+              {% if report.blockchain_hash %}
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-xs text-gray-500">
+                  {{ report.blockchain_hash|slice:":8" }}...{{ report.blockchain_hash|slice:"-6:" }}
+                </span>
+                <button class="text-xs px-1.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  onclick="event.stopPropagation(); copyHash('{{ report.blockchain_hash }}', this)">
+                  copy
+                </button>
+              </div>
+              {% else %}
+              <span class="text-xs text-gray-300">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Income -->
+            <td class="px-4 py-3 text-right font-bold text-green-700 text-xs whitespace-nowrap">
+              ₱{{ report.total_income|default:"0.00"|floatformat:2 }}
+            </td>
+
+            <!-- Expense -->
+            <td class="px-4 py-3 text-right font-bold text-red-500 text-xs whitespace-nowrap">
+              ₱{{ report.total_expense|default:"0.00"|floatformat:2 }}
+            </td>
+
+            <!-- Status -->
+            <td class="px-4 py-3">
+              {% if report.status == 'on_blockchain' %}
+                <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full border border-green-100">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                  On Blockchain
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100">
+                  <i data-lucide="check-circle" class="w-3 h-3"></i>
+                  Approved
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- View button -->
+            <td class="px-4 py-3">
+              <button class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                onclick="event.stopPropagation(); document.getElementById('report-modal-{{ report.pk }}').showModal()">
+                <i data-lucide="search" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center text-sm text-gray-400">
+              <div class="flex flex-col items-center gap-2">
+                <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
+                <span>No financial reports available yet.</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
+
+  <!-- ══ ACCOMPLISHMENT TAB ══════════════════════════════════════ -->
+  {% else %}
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-2 px-6 py-4 border-b border-gray-100">
+      <div class="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
+        <i data-lucide="clipboard-list" class="w-4 h-4 text-purple-600"></i>
+      </div>
+      <p class="font-bold text-gray-800 text-sm">Uploaded Reports</p>
+      <span class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-700">
+        {{ accomplishment_report|length }} record{{ accomplishment_report|length|pluralize }}
+      </span>
+    </div>
+
+    {% if accomplishment_report %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-10">#</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Uploaded By</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date</th>
+            <th class="px-4 py-3 w-10"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in accomplishment_report %}
+          <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-500"></i>
+                </div>
+                <p class="font-bold text-gray-900 text-xs">{{ report.title }}</p>
+              </div>
+            </td>
+            <td class="px-4 py-3 max-w-xs">
+              <p class="text-xs text-gray-400 truncate">{{ report.desciption }}</p>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-600 font-semibold">
+              {{ report.created_by.get_full_name|default:report.created_by.username }}
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+              {{ report.created_at|date:"M d, Y" }}
+            </td>
+            <td class="px-4 py-3">
+              {% if report.report_file %}
+              <button type="button"
+                onclick="document.getElementById('acc-modal-{{ report.pk }}').showModal()"
+                class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-purple-600 hover:border-purple-200 transition-colors">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              </button>
+              {% else %}
+              <span class="text-xs text-gray-300">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="px-6 py-12 text-center text-sm text-gray-400">
+      <div class="flex flex-col items-center gap-2">
+        <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
+        <span>No accomplishment reports uploaded yet.</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% endif %}
 
 </div>
 
-  <div id="card-balance" class="hidden rounded-2xl p-7 bg-blue-700 relative overflow-hidden shadow-xl shadow-blue-700/30">
-    <div class="absolute inset-0 bg-linear-to-br from-white/10 via-transparent to-transparent pointer-events-none"></div>
-    <div class="absolute -bottom-10 -right-10 w-48 h-48 rounded-full border-36 border-white/5 pointer-events-none"></div>
+<!-- ══ FINANCIAL REPORT DETAIL MODALS ══════════════════════════ -->
+{% for report in financial_reports %}
+<dialog id="report-modal-{{ report.pk }}" class="modal">
+  <div class="modal-box rounded-2xl border border-gray-200 shadow-xl max-w-lg p-0 overflow-hidden">
 
-    <p class="text-xs font-bold tracking-widest text-blue-200 uppercase mb-3">Organizational Funds</p>
-    <p class="text-5xl font-extrabold text-white tracking-tight">
-      <span class="text-2xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ object.balance|floatformat:2|default:0.00 }}
-    </p>
-    <div class="mt-4 inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
-      <span class="w-2 h-2 rounded-full bg-green-400 shadow shadow-green-400 animate-pulse"></span>
-      Active Balance
-    </div>
-    
-
-    <div class="mt-2 inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
-      🔗 {{ tx_count }} On-Chain Record{{ tx_count|pluralize }}
-    </div>
-
-    <div class="mt-4 inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
-      📋 {{ accomplishment_report|length }} Accomplishment Record{{ accomplishment_report|pluralize }}
-    </div>
-  </div>
-
-    <!-- Tabs -->
-    <div class="flex bg-white border border-gray-200 rounded-xl p-1 gap-1 shadow-sm">
-      <a href="?type=financial"
-        class="flex-1 text-center text-sm font-semibold py-2 rounded-lg transition-all duration-200
-          {% if active_tab != 'accomplishment' %}bg-blue-700 text-white shadow-md shadow-blue-700/30{% else %}text-gray-500 hover:bg-blue-50 hover:text-blue-700{% endif %}">
-        Financial Records
-      </a>
-      <a href="?type=accomplishment"
-        class="flex-1 text-center text-sm font-semibold py-2 rounded-lg transition-all duration-200
-          {% if active_tab == 'accomplishment' %}bg-blue-700 text-white shadow-md shadow-blue-700/30{% else %}text-gray-500 hover:bg-blue-50 hover:text-blue-700{% endif %}">
-        Accomplishment Report
-      </a>
-    </div>
-
-    <!-- Financial Records Tab -->
-    {% if active_tab != 'accomplishment' %}
-
-    <!-- Blockchain Transactions -->
-    {% if transactions %}
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase">Blockchain Verified Records</p>
+    <!-- Modal Header -->
+    <div class="bg-blue-700 px-6 py-4 flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <i data-lucide="file-text" class="w-4 h-4 text-blue-200"></i>
+          <span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Financial Report</span>
+        </div>
+        <h3 class="font-extrabold text-white text-sm leading-snug">{{ report.title }}</h3>
+        <p class="text-xs text-blue-200 mt-0.5">
+          {{ report.academic_year|default:"No academic year" }}
+        </p>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">#</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Amount</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date Recorded</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Report Hash</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-50">
-            {% for tx in transactions %}
-            <tr class="hover:bg-blue-50/50 transition-colors duration-150">
-              <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
-              <td class="px-5 py-3.5 font-semibold text-gray-800">{{ tx.title }}</td>
-              <td class="px-5 py-3.5 text-gray-700 font-mono">₱{{ tx.amount|floatformat:2 }}</td>
-              <td class="px-5 py-3.5 text-gray-400 text-xs font-mono">{{ tx.timestamp }}</td>
-              <td class="px-5 py-3.5 text-xs font-mono text-gray-400 truncate max-w-35" title="{{ tx.report_hash }}">
-                {{ tx.report_hash|slice:":16" }}...
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- Approved Financial Reports -->   
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="px-5 py-4 border-b border-gray-100">
-        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase">Financial Reports</p>
-      </div>
-      <div class="overflow-x-auto">
-        <div id="financial-skeleton" class="flex flex-col gap-3 px-5 py-4">
-      {% for i in "xxxxx" %}
-      <div class="flex gap-4 items-center">
-        <div class="skeleton h-4 w-6 rounded"></div>
-        <div class="skeleton h-4 flex-1 rounded"></div>
-        <div class="skeleton h-4 w-24 rounded"></div>
-        <div class="skeleton h-4 w-20 rounded"></div>
-        <div class="skeleton h-4 w-20 rounded"></div>
-        <div class="skeleton h-6 w-24 rounded-full"></div>
-      </div>
-      {% endfor %}
+      <button onclick="document.getElementById('report-modal-{{ report.pk }}').close()" class="text-blue-200 hover:text-white mt-1">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
     </div>
 
-        <table id="financial-table" class="w-full text-sm hidden">
-          <thead class="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">#</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Academic Year</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Total Income</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Total Expense</th>
-              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-50">
-            {% for report in financial_reports %}
-            <tr class="hover:bg-blue-50/50 transition-colors duration-150">
-              <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
-              <td class="px-5 py-3.5 font-semibold text-gray-800">{{ report.title }}</td>
-              <td class="px-5 py-3.5 text-gray-500">{{ report.academic_year }}</td>
-              <td class="px-5 py-3.5 text-green-600 font-semibold font-mono">
-                ₱{{ report.total_income|default:"0.00"|floatformat:2 }}
-              </td>
-              <td class="px-5 py-3.5 text-red-500 font-semibold font-mono">
-                ₱{{ report.total_expense|default:"0.00"|floatformat:2 }}
-              </td>
-              <td class="px-5 py-3.5">
-                {% if report.status == 'on_blockchain' %}
-                  <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                    On Blockchain
-                  </span>
-                {% else %}
-                  <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                    Approved
-                  </span>
-                {% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="6" class="px-5 py-10 text-center text-sm text-gray-400 italic">No financial reports available yet.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <div class="p-6 flex flex-col gap-5">
 
-    <!-- Accomplishment Report Tab -->
-    {% else %}
-
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
-                <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i>
-              </div>
-              <p class="text-sm font-bold text-gray-800">Uploaded Reports</p>
-            </div>
-            <span class="text-xs text-gray-400 font-medium">{{ accomplishment_report|length }} record{{ accomplishment_report|length|pluralize }}</span>
-          </div>
-
-          {% if accomplishment_report %}
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead class="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">#</th>
-                    <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
-                    <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
-                    <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Uploaded By</th>
-                    <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date</th>
-                    <th class="px-5 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Action</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                  {% for report in accomplishment_report %}
-                  <tr class="hover:bg-blue-50/40 transition-colors duration-150">
-                    <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
-                    <td class="px-5 py-3.5">
-                      <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                          <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i>
-                        </div>
-                        <p class="font-semibold text-gray-900 text-sm leading-tight">{{ report.title }}</p>
-                      </div>
-                    </td>
-                    <td class="px-5 py-3.5 max-w-xs">
-                      <p class="text-xs text-gray-500 line-clamp-2">{{ report.desciption }}</p>
-                    </td>
-                    <td class="px-5 py-3.5 text-xs text-gray-600 font-medium">
-                      {{ report.created_by.get_full_name|default:report.created_by.username }}
-                    </td>
-                    <td class="px-5 py-3.5 text-xs text-gray-400 font-mono whitespace-nowrap">
-                      {{ report.created_at|date:"M d, Y" }}
-                    </td>
-                    <td class="px-5 py-3.5">
-                      {% if report.report_file %}
-                        <button
-                          type="button"
-                          onclick="document.getElementById('report-modal-{{ report.pk }}').showModal()"
-                          class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
-                          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                        </button>
-                      {% else %}
-                        <span class="text-xs text-gray-300 italic">No file</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="px-5 py-16 text-center">
-              <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
-                <i data-lucide="files" class="w-6 h-6 text-blue-400"></i>
-              </div>
-              <p class="text-sm font-semibold text-gray-600">No reports uploaded yet</p>
-              <p class="text-xs text-gray-400 mt-1">PDF reports you upload will appear here.</p>
-            </div>
+      <!-- Blockchain Hash -->
+      {% if report.blockchain_hash %}
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">Blockchain Hash</p>
+        <p class="font-mono text-xs text-blue-700 break-all leading-relaxed">{{ report.blockchain_hash }}</p>
+        <div class="flex items-center gap-3 mt-3">
+          <span class="inline-flex items-center gap-1.5 text-xs text-green-600 font-semibold">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verified & Immutable
+          </span>
+          {% if report.blockchain_recorded_at %}
+          <span class="text-xs text-gray-400">{{ report.blockchain_recorded_at|date:"M d, Y · g:i A" }}</span>
           {% endif %}
         </div>
+      </div>
+      {% endif %}
 
+      <!-- Approval Chain -->
+      <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">Approval Chain</p>
+        <div class="flex flex-col gap-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Auditor
+            </span>
+            {% if report.auditor_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.auditor_approved_by.get_full_name }} · {{ report.auditor_approved_at|date:"M d, Y" }}</span>
+            {% else %}<span class="text-gray-300">—</span>{% endif %}
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> President
+            </span>
+            {% if report.president_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.president_approved_by.get_full_name }} · {{ report.president_approved_at|date:"M d, Y" }}</span>
+            {% else %}<span class="text-gray-300">—</span>{% endif %}
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Co-Adviser
+            </span>
+            {% if report.co_adviser_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.co_adviser_approved_by.get_full_name }} · {{ report.co_adviser_approved_at|date:"M d, Y" }}</span>
+            {% else %}<span class="text-gray-300">—</span>{% endif %}
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Adviser
+            </span>
+            {% if report.adviser_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.adviser_approved_by.get_full_name }} · {{ report.adviser_approved_at|date:"M d, Y" }}</span>
+            {% else %}<span class="text-gray-300">—</span>{% endif %}
+          </div>
+        </div>
       </div>
 
-      <!-- View Report Modals -->
-      {% for report in accomplishment_report %}
-        {% if report.report_file %}
-          <dialog id="report-modal-{{ report.pk }}" class="modal modal-middle ">
-            <div class="modal-box max-w-5xl rounded-2xl p-0 overflow-hidden flex flex-col h-screen">
-              <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <div>
-                  <p class="font-bold text-gray-900 text-sm">{{ report.title }}</p>
-                  <p class="text-xs text-gray-400 mt-0.5">{{ report.desciption }}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                  <a href="{{ report.report_file.url }}" target="_blank"
-                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors">
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                    Open tab
-                  </a>
-                  <button type="button" onclick="document.getElementById('report-modal-{{ report.pk }}').close()"
-                    class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                  </button>
-                </div>
-              </div>
-              <iframe
-                src="{{ report.report_file.url }}#toolbar=1&navpanes=0"
-                title="{{ report.title }}"
-                class=" flex-1 w-full bg-gray-50"
-              ></iframe>
+      <!-- Totals -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-green-50 rounded-xl p-3 text-center border border-green-100">
+          <p class="text-xs font-bold text-green-600 uppercase tracking-wide mb-1">Income</p>
+          <p class="text-base font-extrabold text-green-700">₱{{ report.total_income|default:"0.00"|floatformat:2 }}</p>
+        </div>
+        <div class="bg-red-50 rounded-xl p-3 text-center border border-red-100">
+          <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-1">Expense</p>
+          <p class="text-base font-extrabold text-red-600">₱{{ report.total_expense|default:"0.00"|floatformat:2 }}</p>
+        </div>
+        <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+          <p class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Net</p>
+          {% with net=report.total_income|default:0 %}
+          <p class="text-base font-extrabold text-blue-700">
+            ₱{{ report.total_income|default:"0"|add:"0"|floatformat:2 }}
+          </p>
+          {% endwith %}
+        </div>
+      </div>
+
+      <!-- Entries -->
+      <div>
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">
+          Entries ({{ report.entries.count }})
+        </p>
+        <div class="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-50 max-h-56 overflow-y-auto">
+          {% for entry in report.entries.all %}
+          <div class="flex items-center gap-3 px-4 py-2.5">
+            <span class="w-2 h-2 rounded-full shrink-0 {% if entry.entry_type == 'income' %}bg-green-500{% else %}bg-red-400{% endif %}"></span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-gray-800">{{ entry.category }}</p>
+              <p class="text-xs text-gray-400 truncate">{{ entry.description }}</p>
             </div>
-            <form method="dialog" class="modal-backdrop"><button>close</button></form>
-          </dialog>
-        {% endif %}
-      {% endfor %}
+            <span class="text-xs font-bold whitespace-nowrap {% if entry.entry_type == 'income' %}text-green-700{% else %}text-red-500{% endif %}">
+              {% if entry.entry_type == 'income' %}+{% else %}-{% endif %}₱{{ entry.amount|floatformat:2 }}
+            </span>
+          </div>
+          {% empty %}
+          <div class="px-4 py-6 text-center text-xs text-gray-400">No entries found.</div>
+          {% endfor %}
+        </div>
+      </div>
+
     </div>
 
-    {% endif %}
-
+    <div class="px-6 pb-6 flex justify-end">
+      <button onclick="document.getElementById('report-modal-{{ report.pk }}').close()"
+        class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50">
+        Close
+      </button>
+    </div>
   </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+{% endfor %}
 
-  <script>
-  
-   window.addEventListener("load", () => {
-  const financialSkeleton = document.getElementById("financial-skeleton");
-  const cardSkeleton = document.getElementById("card-skeleton");
-  const financialTable = document.getElementById("financial-table");
-  const cardBalance = document.getElementById("card-balance");
+<!-- ══ ACCOMPLISHMENT REPORT VIEW MODALS ══════════════════════════ -->
+{% for report in accomplishment_report %}
+  {% if report.report_file %}
+  <dialog id="acc-modal-{{ report.pk }}" class="modal modal-middle">
+    <div class="modal-box max-w-5xl rounded-2xl p-0 overflow-hidden flex flex-col" style="height:90vh;">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center">
+            <i data-lucide="file-text" class="w-4 h-4 text-purple-500"></i>
+          </div>
+          <div>
+            <p class="font-bold text-gray-900 text-sm leading-tight">{{ report.title }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ report.desciption }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{{ report.report_file.url }}" target="_blank"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            Open tab
+          </a>
+          <button type="button" onclick="document.getElementById('acc-modal-{{ report.pk }}').close()"
+            class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+      <iframe src="{{ report.report_file.url }}#toolbar=1&navpanes=0"
+        title="{{ report.title }}" class="flex-1 w-full bg-gray-50"></iframe>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  {% endif %}
+{% endfor %}
 
-  if (financialSkeleton) financialSkeleton.classList.add("hidden");
-  if (cardSkeleton) cardSkeleton.classList.add("hidden");
-  if (financialTable) financialTable.classList.remove("hidden");
-  if (cardBalance) cardBalance.classList.remove("hidden");
+<script>
+function copyHash(hash, btn) {
+  navigator.clipboard.writeText(hash).catch(() => {});
+  btn.textContent = 'copied!';
+  btn.classList.add('text-green-600');
+  setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('text-green-600'); }, 1500);
+}
+
+window.addEventListener("load", () => {
+  document.getElementById("card-skeleton")?.classList.add("hidden");
+  document.getElementById("financial-skeleton")?.classList.add("hidden");
+
+  document.getElementById("card-balance")?.classList.remove("hidden");
+  document.getElementById("financial-table")?.classList.remove("hidden");
+  document.getElementById("stats-cards")?.classList.remove("hidden");
 });
-
-
 </script>
-  {% endblock con %}
+
+{% endblock con %}
