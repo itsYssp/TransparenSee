@@ -239,43 +239,43 @@
 
     <!-- Pagination -->
     {% if is_paginated %}
-<div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
-  
-  <p class="text-xs text-gray-400">
-    Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} reports
-  </p>
+    <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+      
+      <p class="text-xs text-gray-400">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} reports
+      </p>
 
-  <div class="flex items-center gap-1.5">
-    {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
-      class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
-      ‹
-    </a>
-    {% endif %}
-
-    {% for num in paginator.page_range %}
-      {% if page_obj.number == num %}
-        <span class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-blue-700 text-white shadow-md shadow-blue-700/30">
-          {{ num }}
-        </span>
-      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
-        <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+      <div class="flex items-center gap-1.5">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.academic_year %}&academic_year={{ request.GET.academic_year }}{% endif %}"
           class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
-          {{ num }}
+          ‹
         </a>
-      {% endif %}
-    {% endfor %}
+        {% endif %}
 
-    {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
-      class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
-      ›
-    </a>
+        {% for num in paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-blue-700 text-white shadow-md shadow-blue-700/30">
+              {{ num }}
+            </span>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+            <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.academic_year %}&academic_year={{ request.GET.academic_year }}{% endif %}"
+              class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+              {{ num }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.academic_year %}&academic_year={{ request.GET.academic_year }}{% endif %}"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+          ›
+        </a>
+        {% endif %}
+      </div>
+
+    </div>
     {% endif %}
-  </div>
-
-</div>
-{% endif %}
 </div>
   </div>
 
@@ -290,7 +290,6 @@
     <form method="POST" action="{% url 'treasurer_society_fee_create' %}" class="flex flex-col gap-3">
       {% csrf_token %}
 
-      <!-- FIX 1: Added top-full to anchor dropdown below input -->
       <div class="form-control relative">
         <label class="label pb-1">
           <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Student</span>
@@ -304,7 +303,6 @@
         />
         <input type="hidden" name="student" id="student_id_input" required />
 
-        <!-- FIX 1: Added top-full so dropdown anchors correctly below the input -->
         <div id="student_results"
           class="hidden absolute z-50 top-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto w-full">
         </div>
@@ -775,6 +773,7 @@
   </div>
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
+
 {% for message in messages %}
   {% if message.tags == 'success' %}
   <dialog id="success_modal" class="modal modal-middle">
@@ -821,7 +820,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-  // FIX 2: Safe student data — no inline JS string injection risk
   const students = [
     {% for student in students %}
     {
@@ -832,7 +830,6 @@
     {% endfor %}
   ];
 
-  // FIX 3: Attach input listener via JS (not oninput attribute), use event delegation for results
   document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('student_search');
     const resultsBox = document.getElementById('student_results');
@@ -859,8 +856,6 @@
           <div class="px-4 py-3 text-xs text-gray-400 italic">No students found</div>
         `;
       } else {
-        // FIX 4: Use data-* attributes instead of inline onclick strings
-        // — prevents breakage when names contain apostrophes or quotes
         resultsBox.innerHTML = filtered.map(s => `
           <div
             data-id="${s.id}"
@@ -878,7 +873,6 @@
           </div>
         `).join('');
 
-        // Attach click listeners after rendering
         resultsBox.querySelectorAll('.student-result').forEach(el => {
           el.addEventListener('click', function () {
             const id = this.dataset.id;
@@ -894,7 +888,6 @@
       resultsBox.classList.remove('hidden');
     });
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', function (e) {
       if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
         resultsBox.classList.add('hidden');
@@ -954,7 +947,6 @@
     document.getElementById('receipt-amount').textContent = fee.amount;
     document.getElementById('receipt-amount-paid').textContent = fee.amountPaid;
 
-    // Status badge
     const statusEl = document.getElementById('receipt-status-badge');
     const statusMap = {
       paid: { label: 'PAID IN FULL', classes: 'bg-green-50 border-green-500 text-green-700', icon: 'circle-check' },
@@ -1043,161 +1035,157 @@
 
   const BULK_PREVIEW_URL = "{% url 'bulk_fee_preview' %}";
 
-let bulkStudentData = { without: [], with: [] };
-let activeTab = 'without';
+  let bulkStudentData = { without: [], with: [] };
+  let activeTab = 'without';
 
-function switchBulkTab(tab) {
-  activeTab = tab;
+  function switchBulkTab(tab) {
+    activeTab = tab;
 
-  const withoutBtn = document.getElementById('tab-without');
-  const withBtn = document.getElementById('tab-with');
+    const withoutBtn = document.getElementById('tab-without');
+    const withBtn = document.getElementById('tab-with');
 
-  if (tab === 'without') {
-    withoutBtn.classList.add('bg-white', 'text-blue-700', 'shadow-sm');
-    withoutBtn.classList.remove('text-gray-500');
-    withBtn.classList.remove('bg-white', 'text-blue-700', 'shadow-sm');
-    withBtn.classList.add('text-gray-500');
-  } else {
-    withBtn.classList.add('bg-white', 'text-green-700', 'shadow-sm');
-    withBtn.classList.remove('text-gray-500');
-    withoutBtn.classList.remove('bg-white', 'text-blue-700', 'shadow-sm');
-    withoutBtn.classList.add('text-gray-500');
+    if (tab === 'without') {
+      withoutBtn.classList.add('bg-white', 'text-blue-700', 'shadow-sm');
+      withoutBtn.classList.remove('text-gray-500');
+      withBtn.classList.remove('bg-white', 'text-blue-700', 'shadow-sm');
+      withBtn.classList.add('text-gray-500');
+    } else {
+      withBtn.classList.add('bg-white', 'text-green-700', 'shadow-sm');
+      withBtn.classList.remove('text-gray-500');
+      withoutBtn.classList.remove('bg-white', 'text-blue-700', 'shadow-sm');
+      withoutBtn.classList.add('text-gray-500');
+    }
+
+    renderBulkStudentList();
   }
 
-  renderBulkStudentList();
-}
+  function renderBulkStudentList() {
+    const list = document.getElementById('bulk-student-list');
+    const students = bulkStudentData[activeTab];
 
-function renderBulkStudentList() {
-  const list = document.getElementById('bulk-student-list');
-  const students = bulkStudentData[activeTab];
-
-  if (!students.length) {
-    list.innerHTML = `
-      <div class="px-4 py-6 text-center text-xs text-gray-400 italic">No students in this category.</div>
-    `;
-    return;
-  }
-
-  list.innerHTML = students.map((s, i) => `
-    <div class="flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-gray-50 transition-colors">
-      <div class="w-6 h-6 rounded-lg ${activeTab === 'without' ? 'bg-blue-100' : 'bg-green-100'} flex items-center justify-center shrink-0">
-        <span class="text-xs font-bold ${activeTab === 'without' ? 'text-blue-700' : 'text-green-700'}">${s.name.charAt(0).toUpperCase()}</span>
-      </div>
-      <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold text-gray-800 truncate">${s.name}</p>
-        <p class="text-xs text-gray-400">${s.student_id || '—'}</p>
-      </div>
-      ${activeTab === 'without'
-        ? `<span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">Will be created</span>`
-        : `<span class="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-lg">Has record</span>`
-      }
-    </div>
-  `).join('');
-}
-
-async function fetchBulkPreview() {
-  const ay = document.getElementById('bulk_ay').value;
-  const semester = document.getElementById('bulk_semester').value;
-  const previewEl = document.getElementById('bulk-preview');
-  const allDoneEl = document.getElementById('bulk-all-done');
-  const errorEl = document.getElementById('bulk-error');
-  const submitBtn = document.getElementById('bulk-submit-btn');
-  const summaryEl = document.getElementById('bulk-footer-summary');
-
-  // Reset
-  previewEl.classList.add('hidden');
-  previewEl.classList.remove('flex');
-  allDoneEl.classList.add('hidden');
-  allDoneEl.classList.remove('flex');
-  errorEl.classList.add('hidden');
-  submitBtn.disabled = true;
-  summaryEl.textContent = 'Select academic year and semester';
-
-  if (!ay || !semester) return;
-
-  summaryEl.textContent = 'Loading...';
-
-  try {
-    const res = await fetch(
-      `${BULK_PREVIEW_URL}?academic_year=${ay}&semester=${semester}`,
-      { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
-    );
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.error || 'Something went wrong.');
-
-    document.getElementById('bulk-total-students').textContent = data.total_students;
-    document.getElementById('bulk-existing').textContent = data.existing;
-    document.getElementById('bulk-count').textContent = data.count;
-
-    // Store student lists
-    bulkStudentData = {
-      without: data.students_without || [],
-      with: data.students_with || [],
-    };
-
-    if (data.count === 0) {
-      allDoneEl.classList.remove('hidden');
-      allDoneEl.classList.add('flex');
-      summaryEl.textContent = 'Nothing to create';
-      lucide.createIcons();
+    if (!students.length) {
+      list.innerHTML = `
+        <div class="px-4 py-6 text-center text-xs text-gray-400 italic">No students in this category.</div>
+      `;
       return;
     }
 
-    activeTab = 'without';
-    switchBulkTab('without');
-    renderBulkStudentList();
-
-    previewEl.classList.remove('hidden');
-    previewEl.classList.add('flex');
-    submitBtn.disabled = data.count === 0;
-    summaryEl.textContent = data.message;
-    lucide.createIcons();
-
-  } catch (err) {
-    errorEl.textContent = err.message;
-    errorEl.classList.remove('hidden');
-    summaryEl.textContent = 'Error loading preview';
+    list.innerHTML = students.map((s, i) => `
+      <div class="flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-gray-50 transition-colors">
+        <div class="w-6 h-6 rounded-lg ${activeTab === 'without' ? 'bg-blue-100' : 'bg-green-100'} flex items-center justify-center shrink-0">
+          <span class="text-xs font-bold ${activeTab === 'without' ? 'text-blue-700' : 'text-green-700'}">${s.name.charAt(0).toUpperCase()}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-800 truncate">${s.name}</p>
+          <p class="text-xs text-gray-400">${s.student_id || '—'}</p>
+        </div>
+        ${activeTab === 'without'
+          ? `<span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">Will be created</span>`
+          : `<span class="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-lg">Has record</span>`
+        }
+      </div>
+    `).join('');
   }
-}
 
-const form = document.getElementById('filter-form');
-let searchTimeout;
+  async function fetchBulkPreview() {
+    const ay = document.getElementById('bulk_ay').value;
+    const semester = document.getElementById('bulk_semester').value;
+    const previewEl = document.getElementById('bulk-preview');
+    const allDoneEl = document.getElementById('bulk-all-done');
+    const errorEl = document.getElementById('bulk-error');
+    const submitBtn = document.getElementById('bulk-submit-btn');
+    const summaryEl = document.getElementById('bulk-footer-summary');
 
-document.getElementById('search-input').addEventListener('input', function () {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    sessionStorage.setItem('focusField', 'search-input');
-    form.submit();
-  }, 400);
-});
+    previewEl.classList.add('hidden');
+    previewEl.classList.remove('flex');
+    allDoneEl.classList.add('hidden');
+    allDoneEl.classList.remove('flex');
+    errorEl.classList.add('hidden');
+    submitBtn.disabled = true;
+    summaryEl.textContent = 'Select academic year and semester';
 
-document.getElementById('status-select').addEventListener('change', () => {
-  sessionStorage.setItem('focusField', 'status-select');
-  form.submit();
-});
+    if (!ay || !semester) return;
 
-document.getElementById('ay-select').addEventListener('change', () => {
-  sessionStorage.setItem('focusField', 'ay-select');
-  form.submit();
-});
+    summaryEl.textContent = 'Loading...';
 
-// Restore focus after reload
-document.addEventListener('DOMContentLoaded', function () {
-  const focusId = sessionStorage.getItem('focusField');
-  if (focusId) {
-    const el = document.getElementById(focusId);
-    if (el) {
-      el.focus();
-      // Place cursor at end of text for search input
-      if (el.tagName === 'INPUT') {
-        const len = el.value.length;
-        el.setSelectionRange(len, len);
+    try {
+      const res = await fetch(
+        `${BULK_PREVIEW_URL}?academic_year=${ay}&semester=${semester}`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+
+      document.getElementById('bulk-total-students').textContent = data.total_students;
+      document.getElementById('bulk-existing').textContent = data.existing;
+      document.getElementById('bulk-count').textContent = data.count;
+
+      bulkStudentData = {
+        without: data.students_without || [],
+        with: data.students_with || [],
+      };
+
+      if (data.count === 0) {
+        allDoneEl.classList.remove('hidden');
+        allDoneEl.classList.add('flex');
+        summaryEl.textContent = 'Nothing to create';
+        lucide.createIcons();
+        return;
       }
+
+      activeTab = 'without';
+      switchBulkTab('without');
+      renderBulkStudentList();
+
+      previewEl.classList.remove('hidden');
+      previewEl.classList.add('flex');
+      submitBtn.disabled = data.count === 0;
+      summaryEl.textContent = data.message;
+      lucide.createIcons();
+
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.classList.remove('hidden');
+      summaryEl.textContent = 'Error loading preview';
     }
-    sessionStorage.removeItem('focusField');
   }
-});
+
+  const form = document.getElementById('filter-form');
+  let searchTimeout;
+
+  document.getElementById('search-input').addEventListener('input', function () {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      sessionStorage.setItem('focusField', 'search-input');
+      form.submit();
+    }, 400);
+  });
+
+  document.getElementById('status-select').addEventListener('change', () => {
+    sessionStorage.setItem('focusField', 'status-select');
+    form.submit();
+  });
+
+  document.getElementById('ay-select').addEventListener('change', () => {
+    sessionStorage.setItem('focusField', 'ay-select');
+    form.submit();
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const focusId = sessionStorage.getItem('focusField');
+    if (focusId) {
+      const el = document.getElementById(focusId);
+      if (el) {
+        el.focus();
+        if (el.tagName === 'INPUT') {
+          const len = el.value.length;
+          el.setSelectionRange(len, len);
+        }
+      }
+      sessionStorage.removeItem('focusField');
+    }
+  });
 </script>
 
 {% endblock con %}

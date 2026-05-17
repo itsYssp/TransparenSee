@@ -18,11 +18,16 @@ class HeadDashBoardView(RoleRequireMixin, TemplateView):
         context['recent_financial_reports'] = FinancialReport.objects.exclude(status='rejected').annotate(
             income_count=Count('entries', filter=Q(entries__entry_type='income')),
             expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
-        ).order_by('-created_at')[:3]
-        context['recent_approval_logs'] = ReportApprovalLog.objects.order_by('-created_at')[:3]
+        ).order_by('-created_at')[:4]
+        context['recent_approval_logs'] = ReportApprovalLog.objects.order_by('-created_at')[:5]
         context["latest_ay"] = AcademicYear.objects.order_by("-academic_year", "-semester").first()
         context["total_organizations"] = Organization.objects.count()
         context["total_users"] = CustomUser.objects.count()
+        context['accomplishment_report'] = AccomplishmentReport.objects.all()[:3]
+        context['accomplishment_report_count'] = AccomplishmentReport.objects.all().count()
+        context['org_balance'] = Organization.objects.aggregate(
+            total_balance=Sum('balance')
+        )
 
         return context
     
@@ -170,6 +175,7 @@ class UpdateAdviserView(RoleRequireMixin, UpdateView):
         user = adviser.user
         user.first_name = self.request.POST.get('first_name', user.first_name)
         user.last_name = self.request.POST.get('last_name', user.last_name)
+        user.middle_name = self.request.POST.get('middle_name', user.middle_name)
         user.username = self.request.POST.get('username', user.username)
         user.email = self.request.POST.get('email', user.email)
         user.save()
@@ -183,4 +189,35 @@ class UpdateAdviserView(RoleRequireMixin, UpdateView):
         })
 
     def get_success_url(self):
-        return reverse('campus_admin_user_role')
+        return reverse('head_user_role')
+    
+class UpdateOfficerView(RoleRequireMixin, UpdateView):
+    model = Officer
+    context_object_name = 'officer'
+    fields = ['student_id', 'program', 'year', 'section', 'organization']
+    role_required = 'head'
+    template_name = 'app/heads/update_officer.html'
+
+    def get_object(self):
+        return get_object_or_404(Officer, user__pk=self.kwargs['pk'])
+    
+    def form_valid(self, form):
+        officer = form.save()
+        user = officer.user
+        user.first_name = self.request.POST.get('first_name', user.first_name)
+        user.last_name = self.request.POST.get('last_name', user.last_name)
+        user.middle_name = self.request.POST.get('middle_name', user.middle_name)
+        user.username = self.request.POST.get('username', user.username)
+        user.email = self.request.POST.get('email', user.email)
+        user.save()
+        
+        return render(self.request, self.template_name, {
+            'form': form,
+            'officer': officer,
+            'show_modal': True,
+            'modal_type': 'success',
+            'modal_message': 'Officer updated successfully.',
+        })
+
+    def get_success_url(self):
+        return reverse('head_user_role')

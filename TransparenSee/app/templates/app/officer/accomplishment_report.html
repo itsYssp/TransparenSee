@@ -29,6 +29,7 @@
               <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
               <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
               <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Uploaded By</th>
+              <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Organzition</th>
               <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date</th>
               <th class="px-5 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Action</th>
             </tr>
@@ -51,6 +52,16 @@
               <td class="px-5 py-3.5 text-xs text-gray-600 font-medium">
                 {{ report.created_by.get_full_name|default:report.created_by.username }}
               </td>
+              {% if not org %}
+                <td class="px-4 py-3.5">
+                  <div class="flex items-center gap-2">
+                    {% if report.organization.logo %}
+                    <img src="{{ report.organization.logo.url }}" alt="" class="w-5 h-5 rounded-full object-cover">
+                    {% endif %}
+                    <p class="text-xs font-medium text-gray-700 tracking-tight">{{ report.organization }}</p>
+                  </div>
+                </td>
+                {% endif %}
               <td class="px-5 py-3.5 text-xs text-gray-400 font-mono whitespace-nowrap">
                 {{ report.created_at|date:"M d, Y" }}
               </td>

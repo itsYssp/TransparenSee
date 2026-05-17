@@ -1,6 +1,8 @@
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
+from ..models import *
+from accounts.models import *
 
 class HomeTemplateView(TemplateView):
     template_name = 'app/home.html'
@@ -36,3 +38,10 @@ class LandingPage(TemplateView):
         if request.user.is_authenticated:
             return redirect(reverse_lazy('home'))
         return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["orgs"] = Organization.objects.all()
+        context["total_user"] = CustomUser.objects.count()
+        return context
+    

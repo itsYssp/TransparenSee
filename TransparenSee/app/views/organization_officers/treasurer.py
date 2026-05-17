@@ -470,12 +470,14 @@ class SocietyFeePreviewView(RoleRequireMixin, TemplateView):
         )
         student_count = paid_fees.values('student').distinct().count()
         total = paid_fees.aggregate(total=Sum('amount_paid'))['total'] or 0
+        unit_price = total / student_count if student_count > 0 else 0
 
         return JsonResponse({
             'student_count':   student_count,
             'total':           float(total),
             'academic_year':   str(ay),
-            'semester':        ay.semester, 
+            'semester':        ay.semester,
+            'unit_price': float(unit_price), 
         })
     
 class ProductPreviewView(RoleRequireMixin, TemplateView):

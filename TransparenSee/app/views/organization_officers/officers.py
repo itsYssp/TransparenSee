@@ -745,7 +745,7 @@ class MembersView(RoleRequireMixin, TemplateView):
         'auditor':        'app/officer/auditor/sidebar.html',
         'president':      'app/officer/president/sidebar.html',
         'vice_president': 'app/officer/president/sidebar.html',
-        'co_adviser':     'app/co_adviser/sidebar.html',
+        'co_adviser':     'app/adviser/sidebar.html',
         'adviser':        'app/adviser/sidebar.html',
         'secretary':      'app/officer/secretary/sidebar.html',
     }

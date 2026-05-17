@@ -374,7 +374,9 @@ async function previewSocietyFee() {
     const res = await fetch(`${URLS.societyFeePreview}?academic_year=${ay}`, {
       headers: { "X-Requested-With": "XMLHttpRequest" },
     });
+
     const data = await res.json();
+
     if (!res.ok) throw new Error(data.error || "Something went wrong.");
     societyPreviewData = data;
     document.getElementById("preview-count").textContent = data.student_count;
@@ -406,7 +408,7 @@ function confirmSocietyFee() {
     qtyInput.classList.add("opacity-70", "cursor-not-allowed");
   }
   if (unitPriceInput) {
-    unitPriceInput.value = 0;
+    unitPriceInput.value = Number(societyPreviewData.unit_price).toFixed(2);
     unitPriceInput.readOnly = true;
     unitPriceInput.classList.add("opacity-70", "cursor-not-allowed");
   }

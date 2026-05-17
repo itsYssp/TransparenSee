@@ -22,10 +22,19 @@
     0% { transform: scale(1); opacity: 0.4; }
     100% { transform: scale(1.6); opacity: 0; }
   }
-  @keyframes scroll-x {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+@keyframes marquee {
+  from {
+    transform: translateX(0);
   }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  width: max-content;
+  animation: marquee 20s linear infinite;
+}
 
   .fadein-1 { animation: fadein 0.7s ease 0.1s both; }
   .fadein-2 { animation: fadein 0.7s ease 0.25s both; }
@@ -106,8 +115,8 @@
   <section class="min-h-screen flex items-center relative pt-16 grid-bg overflow-hidden">
 
     <!-- Ambient blobs -->
-    <div class="absolute top-20 right-0 w-[600px] h-[600px] rounded-full bg-blue-700/5 blur-3xl pointer-events-none"></div>
-    <div class="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-blue-500/5 blur-3xl pointer-events-none"></div>
+    <div class="absolute top-20 right-0 w-150 h-150 rounded-full bg-blue-700/5 blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-0 left-0 w-100 h-100 rounded-full bg-blue-500/5 blur-3xl pointer-events-none"></div>
 
     <!-- Spinning ring decoration -->
     <div class="absolute top-32 right-20 w-64 h-64 rounded-full border-2 border-dashed border-blue-200/50 spin-slow pointer-events-none hidden lg:block"></div>
@@ -172,7 +181,7 @@
         </div>
 
         <!-- Right — floating dashboard preview cards -->
-        <div class="flex-1 relative hidden lg:flex items-center justify-center min-h-[500px]">
+        <div class="flex-1 relative hidden lg:flex items-center justify-center min-h-125">
 
           <!-- Main card -->
           <div class="float relative z-10 bg-white rounded-2xl border border-gray-200 shadow-xl p-5 w-72">
@@ -234,34 +243,34 @@
 
   <!-- Scrolling ticker -->
   <div class="bg-blue-700 py-3 overflow-hidden">
-    <div class="flex scroll-x whitespace-nowrap">
-      {% for item in "123456789012" %}
-      <span class="mx-8 text-white/80 text-xs font-semibold mono flex items-center gap-2">
-        <i data-lucide="shield-check" class="w-3 h-3 text-white/60 inline-block"></i>
-        BLOCKCHAIN VERIFIED TRANSACTIONS
-      </span>
-      <span class="mx-8 text-white/80 text-xs font-semibold mono flex items-center gap-2">
-        <i data-lucide="lock" class="w-3 h-3 text-white/60 inline-block"></i>
-        IMMUTABLE AUDIT TRAIL
-      </span>
-      <span class="mx-8 text-white/80 text-xs font-semibold mono flex items-center gap-2">
-        <i data-lucide="eye" class="w-3 h-3 text-white/60 inline-block"></i>
-        FULL FINANCIAL TRANSPARENCY
-      </span>
-      {% endfor %}
-    </div>
+  <div class="flex whitespace-nowrap animate-marquee">
+    {% for org in orgs %}
+    <span class="mx-8 text-white/80 text-xs font-semibold flex items-center gap-2">
+      <img src="{{ org.logo.url }}" alt="" class="w-3 h-3 rounded-full">
+      {{ org.name }}
+    </span>
+    {% endfor %}
+
+    <!-- Duplicate for seamless loop -->
+    {% for org in orgs %}
+    <span class="mx-8 text-white/80 text-xs font-semibold flex items-center gap-2">
+      <img src="{{ org.logo.url }}" alt="" class="w-3 h-3 rounded-full">
+      {{ org.name }}
+    </span>
+    {% endfor %}
   </div>
+</div>
 
   <!-- Stats -->
   <section id="stats" class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-6">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
         <div class="text-center">
-          <p class="text-4xl font-extrabold text-blue-700 tracking-tight">14+</p>
+          <p class="text-4xl font-extrabold text-blue-700 tracking-tight">{{ orgs|length}}</p>
           <p class="text-sm text-gray-400 font-medium mt-1">Organizations</p>
         </div>
         <div class="text-center">
-          <p class="text-4xl font-extrabold text-blue-700 tracking-tight">200+</p>
+          <p class="text-4xl font-extrabold text-blue-700 tracking-tight">{{ total_user }}</p>
           <p class="text-sm text-gray-400 font-medium mt-1">Active Users</p>
         </div>
         <div class="text-center">
@@ -351,7 +360,7 @@
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
 
-        <div class="hidden md:block absolute top-10 left-[12%] right-[12%] h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
+        <div class="hidden md:block absolute top-10 left-[12%] right-[12%] h-px bg-linear-to-r from-transparent via-blue-200 to-transparent"></div>
 
         {% for step in "1234" %}
         <div class="flex flex-col items-center text-center relative">
@@ -480,7 +489,7 @@
 
   <!-- CTA -->
   <section class="py-24 bg-blue-700 relative overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-800 pointer-events-none"></div>
+    <div class="absolute inset-0 bg-linear-to-br from-blue-600 to-blue-800 pointer-events-none"></div>
     <div class="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/5 blur-3xl pointer-events-none"></div>
     <div class="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white/5 blur-3xl pointer-events-none"></div>
 

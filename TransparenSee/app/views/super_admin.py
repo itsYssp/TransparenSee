@@ -6,7 +6,7 @@ from accounts.models import CustomUser
 from ..forms import *
 from ..models import *
 from .mixins import *
-
+from django.db.models  import Sum
 
 class SuperAdminView(RoleRequireMixin, TemplateView):
     role_required = 'admin'
@@ -17,7 +17,10 @@ class SuperAdminView(RoleRequireMixin, TemplateView):
         context["total_user"] = CustomUser.objects.count()
         context['total_org'] = Organization.objects.count()
         context['total_on_blockchain'] = FinancialReport.objects.filter(status='on_blockchain').count()
-        
+        context['recent_approval_logs'] = ReportApprovalLog.objects.all()[:10]
+        context['org_balance'] = Organization.objects.aggregate(
+            total_balance=Sum('balance')
+        )
         return context
     
 

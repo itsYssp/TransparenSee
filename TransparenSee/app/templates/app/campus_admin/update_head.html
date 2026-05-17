@@ -1,4 +1,4 @@
-{% extends "app/heads/sidebar.html" %} {% load static %} {% block con %}
+{% extends "app/campus_admin/sidebar.html" %} {% load static %} {% block con %}
 
 <div class="px-6 py-6 flex flex-col gap-6 items-center">
 
@@ -29,7 +29,7 @@
               type="text"
               name="first_name"
               placeholder="First name"
-              value="{{ adviser.user.first_name }}"
+              value="{{ head.user.first_name }}"
               class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
               required
             />
@@ -43,7 +43,7 @@
               type="text"
               name="middle_name"
               placeholder="Middle name"
-              value="{{ adviser.user.middle_name }}"
+              value="{{ head.user.middle_name }}"
               class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
               required
             />
@@ -57,7 +57,7 @@
               type="text"
               name="last_name"
               placeholder="Last name"
-              value="{{ adviser.user.last_name }}"
+              value="{{ head.user.last_name }}"
               class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
               required
             />
@@ -71,7 +71,7 @@
               type="text"
               name="username"
               placeholder="Username"
-              value="{{ adviser.user.username }}"
+              value="{{ head.user.username }}"
               class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
               required
             />
@@ -85,7 +85,7 @@
               type="email"
               name="email"
               placeholder="Email address"
-              value="{{ adviser.user.email }}"
+              value="{{ head.user.email }}"
               class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
               required
             />
@@ -112,20 +112,21 @@
               type="text"
               name="employee_id"
               placeholder="e.g. EMP-00123"
-              value="{{ adviser.employee_id|default:'' }}"
+              value="{{ head.employee_id|default:'' }}"
               class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
             />
           </div>
 
           <div class="form-control">
             <label class="label pb-1">
-              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Department</span>
+              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Campus</span>
             </label>
             <input
               type="text"
-              name="department"
-              placeholder="e.g. College of Engineering"
-              value="{{ adviser.department|default:'' }}"
+              name="campus"
+              placeholder="e.g. Bacoor City Campus"
+              value="{{ head.campus }}"
+              readonly
               class="input input-bordered input-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
             />
           </div>
@@ -134,40 +135,42 @@
       </div>
 
 
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
         <div class="flex items-center gap-2 mb-5">
           <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
-            <i data-lucide="building-2" class="w-4 h-4 text-blue-700"></i>
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-700"></i>
           </div>
-          <p class="font-bold text-gray-800 text-sm">Assignment</p>
+          <p class="font-bold text-gray-800 text-sm">Role Assignment</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-          <div class="form-control">
-            <label class="label pb-1">
-              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Role</span>
+        <div class="form-control">
+          <label class="label pb-1">
+            <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Role</span>
+          </label>
+          <select name="role" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+            <option value="head" selected>Head</option>
+          </select>
+        </div>
+        
+        <div class="form-control">
+            <label for="" class="label pb-1">
+                <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase"> Department</span>
             </label>
-            <select name="role" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
-              <option value="adviser" selected>Adviser</option>
-            </select>
-          </div>
-
-          <div class="form-control">
-            <label class="label pb-1">
-              <span class="label-text text-xs font-bold tracking-wide text-gray-500 uppercase">Organization</span>
-            </label>
-            <select name="organization" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
-              <option value="" disabled>-- Select Organization --</option>
-              {% for org in form.organization.field.queryset %}
-              <option value="{{ org.pk }}" {% if adviser.organization == org %}selected{% endif %}>{{ org.name }}</option>
+            <select name="department" id="" class="select select-bordered select-sm w-full bg-gray-50 focus:bg-white focus:border-blue-500">
+              <option value="" selected disabled>-- Select Department --</option>
+              {% for value, display in form.fields.department.choices  %}
+                <option value="{{ value }}" {% if head.department == value %}selected{% endif %}>{{ display }}</option>
               {% endfor %}
             </select>
-          </div>
+        </div>
 
+        <div class="mt-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-3">
+          <i data-lucide="info" class="w-4 h-4 text-blue-500 mt-0.5 shrink-0"></i>
+          <p class="text-xs text-blue-600 leading-relaxed">
+            Heads have access to manage organizations, offices, and advisers within the campus. 
+          </p>
         </div>
       </div>
-
       
       <div class="flex items-center justify-end gap-3">
         <a href="{% url 'head_user_role' %}"
@@ -218,7 +221,7 @@
           <div class="modal-action mt-0">
             {% if modal_type == 'success' %}
           
-            <a href="{% url 'head_user_role' %}"
+            <a href="{% url 'campus_admin_user_role' %}"
               class="btn btn-sm px-6 rounded-xl btn-primary">
               OK
             </a>

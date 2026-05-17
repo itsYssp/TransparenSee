@@ -70,7 +70,6 @@ class Student(models.Model):
     other_organization = models.ManyToManyField(
         Organization,
         related_name='other_students',
-        null=True,
         blank=True
     )
 
