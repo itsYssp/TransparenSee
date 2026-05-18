@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from ...forms import *
 from ..mixins import *
-from django.db.models import Sum, Q, Count 
+from django.db.models import Sum, Q, Count, ExpressionWrapper, DecimalField
 from ...blockchain import verify_report_hash
 from itertools import groupby  
 import openpyxl
@@ -21,6 +21,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from ...blockchain import  verify_report_hash
 from ...blockchain_utils import build_report_snapshot, generate_report_hash
+from django.db.models.functions import Coalesce
+from decimal import Decimal
 
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
@@ -108,41 +110,38 @@ class ReportListView(RoleRequireMixin, ListView):
     template_name = 'app/officer/treasurer/report_list.html'
     paginate_by = 10
 
-    def get_queryset(self):
-        user = self.request.user
-        qs = super().get_queryset().select_related(
-            'organization', 'created_by', 'academic_year'
-        ).prefetch_related('entries')
+    role_templates = {
+        "treasurer": "app/officer/treasurer/sidebar.html",
+        "auditor": "app/officer/auditor/sidebar.html",
+        "president": "app/officer/president/sidebar.html",
+        "vice_president": "app/officer/president/sidebar.html",
+        "adviser": "app/adviser/sidebar.html",
+        "co_adviser": "app/adviser/sidebar.html",
+        "head": "app/heads/sidebar.html",
+        "campus_admin": "app/campus_admin/sidebar.html",
+    }
 
-        if hasattr(user, 'officer'):
-            qs = qs.filter(organization=user.officer.organization)
-        elif hasattr(user, 'adviser'):
-            qs = qs.filter(organization=user.adviser.organization)
-        else: 
-            qs = qs
-         
-
-
-        search = self.request.GET.get('search', '').strip()
-        if search:
-            qs = qs.filter(title__icontains=search)
-
-
-        status = self.request.GET.get('status')
-        if status   :
-            qs = qs.filter(status=status)
-
-        qs = qs.annotate(
-        total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
-        total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
-        income_count=Count('entries', filter=Q(entries__entry_type='income')),
-        expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
+    def get_report_annotations(self):
+        total_income = Coalesce(
+            Sum('entries__amount', filter=Q(entries__entry_type='income')),
+            Decimal('0'),
+            output_field=DecimalField()
         )
-
-        
-        qs = qs.order_by('-created_at')
-
-        return qs
+        total_expense = Coalesce(
+            Sum('entries__amount', filter=Q(entries__entry_type='expense')),
+            Decimal('0'),
+            output_field=DecimalField()
+        )
+        return {
+            'total_income': total_income,
+            'total_expense': total_expense,
+            'income_count': Count('entries', filter=Q(entries__entry_type='income')),
+            'expense_count': Count('entries', filter=Q(entries__entry_type='expense')),
+            'net_amount': ExpressionWrapper(
+                total_income - total_expense,
+                output_field=DecimalField()
+            ),
+        }
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -150,40 +149,43 @@ class ReportListView(RoleRequireMixin, ListView):
         elif hasattr(user, 'adviser'):
             return user.adviser.organization
         elif hasattr(user, 'co_adviser'):
-            return user.adviser.organization
+            return user.co_adviser.organization
         return None
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super().get_queryset().select_related(
+            'organization', 'created_by', 'academic_year'
+        ).prefetch_related('entries')
+
+        org = self.get_organization(user)
+        if org:
+            qs = qs.filter(organization=org)
+
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            qs = qs.filter(title__icontains=search)
+
+        status = self.request.GET.get('status', '').strip()
+        if status:
+            qs = qs.filter(status=status)
+
+        return qs.annotate(**self.get_report_annotations()).order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         org = self.get_organization(user)
 
-        role_templates = {
-            "treasurer": "app/officer/treasurer/sidebar.html",
-            "auditor": "app/officer/auditor/sidebar.html",
-            "president": "app/officer/president/sidebar.html",
-            "vice_president": "app/officer/president/sidebar.html",
-            "adviser": "app/adviser/sidebar.html",
-            "co_adviser": "app/adviser/sidebar.html",
-            "head": "app/heads/sidebar.html",
-            "campus_admin": "app/campus_admin/sidebar.html",
-        }
-
-        context['base_template'] = role_templates.get(user.role, "app/base.html")
-
+        context['base_template'] = self.role_templates.get(user.role, 'app/base.html')
         context['reports'] = context['object_list']
-
+        context['status_choices'] = FinancialReport.STATUS_CHOICES
         context['rejected_reports'] = FinancialReport.objects.filter(
             organization=org, status='rejected'
-        ).annotate(
-            total_income=Sum('entries__amount', filter=Q(entries__entry_type='income')),
-            total_expense=Sum('entries__amount', filter=Q(entries__entry_type='expense')),
-            income_count=Count('entries', filter=Q(entries__entry_type='income')),
-            expense_count=Count('entries', filter=Q(entries__entry_type='expense')),
-        )
+        ).annotate(**self.get_report_annotations())
 
-        context['status_choices'] = FinancialReport.STATUS_CHOICES
         return context
+
 
 
 class ReportDetailView(RoleRequireMixin, DetailView):

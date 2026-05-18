@@ -205,26 +205,10 @@
             <p class="text-sm font-bold">Statement Details</p>
             <p id="statement-label" class="text-xs text-base-content/50 mt-1">No period loaded yet.</p>
           </div>
-          <div class="overflow-x-auto rounded-xl border border-base-200">
-            <table class="table table-sm w-full min-w-245">
-              <thead class="bg-base-200 text-xs">
-                <tr>
-                  <th>Report</th>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Category</th>
-                  <th>Description</th>
-                  <th class="text-right">Qty</th>
-                  <th class="text-right">Unit Price</th>
-                  <th class="text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody id="statement-rows-body">
-                <tr>
-                  <td colspan="8" class="text-center text-base-content/40 py-10">No records loaded yet.</td>
-                </tr>
-              </tbody>
-            </table>
+          <div id="statement-rows-body" class="flex flex-col gap-4">
+            <div class="rounded-xl border border-dashed border-base-300 p-10 text-center text-base-content/40 text-sm">
+              No records loaded yet.
+            </div>
           </div>
         </div>
       </div>
@@ -323,10 +307,10 @@ function renderSummaries(data) {
       let verificationClass = 'badge-ghost';
       if (report.blockchain_verified === true) {
         verification = 'Verified';
-        verificationClass = 'badge-success';
+        verificationClass = 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
       } else if (report.blockchain_verified === false) {
         verification = 'Hash mismatch';
-        verificationClass = 'badge-error';
+        verificationClass = 'bg-red-50 text-red-700 ring-1 ring-red-200';
       }
 
       return `
@@ -345,22 +329,65 @@ function renderSummaries(data) {
 
 function renderRows(data) {
   const rowsBody = document.getElementById('statement-rows-body');
-  if (!data.entries?.length) {
-    rowsBody.innerHTML = '<tr><td colspan="8" class="text-center text-base-content/40 py-10">No detailed entries found for this period.</td></tr>';
+  if (!data.grouped_entries?.length) {
+    rowsBody.innerHTML = '<div class="rounded-xl border border-dashed border-base-300 p-10 text-center text-base-content/40 text-sm">No detailed entries found for this period.</div>';
     return;
   }
 
-  rowsBody.innerHTML = data.entries.map((entry) => `
-    <tr>
-      <td class="font-semibold">${entry.report_title}</td>
-      <td class="whitespace-nowrap">${entry.date}</td>
-      <td><span class="badge badge-sm ${entry.entry_type === 'income' ? 'badge-success' : 'badge-error'}">${entry.entry_type}</span></td>
-      <td>${entry.category}</td>
-      <td>${entry.description}</td>
-      <td class="text-right">${entry.quantity}</td>
-      <td class="text-right">${money(entry.unit_price)}</td>
-      <td class="text-right font-semibold">${money(entry.amount)}</td>
-    </tr>
+  rowsBody.innerHTML = data.grouped_entries.map((group) => `
+    <div class="overflow-hidden rounded-2xl border border-base-200">
+      <div class="flex items-start justify-between gap-4 bg-base-200/70 px-4 py-3">
+        <div>
+          <p class="text-sm font-bold">${group.report_title}</p>
+          <p class="text-xs text-base-content/50 mt-1">Academic Year: ${group.academic_year}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] font-bold uppercase tracking-wide text-base-content/40">Record Count</p>
+          <p class="text-sm font-extrabold mt-1">${group.entries.length}</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="table table-sm w-full min-w-[980px]">
+          <thead class="bg-base-100 text-xs">
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th class="text-right">Qty</th>
+              <th class="text-right">Unit Price</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${group.entries.map((entry) => `
+              <tr>
+                <td class="whitespace-nowrap">${entry.date}</td>
+                <td>
+                  <span class="text-xs px-2 py-1 rounded-full ${
+                    entry.entry_type === 'income'
+                      ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                      : 'bg-red-50 text-red-700 ring-1 ring-red-200'
+                  }">
+                    ${entry.entry_type}
+                  </span>
+                </td>
+                <td>${entry.category}</td>
+                <td>${entry.description}</td>
+                <td class="text-right">${entry.quantity}</td>
+                <td class="text-right">${money(entry.unit_price)}</td>
+                <td class="text-right font-semibold">${money(entry.amount)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-wrap justify-end gap-4 border-t border-base-200 bg-base-100 px-4 py-3 text-xs text-base-content/60">
+        <span>Income <strong class="ml-1 text-base-content">${money(group.income_total)}</strong></span>
+        <span>Expense <strong class="ml-1 text-base-content">${money(group.expense_total)}</strong></span>
+        <span>Net <strong class="ml-1 text-base-content">${money(group.net_total)}</strong></span>
+      </div>
+    </div>
   `).join('');
 }
 

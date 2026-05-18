@@ -1,4 +1,4 @@
-{% extends "app/superadmin/sidebar.html" %} {% block con %}
+{% extends "app/superadmin/sidebar.html" %} {% block con %} {% load humanize %}
 
 <div class="px-6 py-6 flex flex-col gap-6  bg-gray-50">
 
@@ -13,7 +13,7 @@
     <div class="absolute -top-8 -left-8 w-40 h-40 rounded-full border-30 border-white/5 pointer-events-none"></div>
     <p class="text-xs font-bold tracking-widest text-blue-200 uppercase mb-3">Total System Funds</p>
     <p class="text-5xl font-extrabold text-white tracking-tight">
-      <span class="text-xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ org_balance.total_balance }}
+      <span class="text-xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ org_balance.total_balance|floatformat:2|intcomma }}
     </p>
     <div class="mt-4 inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
       <span class="w-2 h-2 rounded-full bg-green-400 shadow shadow-green-400 animate-pulse"></span>

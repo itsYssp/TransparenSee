@@ -10,8 +10,7 @@ class Organization(models.Model):
         ("BSIT", "Bachelor of Science in Information Technology"),
         ("BSCS", "Bachelor of Science in Computer Science"),
         ("BSP", "Bachelor of Science in Psychology"),
-        ("BSED-MTH", "Bachelor of Secondary Education - Mathematics "),
-        ("BSED-ENG", "Bachelor of Secondary Education - English"),
+        ("BSED", "Bachelor of Secondary Education"),
         ("BSHM", "Bachelor of Science in Hospitality Management"),
         ("BSC", "Bachelor of Science in Criminology"),
         ("BSBA-MM", "Bachelor of Science in Bussiness Administration - Marketing Management"),
@@ -350,12 +349,12 @@ class FinancialReportEntry(models.Model):
     variant = models.ForeignKey('ProductVariant', null=True, blank=True, on_delete=models.SET_NULL)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     receipt_image = models.ImageField(upload_to='financial_reports/receipts/', blank=True, null=True)
-
+    quantity = models.PositiveIntegerField(default=1)
     class Meta:
         ordering = ['date', 'order']
 
     def __str__(self):
-        return f'{self.date} - {self.category} - {self.amount}'
+        return f'{self.date} - {self.category} - {self.amount} - {self.report}'
 
 
 class ReportApprovalLog(models.Model):

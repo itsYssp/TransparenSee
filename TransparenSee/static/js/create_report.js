@@ -28,14 +28,17 @@ function nextRowKey() {
 
 function addRow(type = "expense", options = {}) {
   document.getElementById("empty-row")?.remove();
-  const rowKey = nextRowKey();
+  const rowKey = options.rowKey || nextRowKey();
   const row = document.createElement("tr");
   row.className = "entry-row border-b border-gray-50 align-top";
   row.dataset.type = type;
   row.dataset.rowKey = rowKey;
+  if (options.existingReceiptUrl) row.dataset.existingReceiptUrl = options.existingReceiptUrl;
+  if (options.existingReceiptName) row.dataset.existingReceiptName = options.existingReceiptName;
   row.innerHTML = buildRowHTML(type, rowKey, options);
   document.getElementById("entries-body").appendChild(row);
   lucide.createIcons();
+  hydrateRow(row, options);
   renderReceiptGallery();
   updateTotals();
 }
@@ -44,6 +47,17 @@ function buildRowHTML(type, rowKey, options = {}) {
   const isIncome = type === "income";
   const dateValue = options.date || "";
   const categoryValue = options.category || "";
+  const descriptionValue = options.description || "";
+  const amountValue = options.amount ?? "";
+  const quantityValue = options.quantity ?? 1;
+  const unitPriceValue = options.unit_price ?? 0;
+  const incomeSourceValue = options.income_source || "other";
+  const entryIdValue = options.entry_id || "";
+  const societyAyValue = options.society_academic_year || "";
+  const productIdValue = options.product_id || "";
+  const variantIdValue = options.variant_id || "";
+  const existingReceiptName = options.existing_receipt_name || "";
+  const attachLabel = existingReceiptName || "Attach";
 
   const typeBadge = isIncome
     ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">
@@ -57,15 +71,15 @@ function buildRowHTML(type, rowKey, options = {}) {
     ? `
       <div class="mt-1.5">
         <select name="income_source[]" class="select select-bordered select-xs w-full bg-gray-50 income-source-select" onchange="handleIncomeSourceChange(this)">
-          <option value="other">Other Income</option>
-          <option value="society">Society Fee</option>
-          <option value="product">Product Sale</option>
-          <option value="voluntary">Voluntary Funds</option>
+          <option value="other" ${incomeSourceValue === "other" ? "selected" : ""}>Other Income</option>
+          <option value="society" ${incomeSourceValue === "society" ? "selected" : ""}>Society Fee</option>
+          <option value="product" ${incomeSourceValue === "product" ? "selected" : ""}>Product Sale</option>
+          <option value="voluntary" ${incomeSourceValue === "voluntary" ? "selected" : ""}>Voluntary Funds</option>
         </select>
       </div>
-      <input type="hidden" name="society_academic_year[]" class="society-ay-input" value="" />
-      <input type="hidden" name="product_id[]" class="product-id-input" value="" />
-      <input type="hidden" name="variant_id[]" class="variant-id-input" value="" />
+      <input type="hidden" name="society_academic_year[]" class="society-ay-input" value="${societyAyValue}" />
+      <input type="hidden" name="product_id[]" class="product-id-input" value="${productIdValue}" />
+      <input type="hidden" name="variant_id[]" class="variant-id-input" value="${variantIdValue}" />
     `
     : `
       <input type="hidden" name="income_source[]" value="" />
@@ -76,12 +90,12 @@ function buildRowHTML(type, rowKey, options = {}) {
 
   const amountCells = isIncome
     ? `<td class="px-2 py-2">
-         <input type="number" step="0.01" name="amount[]" placeholder="0.00" class="input input-bordered input-xs w-full bg-gray-50 amount-input" oninput="updateTotals()" required />
+         <input type="number" step="0.01" name="amount[]" value="${amountValue}" placeholder="0.00" class="input input-bordered input-xs w-full bg-gray-50 amount-input" oninput="updateTotals()" required />
        </td>
        <td class="px-2 py-2 text-center text-gray-200">-</td>`
     : `<td class="px-2 py-2 text-center text-gray-200">-</td>
        <td class="px-2 py-2">
-         <input type="number" step="0.01" name="amount[]" placeholder="0.00" class="input input-bordered input-xs w-full bg-gray-50 amount-input" oninput="updateTotals()" required />
+         <input type="number" step="0.01" name="amount[]" value="${amountValue}" placeholder="0.00" class="input input-bordered input-xs w-full bg-gray-50 amount-input" oninput="updateTotals()" required />
        </td>`;
 
   return `
@@ -89,6 +103,8 @@ function buildRowHTML(type, rowKey, options = {}) {
       ${typeBadge}
       <input type="hidden" name="entry_type[]" value="${type}" />
       <input type="hidden" name="row_key[]" value="${rowKey}" />
+      <input type="hidden" name="entry_id[]" value="${entryIdValue}" />
+      <input type="hidden" name="clear_receipt[]" class="clear-receipt-input" value="0" />
       ${hiddenFields}
     </td>
     <td class="px-2 py-2">
@@ -98,18 +114,18 @@ function buildRowHTML(type, rowKey, options = {}) {
       <input type="text" name="category[]" value="${categoryValue}" class="input input-xs w-full bg-gray-50 category-input" oninput="renderReceiptGallery()" placeholder="${isIncome ? "e.g. Membership Fee, Product Sale" : "e.g. Supplies, Event Expense"}" required />
     </td>
     <td class="px-2 py-2">
-      <input type="text" name="description[]" class="input input-xs w-full bg-gray-50 description-input" oninput="renderReceiptGallery()" placeholder="${isIncome ? "Describe the income source" : "Describe the expense details"}" required />
+      <input type="text" name="description[]" value="${descriptionValue}" class="input input-xs w-full bg-gray-50 description-input" oninput="renderReceiptGallery()" placeholder="${isIncome ? "Describe the income source" : "Describe the expense details"}" required />
     </td>
     <td class="px-2 py-2 text-center">
-      <input type="number" name="quantity[]" min="1" value="1" class="input input-bordered input-xs w-20 text-center qty-input bg-gray-50" oninput="handleQtyChange(this)" />
+      <input type="number" name="quantity[]" min="1" value="${quantityValue}" class="input input-bordered input-xs w-20 text-center qty-input bg-gray-50" oninput="handleQtyChange(this)" />
     </td>
     <td class="px-2 py-2 text-center">
-      <input type="number" name="unit_price[]" step="0.01" value="0" class="input input-bordered input-xs w-24 text-center unit-price-input bg-gray-50" oninput="handleUnitPriceChange(this)" />
+      <input type="number" name="unit_price[]" step="0.01" value="${unitPriceValue}" class="input input-bordered input-xs w-24 text-center unit-price-input bg-gray-50" oninput="handleUnitPriceChange(this)" />
     </td>
     <td class="px-2 py-2">
       <label class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-2 py-2 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors">
         <i data-lucide="image-plus" class="w-3.5 h-3.5 shrink-0"></i>
-        <span class="receipt-label inline-block max-w-18 truncate text-center">Attach</span>
+        <span class="receipt-label inline-block max-w-18 truncate text-center">${attachLabel}</span>
         <input type="file" accept="image/*" name="receipt_image__${rowKey}" class="hidden receipt-input" onchange="handleReceiptChange(this)" />
       </label>
     </td>
@@ -131,6 +147,16 @@ function buildRowHTML(type, rowKey, options = {}) {
       </div>
     </td>
   `;
+}
+
+function hydrateRow(row, options = {}) {
+  if (!options.locked) return;
+  [".qty-input", ".unit-price-input", ".amount-input"].forEach((selector) => {
+    const field = row.querySelector(selector);
+    if (!field) return;
+    field.readOnly = true;
+    field.classList.add("opacity-70", "cursor-not-allowed");
+  });
 }
 
 function restoreEmptyState() {
@@ -175,12 +201,14 @@ function addSubRow(btn) {
 function handleReceiptChange(input) {
   const row = input.closest("tr");
   const label = row.querySelector(".receipt-label");
+  const clearReceiptInput = row.querySelector(".clear-receipt-input");
   const file = input.files?.[0];
   if (!file) {
-    label.textContent = "Attach";
+    label.textContent = row.dataset.existingReceiptName || "Attach";
     renderReceiptGallery();
     return;
   }
+  if (clearReceiptInput) clearReceiptInput.value = "0";
   label.textContent = file.name.length > 10 ? `${file.name.slice(0, 10)}...` : file.name;
   renderReceiptGallery();
 }
@@ -190,7 +218,11 @@ function deleteReceipt(rowKey) {
   if (!row) return;
   const input = row.querySelector(".receipt-input");
   const label = row.querySelector(".receipt-label");
+  const clearReceiptInput = row.querySelector(".clear-receipt-input");
   if (input) input.value = "";
+  row.dataset.existingReceiptUrl = "";
+  row.dataset.existingReceiptName = "";
+  if (clearReceiptInput) clearReceiptInput.value = "1";
   if (label) label.textContent = "Attach";
   renderReceiptGallery();
 }
@@ -200,11 +232,12 @@ function openReceiptPreviewModal(rowKey) {
   if (!row) return;
   const input = row.querySelector(".receipt-input");
   const file = input?.files?.[0];
-  if (!file) return;
+  const existingUrl = row.dataset.existingReceiptUrl;
   const category = row.querySelector(".category-input")?.value || "Receipt Preview";
   const description = row.querySelector(".description-input")?.value || "";
   const date = row.querySelector(".date-input")?.value || "";
-  const imageUrl = URL.createObjectURL(file);
+  const imageUrl = file ? URL.createObjectURL(file) : existingUrl;
+  if (!imageUrl) return;
   document.getElementById("receipt-modal-title").textContent = category;
   document.getElementById("receipt-modal-description").textContent = description;
   document.getElementById("receipt-modal-date").textContent = date;
@@ -225,12 +258,15 @@ function renderReceiptGallery() {
   document.querySelectorAll(".entry-row").forEach((row, index) => {
     const input = row.querySelector(".receipt-input");
     const file = input?.files?.[0];
-    if (!file) return;
+    const existingUrl = row.dataset.existingReceiptUrl || "";
+    const existingName = row.dataset.existingReceiptName || "";
+    if (!file && !existingUrl) return;
     const rowKey = row.dataset.rowKey;
     const category = row.querySelector(".category-input")?.value || "Uncategorized";
     const description = row.querySelector(".description-input")?.value || "No description";
     const date = row.querySelector(".date-input")?.value || "No date";
-    const objectUrl = URL.createObjectURL(file);
+    const objectUrl = file ? URL.createObjectURL(file) : existingUrl;
+    const fileName = file ? file.name : existingName;
     cards.push(`
       <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <button type="button" onclick="openReceiptPreviewModal('${rowKey}')" class="block w-full text-left">
@@ -248,7 +284,7 @@ function renderReceiptGallery() {
             </button>
           </div>
           <p class="mt-2 text-xs text-gray-500">${description}</p>
-          <p class="mt-2 text-xs font-medium text-blue-600 truncate">${file.name}</p>
+          <p class="mt-2 text-xs font-medium text-blue-600 truncate">${fileName}</p>
         </div>
       </div>
     `);
@@ -515,6 +551,22 @@ function confirmProduct() {
   updateTotals();
   document.getElementById("product-modal").close();
   pendingProductRow = null;
+}
+
+function preloadReportEntries() {
+  const initialData =
+    typeof REPORT_INITIAL_DATA !== "undefined" && Array.isArray(REPORT_INITIAL_DATA)
+      ? REPORT_INITIAL_DATA
+      : [];
+  if (!initialData.length) return;
+  initialData.forEach((entry, index) => {
+    addRow(entry.entry_type || "expense", {
+      ...entry,
+      rowKey: `existing_${entry.entry_id || index}`,
+      existingReceiptUrl: entry.existing_receipt_url || "",
+      existingReceiptName: entry.existing_receipt_name || "",
+    });
+  });
 }
 
 // ── Voluntary Funds ───────────────────────────────────────────────
@@ -796,3 +848,9 @@ function _fillVoluntaryRow(row, donor, date = "") {
     unitPriceInput.classList.add("opacity-70", "cursor-not-allowed");
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  preloadReportEntries();
+  updateTotals();
+  renderReceiptGallery();
+});

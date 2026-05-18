@@ -23,6 +23,7 @@ urlpatterns = [
     path('product-list', ProductListView.as_view(), name='product_list'),
     path('reports/', ReportListView.as_view(), name='reports'),
     path('treasurer/reports/create/', CreateFinancialReportView.as_view(), name='treasurer_create_report'),
+    path('treasurer/reports/<int:pk>/edit/', CreateFinancialReportView.as_view(), name='treasurer_edit_report'),
     path('reports/<int:pk>/', ReportDetailView.as_view(), name='report_detail'),
     path('reports/<int:pk>/approve/', ApproveReportView.as_view(), name='report_approve'),
     path('reports/<int:pk>/blockchain/', RecordBlockchainView.as_view(), name='record_blockchain'),

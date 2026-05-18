@@ -154,11 +154,19 @@ class CreateAdviserView(RoleRequireMixin, CreateView):
     template_name = 'app/heads/create_adviser.html'
     success_url = reverse_lazy('head_user_role')
 
+    def form_valid(self, form):
+       messages.success(self.request, f'Adviser/Co-Adviser "{form.instance.get_full_name()}" account created successfully.')
+       return super().form_valid(form)
+
 class CreateOfficerView(RoleRequireMixin, CreateView):
     role_required = 'head'
     form_class= OfficerCreationForm
     template_name = 'app/heads/create_officer.html'
     success_url = reverse_lazy('head_user_role')
+
+    def form_valid(self, form):
+       messages.success(self.request, f'Officer "{form.instance.get_full_name()}" account created successfully.')
+       return super().form_valid(form)
 
 class UpdateAdviserView(RoleRequireMixin, UpdateView):
     model = Adviser

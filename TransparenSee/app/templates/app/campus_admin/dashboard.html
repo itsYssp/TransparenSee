@@ -1,4 +1,4 @@
-{% extends "app/campus_admin/sidebar.html" %} {% block con %}
+{% extends "app/campus_admin/sidebar.html" %} {% block con %} {% load humanize %}
 
 <div class="px-6 py-6 flex flex-col gap-6 ">
 
@@ -13,7 +13,7 @@
     <div class="absolute -top-8 -left-8 w-40 h-40 rounded-full border-30 border-white/5 pointer-events-none"></div>
     <p class="text-xs font-bold tracking-widest text-blue-200 uppercase mb-3">Total Funds Across All Organizations</p>
     <p class="text-5xl font-extrabold text-white tracking-tight">
-      <span class="text-xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ org_balance.total_balance }}
+      <span class="text-xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ org_balance.total_balance|floatformat:2|intcomma }}
     </p>
     <div class="mt-4 inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
       <span class="w-2 h-2 rounded-full bg-green-400 shadow shadow-green-400 animate-pulse"></span>
@@ -266,9 +266,9 @@
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Organization</th>
-            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">User</th>
-            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Action</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Name</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Action By</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">

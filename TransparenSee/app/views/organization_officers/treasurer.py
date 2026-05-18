@@ -307,30 +307,99 @@ class BulkFeePreviewView(RoleRequireMixin, TemplateView):
 class CreateFinancialReportView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/create_report.html'
     role_required = 'treasurer'
-    
 
     def get_organization(self):
         return self.request.user.officer.organization
 
-    def get(self, request):
+    def get_editable_statuses(self):
+        return ['draft', 'rejected']
+
+    def get_report(self):
+        pk = self.kwargs.get('pk')
+        if not pk:
+            return None
+        return get_object_or_404(
+            FinancialReport,
+            pk=pk,
+            organization=self.get_organization(),
+        )
+
+    def can_edit_report(self, report):
+        return report.status in self.get_editable_statuses()
+
+    def build_context(self, report=None):
         org = self.get_organization()
         academic_years = AcademicYear.objects.all().order_by('-academic_year')
-        products = Product.objects.filter(organization=org)
-        return render(request, self.template_name, {
+        products = Product.objects.filter(organization=org).prefetch_related('variants')
+        report_entries = []
+
+        if report:
+            for entry in report.entries.order_by('date', 'order', 'id'):
+                report_entries.append({
+                    'entry_id': entry.id,
+                    'entry_type': entry.entry_type,
+                    'date': entry.date.isoformat() if entry.date else '',
+                    'category': entry.category or '',
+                    'description': entry.description or '',
+                    'amount': str(entry.amount or '0'),
+                    'income_source': entry.income_source or ('other' if entry.entry_type == 'income' else ''),
+                    'society_academic_year': str(report.academic_year_id or ''),
+                    'product_id': str(entry.product_id or ''),
+                    'variant_id': str(entry.variant_id or ''),
+                    'quantity': entry.quantity or 1,
+                    'unit_price': str(entry.unit_price or '0'),
+                    'existing_receipt_url': entry.receipt_image.url if entry.receipt_image else '',
+                    'existing_receipt_name': entry.receipt_image.name.split('/')[-1] if entry.receipt_image else '',
+                    'locked': entry.entry_type == 'income' and entry.income_source in ['society', 'product', 'voluntary'],
+                })
+
+        return {
             'academic_years': academic_years,
             'products': products,
-        })
+            'report': report,
+            'report_entries': report_entries,
+            'is_edit_mode': bool(report),
+            'editable_statuses': self.get_editable_statuses(),
+        }
 
-    def post(self, request):
+    def reset_approval_fields(self, report):
+        report.auditor_approved_by = None
+        report.auditor_approved_at = None
+        report.auditor_remarks = None
+        report.president_approved_by = None
+        report.president_approved_at = None
+        report.president_remarks = None
+        report.co_adviser_approved_by = None
+        report.co_adviser_approved_at = None
+        report.co_adviser_remarks = None
+        report.adviser_approved_by = None
+        report.adviser_approved_at = None
+        report.adviser_remarks = None
+
+    def get(self, request, *args, **kwargs):
+        report = self.get_report()
+        if report and not self.can_edit_report(report):
+            messages.error(request, 'This report can no longer be edited.')
+            return redirect('report_detail', pk=report.pk)
+        return render(request, self.template_name, self.build_context(report))
+
+    def post(self, request, *args, **kwargs):
+        report = self.get_report()
+        if report and not self.can_edit_report(report):
+            messages.error(request, 'This report can no longer be edited.')
+            return redirect('report_detail', pk=report.pk)
+
         org   = self.get_organization()
         title = request.POST.get('title', '').strip()
         academic_year_id = request.POST.get('academic_year')
+        form_action = request.POST.get('action', 'submit')
 
         if not title:
             messages.error(request, 'Title is required.')
             return redirect(request.path)
 
         dates          = request.POST.getlist('date[]')
+        entry_ids      = request.POST.getlist('entry_id[]')
         categories     = request.POST.getlist('category[]')
         descriptions   = request.POST.getlist('description[]')
         amounts        = request.POST.getlist('amount[]')
@@ -340,8 +409,9 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
         society_ay_ids = request.POST.getlist('society_academic_year[]')
         product_ids    = request.POST.getlist('product_id[]')
         variant_ids    = request.POST.getlist('variant_id[]')
-        quantities     = request.POST.getlist('quantity[]')  
+        quantities     = request.POST.getlist('quantity[]')
         unit_prices    = request.POST.getlist('unit_price[]')
+        clear_receipts = request.POST.getlist('clear_receipt[]')
 
         if not any(d.strip() for d in dates):
             messages.error(request, 'At least one entry is required.')
@@ -349,25 +419,36 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
 
         with transaction.atomic():
             ay = AcademicYear.objects.filter(pk=academic_year_id).first() if academic_year_id else None
+            target_status = 'draft' if form_action == 'draft' else 'pending_auditor'
 
-            report = FinancialReport.objects.create(
-                organization=org,
-                created_by=request.user,
-                academic_year=ay,
-                title=title,
-                status='pending_auditor',
-            )
-
-            entries = []
+            if report:
+                report.academic_year = ay
+                report.title = title
+                report.status = target_status
+                self.reset_approval_fields(report)
+                report.save()
+                existing_entries = {str(entry.id): entry for entry in report.entries.all()}
+                seen_entry_ids = set()
+            else:
+                report = FinancialReport.objects.create(
+                    organization=org,
+                    created_by=request.user,
+                    academic_year=ay,
+                    title=title,
+                    status=target_status,
+                )
+                existing_entries = {}
+                seen_entry_ids = set()
 
             for i in range(len(dates)):
                 date        = dates[i]
                 category    = categories[i]
                 description = descriptions[i]
                 amount      = amounts[i]
+                entry_id    = entry_ids[i] if i < len(entry_ids) else ''
                 row_key     = row_keys[i] if i < len(row_keys) else ''
                 receipt_image = request.FILES.get(f'receipt_image__{row_key}') if row_key else None
-                
+                clear_receipt = clear_receipts[i] if i < len(clear_receipts) else '0'
 
                 if not (date and amount):
                     continue
@@ -418,34 +499,46 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                         if variant_obj:
                             amount = variant_obj.price * quantity
 
-                entries.append(FinancialReportEntry(
+                entry = existing_entries.get(entry_id) if entry_id else FinancialReportEntry(report=report)
+                entry.report = report
+                entry.date = date
+                entry.category = category
+                entry.description = description
+                entry.amount = amount
+                entry.order = i
+                entry.entry_type = entry_type
+                entry.income_source = income_source if entry_type == 'income' else None
+                entry.society_student_count = student_count
+                entry.society_fee_per_student = fee_per_student
+                entry.society_semester = None
+                entry.quantity = quantity
+                entry.product = product_obj if income_source == 'product' else None
+                entry.variant = variant_obj if income_source == 'product' else None
+                entry.unit_price = unit_price
+                if receipt_image:
+                    entry.receipt_image = receipt_image
+                elif clear_receipt == '1':
+                    entry.receipt_image = None
+                entry.save()
+                if entry.id:
+                    seen_entry_ids.add(str(entry.id))
+
+            if existing_entries:
+                report.entries.exclude(id__in=seen_entry_ids).delete()
+
+            if form_action == 'submit':
+                ReportApprovalLog.objects.create(
                     report=report,
-                    date=date,
-                    category=category,
-                    description=description,
-                    amount=amount,
-                    order=i,
-                    entry_type=entry_type,
-                    income_source=income_source if entry_type == 'income' else None,
-                    society_student_count=student_count,
-                    society_fee_per_student=fee_per_student,
-                    society_semester=None,
-                    product=product_obj if income_source == 'product' else None,
-                    variant=variant_obj if income_source == 'product' else None,
-                    unit_price=unit_price,
-                    receipt_image=receipt_image,
-                ))
+                    action_by=request.user,
+                    action='submitted',
+                    remarks='Report submitted for approval.',
+                )
 
-            FinancialReportEntry.objects.bulk_create(entries)
-
-            ReportApprovalLog.objects.create(
-                report=report,
-                action_by=request.user,
-                action='submitted',
-                remarks='Report submitted for approval.',
-            )
-
-        return redirect(f"{reverse('reports')}?submitted=1")    
+        if form_action == 'draft':
+            messages.success(request, f'Financial report "{title}" has been saved as draft.')
+        else:
+            messages.success(request, f'Financial report "{title}" has been submitted for approval.')
+        return redirect('reports')
 
 
 class SocietyFeePreviewView(RoleRequireMixin, TemplateView):

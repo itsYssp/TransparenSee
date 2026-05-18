@@ -24,7 +24,7 @@
         {% elif report.status == 'pending_president' %}
         <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending President</span>
         {% elif report.status == 'pending_co_adviser' %}
-        <span class="bg-purple-50 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Adviser</span>
+        <span class="bg-purple-50 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Co-Adviser</span>
         {% elif report.status == 'pending_adviser' %}
         <span class="bg-purple-50 text-purple-700 text-xs font-bold px-3 py-1.5 rounded-xl">Pending Adviser</span>
         {% elif report.status == 'approved' %}
@@ -35,6 +35,15 @@
         <span class="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
           <i data-lucide="link" class="w-3.5 h-3.5"></i> On Blockchain
         </span>
+        {% endif %}
+        {% if user.role == 'treasurer' %}
+        {% if report.status == 'draft' or report.status == 'rejected' %}
+        <a href="{% url 'treasurer_edit_report' report.pk %}"
+          class="ml-3 inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors">
+          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+          Edit Report
+        </a>
+        {% endif %}
         {% endif %}
       </div>
     </div>
@@ -509,11 +518,11 @@
             {% if log.remarks %}
             <p class="text-xs text-gray-400 mt-0.5">{{ log.remarks }}</p>
             {% else %}
-            {% if log.staus == rejected %}
-            <p class="text-xs text-gray-400 mt-0.5">Rejected by: {{log.action_by.get_role_display}}</p>
-            {% else %}
-            <p class="text-xs text-gray-400 mt-0.5">Approve by: {{log.action_by.get_role_display}}</p>
-            {% endif %}
+              {% if log.status == "rejected" %}
+              <p class="text-xs text-gray-400 mt-0.5">Rejected by: {{log.action_by.get_role_display}}</p>
+              {% else %}
+              <p class="text-xs text-gray-400 mt-0.5">Approve by: {{log.action_by.get_role_display}}</p>
+              {% endif %}
             
             {% endif %}
           </div>

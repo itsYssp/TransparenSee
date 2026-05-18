@@ -8,33 +8,42 @@ class OrganizationListView(RoleRequireMixin, ListView):
     template_name = 'app/organizations.html'
     context_object_name = 'organizations'
     role_required = ['campus_admin', 'head', 'admin']
-    paginate_by = 10
+
+    role_template = {
+        "head": "app/heads/sidebar.html",
+        "admin": "app/superadmin/sidebar.html",
+        "campus_admin": "app/campus_admin/sidebar.html",
+    }
 
     def get_queryset(self):
-        queryset = Organization.objects.all().order_by('name')
         search = self.request.GET.get('search', '').strip()
+        queryset = Organization.objects.all().order_by('name')
+
         if search:
             queryset = queryset.filter(name__icontains=search)
-        return queryset
 
-    def get_context_data(self,**kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-
-        role_template = {
-            "head": "app/heads/sidebar.html",
-            "admin": "app/superadmin/sidebar.html",
-            "campus_admin": "app/campus_admin/sidebar.html", 
-        }
-
-        context["base_template"] = role_template.get(user.role,  'app/base.html')
-        context['total_organizations'] = Organization.objects.count()
-        context['search'] = self.request.GET.get('search', '')
-        organizations = Organization.objects.annotate(
-            officer_count=Count('officer',distinct=True),
-            adviser_count=Count('adviser',distinct=True)
+        return queryset.annotate(
+            officer_count=Count('officer', distinct=True),
+            adviser_count=Count('adviser', distinct=True)
         )
-        context['organizations'] = organizations
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()  # still one call, reused below
+
+        context.update({
+            "base_template": self.role_template.get(self.request.user.role, 'app/base.html'),
+            "search": self.request.GET.get('search', ''),
+            "total_organizations": queryset.count(),
+            "org_categories": [
+                ("Student Council", queryset.filter(category='student_council')),
+                ("Academic Organizations", queryset.filter(category='academic')),
+                ("Non-Academic Organizations", queryset.filter(category='non_academic')),
+                ("Performing Arts Organizations", queryset.filter(category='performing_arts')),
+                
+            ],
+        })
+
         return context
 
 

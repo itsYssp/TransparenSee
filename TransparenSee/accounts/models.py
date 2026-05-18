@@ -56,7 +56,7 @@ class CustomUser(AbstractUser):
         ('head', 'Head')
     ]
     
-    middle_name = models.CharField(max_length=50)
+    middle_name = models.CharField(max_length=50, blank=True)
     role = models.CharField( max_length=20, choices=ROLE_CHOICES)
     profile_image = models.ImageField(upload_to="profile_pictures", blank=True, null=True)
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name']

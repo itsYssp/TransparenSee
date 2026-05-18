@@ -263,6 +263,7 @@ class StatementPeriodMixin:
         payload = {
             "period": period,
             "entries": [],
+            "grouped_entries": [],
             "receipt_images": [],
             "report_summaries": [],
             "total_income": 0.0,
@@ -283,7 +284,7 @@ class StatementPeriodMixin:
             'academic_year', 'created_by'
         ).prefetch_related(
             'entries'
-        ).order_by('title', 'created_at')
+        ).order_by('created_at', 'title')
 
         if period["period_type"] == 'semestral' and period["academic_year_obj"]:
             reports = reports.filter(academic_year=period["academic_year_obj"])
@@ -302,9 +303,9 @@ class StatementPeriodMixin:
                 date__lte=period["end_date"],
             )
 
-        entries = entries.select_related('report', 'report__academic_year').order_by(
-            'report__title', 'date', 'order', 'id'
-        )
+        entries = list(entries.select_related('report', 'report__academic_year').order_by(
+            'date', 'report__created_at', 'report__title', 'order', 'id'
+        ))
 
         report_ids = list(OrderedDict.fromkeys(entry.report_id for entry in entries))
         relevant_reports = [report for report in reports if report.id in report_ids]
@@ -312,6 +313,10 @@ class StatementPeriodMixin:
         summaries = []
         for report in relevant_reports:
             report_entries = [entry for entry in entries if entry.report_id == report.id]
+            first_entry_date = min(
+                (entry.date for entry in report_entries),
+                default=report.created_at.date() if report.created_at else None
+            )
             total_income = sum(float(entry.amount) for entry in report_entries if entry.entry_type == 'income')
             total_expense = sum(float(entry.amount) for entry in report_entries if entry.entry_type == 'expense')
             blockchain_verified = verify_report_hash(report) if report.blockchain_hash else None
@@ -320,6 +325,7 @@ class StatementPeriodMixin:
                 "title": report.title,
                 "status": report.get_status_display(),
                 "academic_year": str(report.academic_year) if report.academic_year else "—",
+                "first_entry_date": first_entry_date.strftime("%Y-%m-%d") if first_entry_date else "",
                 "blockchain_hash": report.blockchain_hash or "",
                 "blockchain_verified": blockchain_verified,
                 "income": total_income,
@@ -330,8 +336,9 @@ class StatementPeriodMixin:
 
         rows = []
         receipt_images = []
+        grouped_rows = OrderedDict()
         for entry in entries:
-            rows.append({
+            row = {
                 "report_id": entry.report_id,
                 "report_title": entry.report.title,
                 "report_status": entry.report.status,
@@ -342,7 +349,25 @@ class StatementPeriodMixin:
                 "quantity": self._entry_quantity(entry),
                 "unit_price": float(entry.unit_price or 0),
                 "amount": float(entry.amount or 0),
+            }
+            rows.append(row)
+            group = grouped_rows.setdefault(entry.report_id, {
+                "report_id": entry.report_id,
+                "report_title": entry.report.title,
+                "academic_year": str(entry.report.academic_year) if entry.report.academic_year else "-",
+                "first_entry_date": entry.date.strftime("%Y-%m-%d"),
+                "entries": [],
+                "income_total": 0.0,
+                "expense_total": 0.0,
+                "net_total": 0.0,
             })
+            group["entries"].append(row)
+            if entry.entry_type == 'income':
+                group["income_total"] += row["amount"]
+            else:
+                group["expense_total"] += row["amount"]
+            group["net_total"] = group["income_total"] - group["expense_total"]
+
             if entry.receipt_image:
                 receipt_images.append({
                     "report_id": entry.report_id,
@@ -355,9 +380,18 @@ class StatementPeriodMixin:
 
         total_income = sum(row["amount"] for row in rows if row["entry_type"] == 'income')
         total_expense = sum(row["amount"] for row in rows if row["entry_type"] == 'expense')
+        grouped_entries = sorted(
+            list(grouped_rows.values()),
+            key=lambda group: (group.get("first_entry_date") or "", group.get("report_title") or "")
+        )
+        summaries = sorted(
+            summaries,
+            key=lambda report: (report.get("first_entry_date") or "", report.get("title") or "")
+        )
 
         payload.update({
             "entries": rows,
+            "grouped_entries": grouped_entries,
             "receipt_images": receipt_images,
             "report_summaries": summaries,
             "total_income": total_income,

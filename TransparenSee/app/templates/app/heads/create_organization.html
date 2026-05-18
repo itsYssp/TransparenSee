@@ -113,13 +113,6 @@
       </div>
       {% endif %}
 
-      {% for message in messages %}
-      <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} rounded-xl text-sm">
-        <i data-lucide="{% if message.tags == 'error' %}circle-alert{% else %}circle-check{% endif %}" class="w-5 h-5 shrink-0"></i>
-        <span>{{ message }}</span>
-      </div>
-      {% endfor %}
-
       <div class="flex items-center justify-end gap-3">
         <a href="{% url 'organizations' %}"
           class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
@@ -135,7 +128,10 @@
     </form>
   </div>
 
+  
 </div>
+
+
 
 <script>
   function previewLogo(event) {

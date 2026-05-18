@@ -1,4 +1,4 @@
-{% extends "app/student/sidebar.html" %}
+{% extends "app/student/sidebar.html" %} {% load humanize %}
 {% load static %}
 {% block con %}
 
@@ -34,7 +34,7 @@
     <div class="absolute -bottom-10 -right-10 w-48 h-48 rounded-full border-36 border-white/5 pointer-events-none"></div>
     <p class="text-xs font-bold tracking-widest text-blue-200 uppercase mb-2">Organizational Funds</p>
     <p class="text-5xl font-extrabold text-white tracking-tight">
-      <span class="text-2xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ user.student.organization.balance|floatformat:2 }}
+      <span class="text-2xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ user.student.organization.balance|floatformat:2|intcomma }}
     </p>
     <div class="mt-4 flex flex-wrap gap-2">
       <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">

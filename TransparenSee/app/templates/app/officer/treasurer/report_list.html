@@ -88,7 +88,7 @@
               </div>
             </td>
             <td class="px-4 py-3 text-gray-600">{{ report.academic_year }}</td>
-            <td class="px-4 py-3 font-semibold text-gray-900">₱ {{ report.total_amount|floatformat:2 }}</td>
+            <td class="px-4 py-3 font-semibold text-gray-900">₱ {{ report.net_amount|floatformat:2 }}</td>
             <td class="px-4 py-3">
               <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
                 {% if report.status == 'approved' %}bg-green-100 text-green-700
@@ -101,10 +101,20 @@
             </td>
             <td class="px-4 py-3 text-gray-500 text-xs">{{ report.created_at|date:"M d, Y" }}</td>
             <td class="px-4 py-3 text-center">
-              <a href="{% url 'report_detail' report.pk %}"
-                class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold">
-                <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
-              </a>
+              <div class="inline-flex items-center gap-3">
+                <a href="{% url 'report_detail' report.pk %}"
+                  class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold">
+                  <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
+                </a>
+                {% if user.role == 'treasurer' %}
+                {% if report.status == 'draft' or report.status == 'rejected' %}
+                <a href="{% url 'treasurer_edit_report' report.pk %}"
+                  class="inline-flex items-center gap-1 text-amber-600 hover:text-amber-800 text-xs font-semibold">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
+                </a>
+                {% endif %}
+                {% endif %}
+              </div>
             </td>
           </tr>
           {% empty %}
@@ -203,10 +213,18 @@
             </td>
             <td class="px-4 py-3 text-gray-500 text-xs">{{ rejected.created_at|date:"M d, Y" }}</td>
             <td class="px-4 py-3 text-center">
-              <a href="{% url 'report_detail' rejected.pk %}"
-                class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold">
-                <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
-              </a>
+              <div class="inline-flex items-center gap-3">
+                <a href="{% url 'report_detail' rejected.pk %}"
+                  class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold">
+                  <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
+                </a>
+                {% if user.role == 'treasurer' %}
+                <a href="{% url 'treasurer_edit_report' rejected.pk %}"
+                  class="inline-flex items-center gap-1 text-amber-600 hover:text-amber-800 text-xs font-semibold">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
+                </a>
+                {% endif %}
+              </div>
             </td>
           </tr>
           {% empty %}
@@ -227,6 +245,48 @@
 
   </div>
 </div>
+
+
+{% for message in messages %}
+  {% if message.tags == 'success' %}
+  <dialog id="success_modal" class="modal modal-middle">
+    <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center gap-4 px-8 py-8">
+        <div class="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+          <i data-lucide="circle-check-big" class="w-8 h-8 text-emerald-500"></i>
+        </div>
+        <div class="text-center">
+          <p class="font-extrabold text-gray-900 text-base tracking-tight">Success</p>
+          <p class="text-sm text-gray-500 mt-1">{{ message }}</p>
+        </div>
+        <button onclick="document.getElementById('success_modal').close()"
+          class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors">Done</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  <script>document.getElementById('success_modal').showModal();</script>
+
+  {% elif message.tags == 'error' %}
+  <dialog id="error_modal" class="modal modal-middle">
+    <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center gap-4 px-8 py-8">
+        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+          <i data-lucide="circle-x" class="w-8 h-8 text-red-500"></i>
+        </div>
+        <div class="text-center">
+          <p class="font-extrabold text-gray-900 text-base tracking-tight">Failed</p>
+          <p class="text-sm text-gray-500 mt-1">{{ message }}</p>
+        </div>
+        <button onclick="document.getElementById('error_modal').close()"
+          class="w-full py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors">Close</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  <script>document.getElementById('error_modal').showModal();</script>
+ {% endif %}
+{% endfor %}
 
 <script>lucide.createIcons();</script>
 

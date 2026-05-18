@@ -7,11 +7,14 @@
       <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Campus Admin</p>
       <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Organizations</h1>
     </div>
+    {% if user.role == 'head' %}
     <a href="{% url 'head_create_organization' %}"
       class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
       <i data-lucide="plus" class="w-4 h-4"></i>
       New Organization
     </a>
+    {% endif %}
+    
   </div>
 
   <!-- Search -->
@@ -36,17 +39,16 @@
   </form>
 
   <!-- Grid -->
+  {% for category_name, organizations in org_categories %}
+<div class="flex flex-col">
+  <h1 class="font-extrabold text-xl mb-5">{{ category_name }}</h1>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     {% for org in organizations %}
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-blue-100 shrink-0 shadow-sm">
-          <img
-            src="{% if org.logo %}{{ org.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
-            alt="{{ org.name }}"
-            class="w-full h-full object-cover"
-          />
+          <img src="{% if org.logo %}{{ org.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
+               alt="{{ org.name }}" class="w-full h-full object-cover" />
         </div>
         <div class="min-w-0">
           <p class="font-bold text-gray-900 truncate">{{ org.name }}</p>
@@ -71,40 +73,38 @@
 
       <div class="flex items-center gap-2 pt-1 border-t border-gray-100">
         <a href="{% url 'organization_detail' org.pk %}"
-          class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
-          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-          View
+           class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+          <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
         </a>
-       {% if user.role == 'head' %}
-       <a href="{% url 'head_update_organization' org.pk %}"
-          class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors">
-          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-          Edit
+        {% if user.role == 'head' %}
+        <a href="{% url 'head_update_organization' org.pk %}"
+           class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors">
+          <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
         </a>
-        <button
-          onclick="openDeleteModal('{{ org.pk }}', '{{ org.name|escapejs }}')"
-          class="w-8 h-8 flex items-center justify-center rounded-xl text-red-500 bg-red-50 hover:bg-red-100 transition-colors">
+        <button onclick="openDeleteModal('{{ org.pk }}', '{{ org.name|escapejs }}')"
+                class="w-8 h-8 flex items-center justify-center rounded-xl text-red-500 bg-red-50 hover:bg-red-100 transition-colors">
           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
         </button>
-         {% endif %}
+        {% endif %}
       </div>
-
     </div>
     {% empty %}
-    <div class="col-span-full flex flex-col items-center justify-center py-20 text-center">
+    <div class="col-span-full flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl">
       <div class="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
         <i data-lucide="building-2" class="w-6 h-6 text-gray-400"></i>
       </div>
       <p class="text-sm font-semibold text-gray-400">No organizations yet</p>
       <p class="text-xs text-gray-300 mt-1">Create the first one</p>
-      <a href="{% url 'campus_admin_create_organization' %}"
-        class="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors">
-        <i data-lucide="plus" class="w-4 h-4"></i>
-        New Organization
+      <a href="{% url 'head_create_organization' %}"
+         class="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors">
+        <i data-lucide="plus" class="w-4 h-4"></i> New Organization
       </a>
     </div>
     {% endfor %}
   </div>
+</div>
+{% endfor %}
+
 
   <!-- Pagination -->
   {% if page_obj.paginator.num_pages > 1 %}
@@ -149,6 +149,47 @@
   </div>
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
+
+{% for message in messages %}
+  {% if message.tags == 'success' %}
+  <dialog id="success_modal" class="modal modal-middle">
+    <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center gap-4 px-8 py-8">
+        <div class="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+          <i data-lucide="circle-check-big" class="w-8 h-8 text-emerald-500"></i>
+        </div>
+        <div class="text-center">
+          <p class="font-extrabold text-gray-900 text-base tracking-tight">Success</p>
+          <p class="text-sm text-gray-500 mt-1">{{ message }}</p>
+        </div>
+        <button onclick="document.getElementById('success_modal').close()"
+          class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors">Done</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  <script>document.getElementById('success_modal').showModal();</script>
+
+  {% elif message.tags == 'error' %}
+  <dialog id="error_modal" class="modal modal-middle">
+    <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center gap-4 px-8 py-8">
+        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+          <i data-lucide="circle-x" class="w-8 h-8 text-red-500"></i>
+        </div>
+        <div class="text-center">
+          <p class="font-extrabold text-gray-900 text-base tracking-tight">Failed</p>
+          <p class="text-sm text-gray-500 mt-1">{{ message }}</p>
+        </div>
+        <button onclick="document.getElementById('error_modal').close()"
+          class="w-full py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors">Close</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  <script>document.getElementById('error_modal').showModal();</script>
+ {% endif %}
+{% endfor %}
 
 <script>
   function openDeleteModal(pk, name) {
