@@ -2,7 +2,7 @@
 {% load static %}
 {% block con %}
 
-<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 ">
+<div class="px-6 py-6 flex flex-col gap-6 bg-gray-50">
 
   <!-- Header -->
   <div class="flex items-center gap-3">
@@ -34,7 +34,7 @@
     <div class="absolute -bottom-10 -right-10 w-48 h-48 rounded-full border-36 border-white/5 pointer-events-none"></div>
     <p class="text-xs font-bold tracking-widest text-blue-200 uppercase mb-2">Organizational Funds</p>
     <p class="text-5xl font-extrabold text-white tracking-tight">
-      <span class="text-2xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ user.student.organization.balance|floatformat:2|intcomma|default:0 }}
+      <span class="text-2xl font-semibold text-blue-300 align-super mr-1">₱</span>{{ user.student.organization.balance|floatformat:2|intcomma }}
     </p>
     <div class="mt-4 flex flex-wrap gap-2">
       <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
@@ -51,6 +51,34 @@
   </div>
 
   <!-- Tabs -->
+  <div class="flex bg-white border border-gray-200 rounded-xl p-1 gap-1 shadow-sm">
+    <a href="?type=financial"
+      class="flex-1 text-center text-sm font-semibold py-2 rounded-lg transition-all duration-200
+        {% if active_tab != 'accomplishment' %}bg-blue-700 text-white shadow-md{% else %}text-gray-500 hover:bg-blue-50 hover:text-blue-700{% endif %}">
+      Financial Records
+    </a>
+    <a href="?type=accomplishment"
+      class="flex-1 text-center text-sm font-semibold py-2 rounded-lg transition-all duration-200
+        {% if active_tab == 'accomplishment' %}bg-blue-700 text-white shadow-md{% else %}text-gray-500 hover:bg-blue-50 hover:text-blue-700{% endif %}">
+      Accomplishment Report
+    </a>
+  </div>
+
+  {% if active_tab != 'accomplishment' %}
+
+  <!-- Combined Financial + Blockchain Table -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-2 px-6 py-4 border-b border-gray-100">
+      <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+        <i data-lucide="database" class="w-4 h-4 text-blue-700"></i>
+      </div>
+      <p class="font-bold text-gray-800 text-sm">Financial Records</p>
+      <span class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-blue-100 text-blue-700">
+        {{ financial_reports|length }} record{{ financial_reports|length|pluralize }}
+      </span>
+    </div>
+  </div>
+
   {% if tampered_count > 0 %}
   <div class="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
     <div class="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
@@ -291,9 +319,86 @@
     </div>
   </div>
 
+  <!-- ══ ACCOMPLISHMENT TAB ══════════════════════════════════════ -->
+  {% else %}
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-2 px-6 py-4 border-b border-gray-100">
+      <div class="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
+        <i data-lucide="clipboard-list" class="w-4 h-4 text-purple-600"></i>
+      </div>
+      <p class="font-bold text-gray-800 text-sm">Uploaded Reports</p>
+      <span class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-700">
+        {{ accomplishment_report|length }} record{{ accomplishment_report|length|pluralize }}
+      </span>
+    </div>
+
+    {% if accomplishment_report %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase w-10">#</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Title</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Description</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Uploaded By</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Date</th>
+            <th class="px-4 py-3 w-10"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in accomplishment_report %}
+          <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-500"></i>
+                </div>
+                <p class="font-bold text-gray-900 text-xs">{{ report.title }}</p>
+              </div>
+            </td>
+            <td class="px-4 py-3 max-w-xs">
+              <!-- FIX: was report.desciption (typo) -->
+              <p class="text-xs text-gray-400 truncate">{{ report.desciption }}</p>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-600 font-semibold">
+              {{ report.created_by.get_full_name|default:report.created_by.username }}
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+              {{ report.created_at|date:"M d, Y" }}
+            </td>
+            <td class="px-4 py-3">
+              {% if report.report_file %}
+              <button type="button"
+                onclick="document.getElementById('acc-modal-{{ report.pk }}').showModal()"
+                class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-purple-600 hover:border-purple-200 transition-colors">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              </button>
+              {% else %}
+              <span class="text-xs text-gray-300">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="px-6 py-12 text-center text-sm text-gray-400">
+      <div class="flex flex-col items-center gap-2">
+        <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
+        <span>No accomplishment reports uploaded yet.</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% endif %}
+
 </div>
 
-<!-- Modals -->
+<!-- ══ BLOCKCHAIN RECORD DETAIL MODALS ════════════════════════════ -->
 {% for report in reports %}
 <dialog id="modal-{{ report.pk }}" class="modal">
   <div class="modal-box rounded-2xl border shadow-xl max-w-lg p-0 overflow-y-auto max-h-[90vh]
@@ -422,6 +527,7 @@
         </div>
         <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
           <p class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Net</p>
+          <!-- FIX: was incorrectly showing income twice; now uses report.net -->
           <p class="text-base font-extrabold text-blue-700">₱{{ report.net|floatformat:2 }}</p>
         </div>
       </div>
@@ -461,38 +567,209 @@
 </dialog>
 {% endfor %}
 
+<!-- ══ FINANCIAL REPORT DETAIL MODALS ══════════════════════════ -->
+{% for report in financial_reports %}
+<dialog id="report-modal-{{ report.pk }}" class="modal">
+  <div class="modal-box rounded-2xl border border-gray-200 shadow-xl max-w-lg p-0 overflow-hidden">
+
+    <!-- Modal Header -->
+    <div class="bg-blue-700 px-6 py-4 flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <i data-lucide="file-text" class="w-4 h-4 text-blue-200"></i>
+          <span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Financial Report</span>
+        </div>
+        <h3 class="font-extrabold text-white text-sm leading-snug">{{ report.title }}</h3>
+        <p class="text-xs text-blue-200 mt-0.5">
+          {{ report.academic_year|default:"No academic year" }}
+        </p>
+      </div>
+      <button onclick="document.getElementById('report-modal-{{ report.pk }}').close()" class="text-blue-200 hover:text-white mt-1">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <div class="p-6 flex flex-col gap-5">
+
+      <!-- Blockchain Hash -->
+      {% if report.blockchain_hash %}
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">Blockchain Hash</p>
+        <p class="font-mono text-xs text-blue-700 break-all leading-relaxed">{{ report.blockchain_hash }}</p>
+        <div class="flex items-center gap-3 mt-3">
+          <span class="inline-flex items-center gap-1.5 text-xs text-green-600 font-semibold">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verified & Immutable
+          </span>
+          {% if report.blockchain_recorded_at %}
+          <span class="text-xs text-gray-400">{{ report.blockchain_recorded_at|date:"M d, Y · g:i A" }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Approval Chain -->
+      <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">Approval Chain</p>
+        <div class="flex flex-col gap-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Auditor
+            </span>
+            {% if report.auditor_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.auditor_approved_by.get_full_name }} · {{ report.auditor_approved_at|date:"M d, Y" }}</span>
+            {% else %}<span class="text-gray-300">—</span>{% endif %}
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> President
+            </span>
+            {% if report.president_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.president_approved_by.get_full_name }} · {{ report.president_approved_at|date:"M d, Y" }}</span>
+            {% else %}<span class="text-gray-300">—</span>{% endif %}
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Co-Adviser
+            </span>
+            {% if report.co_adviser_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.co_adviser_approved_by.get_full_name }} · {{ report.co_adviser_approved_at|date:"M d, Y" }}</span>
+            {% else %}<span class="text-gray-300">—</span>{% endif %}
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-500 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Adviser
+            </span>
+            {% if report.adviser_approved_by %}
+            <span class="font-semibold text-green-700">{{ report.adviser_approved_by.get_full_name }} · {{ report.adviser_approved_at|date:"M d, Y" }}</span>
+            {% else %}<span class="text-gray-300">—</span>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Totals -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-green-50 rounded-xl p-3 text-center border border-green-100">
+          <p class="text-xs font-bold text-green-600 uppercase tracking-wide mb-1">Income</p>
+          <p class="text-base font-extrabold text-green-700">₱{{ report.total_income|default:"0.00"|floatformat:2 }}</p>
+        </div>
+        <div class="bg-red-50 rounded-xl p-3 text-center border border-red-100">
+          <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-1">Expense</p>
+          <p class="text-base font-extrabold text-red-600">₱{{ report.total_expense|default:"0.00"|floatformat:2 }}</p>
+        </div>
+        <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+          <p class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Net</p>
+          <!-- FIX: was incorrectly re-using total_income; now uses report.net -->
+          <p class="text-base font-extrabold text-blue-700">₱{{ report.net|default:"0.00"|floatformat:2 }}</p>
+        </div>
+      </div>
+
+      <!-- Entries -->
+      <div>
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">
+          Entries ({{ report.entries.count }})
+        </p>
+        <div class="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-50 max-h-56 overflow-y-auto">
+          {% for entry in report.entries.all %}
+          <div class="flex items-center gap-3 px-4 py-2.5">
+            <span class="w-2 h-2 rounded-full shrink-0 {% if entry.entry_type == 'income' %}bg-green-500{% else %}bg-red-400{% endif %}"></span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-gray-800">{{ entry.category }}</p>
+              <p class="text-xs text-gray-400 truncate">{{ entry.description }}</p>
+            </div>
+            <span class="text-xs font-bold whitespace-nowrap {% if entry.entry_type == 'income' %}text-green-700{% else %}text-red-500{% endif %}">
+              {% if entry.entry_type == 'income' %}+{% else %}-{% endif %}₱{{ entry.amount|floatformat:2 }}
+            </span>
+          </div>
+          {% empty %}
+          <div class="px-4 py-6 text-center text-xs text-gray-400">No entries found.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <div class="px-6 pb-6 flex justify-end">
+      <button onclick="document.getElementById('report-modal-{{ report.pk }}').close()"
+        class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50">
+        Close
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+{% endfor %}
+
+<!-- ══ ACCOMPLISHMENT REPORT VIEW MODALS ══════════════════════════ -->
+{% for report in accomplishment_report %}
+  {% if report.report_file %}
+  <dialog id="acc-modal-{{ report.pk }}" class="modal modal-middle">
+    <div class="modal-box max-w-5xl rounded-2xl p-0 overflow-hidden flex flex-col" style="height:90vh;">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center">
+            <i data-lucide="file-text" class="w-4 h-4 text-purple-500"></i>
+          </div>
+          <div>
+            <p class="font-bold text-gray-900 text-sm leading-tight">{{ report.title }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ report.desciption }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{{ report.report_file.url }}" target="_blank"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            Open tab
+          </a>
+          <button type="button" onclick="document.getElementById('acc-modal-{{ report.pk }}').close()"
+            class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+      <iframe src="{{ report.report_file.url }}#toolbar=1&navpanes=0"
+        title="{{ report.title }}" class="flex-1 w-full bg-gray-50"></iframe>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+  {% endif %}
+{% endfor %}
+
 <script>
-function copyHash(hash, btn) {
-  navigator.clipboard.writeText(hash).catch(() => {});
-  btn.textContent = 'copied!';
-  btn.classList.add('text-green-600');
-  setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('text-green-600'); }, 1500);
-}
-
-function applyFilters() {
-  const q      = document.getElementById('search-input').value.toLowerCase();
-  const ay     = document.getElementById('ay-filter').value;
-  const status = document.getElementById('status-filter').value;
-
-  document.querySelectorAll('#blockchain-table tbody tr[data-ay]').forEach(row => {
-    const matchSearch = !q      || row.textContent.toLowerCase().includes(q);
-    const matchAY     = !ay     || row.dataset.ay === ay;
-    const matchStatus = !status || row.dataset.integrity === status;
-    row.style.display = (matchSearch && matchAY && matchStatus) ? '' : 'none';
+  // Show real balance card once page is loaded, hide skeleton
+  document.addEventListener('DOMContentLoaded', function () {
+    const skeleton = document.getElementById('card-skeleton');
+    const card = document.getElementById('card-balance');
+    if (skeleton && card) {
+      setTimeout(function () {
+        skeleton.classList.add('hidden');
+        card.classList.remove('hidden');
+      }, 600);
+    }
   });
-}
 
-document.getElementById('search-input').addEventListener('input',  applyFilters);
-document.getElementById('ay-filter').addEventListener('change',    applyFilters);
-document.getElementById('status-filter').addEventListener('change', applyFilters);
+  function copyHash(hash, btn) {
+    navigator.clipboard.writeText(hash).catch(() => {});
+    btn.textContent = 'copied!';
+    btn.classList.add('text-green-600');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('text-green-600'); }, 1500);
+  }
 
-window.addEventListener("load", () => {
-  document.getElementById("card-skeleton")?.classList.add("hidden");
-  document.getElementById("financial-skeleton")?.classList.add("hidden");
-  document.getElementById("card-balance")?.classList.remove("hidden");
-  document.getElementById("financial-table")?.classList.remove("hidden");
-  document.getElementById("stats-cards")?.classList.remove("hidden");
-});
+  function applyFilters() {
+    const q      = document.getElementById('search-input').value.toLowerCase();
+    const ay     = document.getElementById('ay-filter').value;
+    const status = document.getElementById('status-filter').value;
+
+    document.querySelectorAll('#blockchain-table tbody tr[data-ay]').forEach(row => {
+      const matchSearch = !q      || row.textContent.toLowerCase().includes(q);
+      const matchAY     = !ay     || row.dataset.ay === ay;
+      const matchStatus = !status || row.dataset.integrity === status;
+      row.style.display = (matchSearch && matchAY && matchStatus) ? '' : 'none';
+    });
+  }
+
+  document.getElementById('search-input').addEventListener('input',  applyFilters);
+  document.getElementById('ay-filter').addEventListener('change',    applyFilters);
+  document.getElementById('status-filter').addEventListener('change', applyFilters);
 </script>
 
 {% endblock con %}

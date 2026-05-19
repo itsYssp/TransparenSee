@@ -28,12 +28,15 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         return context
 
-
     def get(self, request):
         context = self.get_context_data()
-        user = self.request.user
+        user = request.user
         org = self.get_organization(user)
 
+        # ── Active tab ─────────────────────────────────────────────
+        active_tab = request.GET.get('type', 'financial')
+
+        # ── Blockchain / Financial records ─────────────────────────
         base_qs = FinancialReport.objects.filter(
             status='on_blockchain'
         ).prefetch_related('entries').order_by('-blockchain_recorded_at')
@@ -51,7 +54,7 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
             report.total_expense = report.entries.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
             report.net           = report.total_income - report.total_expense
 
-            report.is_verified = verify_report_hash(report)  # uses blockchain_utils internally
+            report.is_verified = verify_report_hash(report)
 
             if not report.is_verified and report.blockchain_hash:
                 snapshot = build_report_snapshot(report)
@@ -64,13 +67,27 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
             else:
                 tampered_count += 1
 
+        # ── All financial reports (for the financial tab table) ────
+        financial_reports = FinancialReport.objects.filter(
+            organization=org
+        ).prefetch_related('entries').order_by('-created_at') if org else FinancialReport.objects.none()
+
+        # ── Accomplishment reports ─────────────────────────────────
+        accomplishment_report = AccomplishmentReport.objects.filter(
+            organization=org
+        ).order_by('-created_at') if org else AccomplishmentReport.objects.none()
+
         context.update({
-            'reports':        reports,
-            'total_income':   sum(r.total_income  for r in reports),
-            'total_expense':  sum(r.total_expense for r in reports),
-            'academic_years': AcademicYear.objects.order_by('-academic_year'),
-            'trusted_count':  trusted_count,
-            'tampered_count': tampered_count,
+            'active_tab':           active_tab,
+            'reports':              reports,
+            'financial_reports':    financial_reports,
+            'accomplishment_report': accomplishment_report,
+            'total_income':         sum(r.total_income  for r in reports),
+            'total_expense':        sum(r.total_expense for r in reports),
+            'academic_years':       AcademicYear.objects.order_by('-academic_year'),
+            'trusted_count':        trusted_count,
+            'tampered_count':       tampered_count,
+            'tx_count':             len(reports),
         })
 
         return render(request, self.template_name, context)
@@ -147,8 +164,10 @@ class OtherOrganizationDashboardView(RoleRequireMixin, DetailView):
         context = super().get_context_data(**kwargs)
         org = self.object
 
-        context['accomplishment_report'] = AccomplishmentReport.objects.filter(organization=org)
+        # ── Active tab ─────────────────────────────────────────────
+        active_tab = self.request.GET.get('type', 'financial')
 
+        # ── Blockchain records ─────────────────────────────────────
         base_qs = FinancialReport.objects.filter(
             organization=org,
             status='on_blockchain',
@@ -177,13 +196,27 @@ class OtherOrganizationDashboardView(RoleRequireMixin, DetailView):
             else:
                 tampered_count += 1
 
+        # ── All financial reports (for tab badge/table) ────────────
+        financial_reports = FinancialReport.objects.filter(
+            organization=org
+        ).prefetch_related('entries').order_by('-created_at')
+
+        # ── Accomplishment reports ─────────────────────────────────
+        accomplishment_report = AccomplishmentReport.objects.filter(
+            organization=org
+        ).order_by('-created_at')
+
         context.update({
-            'reports':        reports,
-            'total_income':   sum(r.total_income  for r in reports),
-            'total_expense':  sum(r.total_expense for r in reports),
-            'academic_years': AcademicYear.objects.order_by('-academic_year'),
-            'trusted_count':  trusted_count,
-            'tampered_count': tampered_count,
+            'active_tab':            active_tab,
+            'reports':               reports,
+            'financial_reports':     financial_reports,
+            'accomplishment_report': accomplishment_report,
+            'total_income':          sum(r.total_income  for r in reports),
+            'total_expense':         sum(r.total_expense for r in reports),
+            'academic_years':        AcademicYear.objects.order_by('-academic_year'),
+            'trusted_count':         trusted_count,
+            'tampered_count':        tampered_count,
+            'tx_count':              len(reports),
         })
 
         return context

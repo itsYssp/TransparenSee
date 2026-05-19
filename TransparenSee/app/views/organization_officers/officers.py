@@ -1151,7 +1151,7 @@ class LogsView(RoleRequireMixin, ListView):
         user = self.request.user
         org = self.get_organization()
 
-        # --- ReportApprovalLog pagination (uses ?page=) ---
+        
         logs_qs = self.get_queryset()
         logs_paginator = Paginator(logs_qs, self.paginate_by)
         logs_page_number = self.request.GET.get('page', 1)
