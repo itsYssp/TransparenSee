@@ -85,6 +85,8 @@ class RecordBlockchainView(RoleRequireMixin, TemplateView):
                 'blockchain_recorded_at',
                 'status',
             ])
+            
+            tx_hash = result['tx_hash']
 
             ReportApprovalLog.objects.create(
                 report=report,
@@ -96,11 +98,12 @@ class RecordBlockchainView(RoleRequireMixin, TemplateView):
                     f"Report Hash: {result['report_hash']}"
                 )
             )
+            
 
             messages.success(
-                request,
-                f"Successfully recorded on blockchain. TX: {result['tx_hash']}"
-            )
+            request,
+            f"Successfully recorded on blockchain. TX: {tx_hash[:8]}...{tx_hash[-6:]}"
+)
 
         except ConnectionError as e:
             messages.error(request, f"Blockchain connection failed: {str(e)}")

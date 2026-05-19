@@ -16,7 +16,7 @@
 
     <p class="text-xs font-bold tracking-widest text-blue-200 uppercase mb-3">Remaining Funds</p>
     <p class="text-5xl font-extrabold text-white tracking-tight">
-      <span class=" font-semibold text-blue-300 align-super mr-1 text-xl">₱</span>{{ balance|floatformat:2|intcomma }}
+      <span class=" font-semibold text-blue-300 align-super mr-1 text-xl">₱</span>{{ balance|floatformat:2|intcomma|default:0 }}
     </p>
     <div class="mt-4 inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
       <span class="w-2 h-2 rounded-full bg-green-400 shadow shadow-green-400 animate-pulse"></span>
@@ -72,7 +72,7 @@
   </div>
 
 
-  <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+  <div class="grid grid-cols-2  {% if user.officer.organization.category == 'academic' %} md:grid-cols-3 {% endif %} md:grid-cols-2 gap-3">
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
       <div class="flex items-center justify-between">
@@ -105,8 +105,8 @@
       </div>
     </div>
 
-   
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+   {% if user.officer.organization.category == 'academic' %}
+   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
       <div class="flex items-center justify-between">
         <div class="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
           <i data-lucide="banknote" class="w-4 h-4 text-green-600"></i>
@@ -122,6 +122,8 @@
         <p class="text-xs text-gray-400 mt-0.5 font-medium">Society Fee Amount</p>
       </div>
     </div>
+   {% endif %}
+    
 
   </div>
 

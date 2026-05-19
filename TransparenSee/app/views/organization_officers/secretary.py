@@ -1,5 +1,5 @@
 from django.views.generic import ListView
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from ... models import *
 from ...forms import AccomplishmentReportForm
@@ -19,13 +19,21 @@ class SecretaryHomepageView(RoleRequireMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
-        form = AccomplishmentReportForm(request.POST, request.FILES)
         organization = getattr(request.user.officer, 'organization', None)
 
         if organization is None:
             messages.error(request, 'No organization is assigned to this secretary account.')
             return redirect('secretary_homepage')
 
+        # Handle delete
+        if request.POST.get('action') == 'delete':
+            report_id = request.POST.get('report_id')
+            report = get_object_or_404(AccomplishmentReport, pk=report_id, organization=organization)
+            report.delete()
+            messages.success(request, 'Accomplishment report deleted successfully.')
+            return redirect('secretary_homepage')
+        # Handle upload
+        form = AccomplishmentReportForm(request.POST, request.FILES)
         if form.is_valid():
             report = form.save(commit=False)
             report.organization = organization

@@ -431,18 +431,14 @@ class AccomplishmentReport(models.Model):
         return f"{self.title} - {self.organization}"
 class AccomplishmentReportLog(models.Model):
     ACTION_CHOICES = [
-        ('submitted', 'Submitted')
+        ('submitted', 'Submitted'),
     ]
     report = models.ForeignKey(
         AccomplishmentReport,
         on_delete=models.CASCADE,
         related_name='ar_log'
     )
-    action_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True
-    )
+    action_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -1,5 +1,28 @@
 {% extends base_template %} {% load static %} {% block con %}
 
+<style>
+  .chat-panel {
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+
+  .chat-panel.is-entering {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+  }
+
+  .chat-feed.is-refreshing {
+    opacity: 0.68;
+    transform: translateY(3px);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .chat-item {
+    transition: opacity 260ms ease, transform 260ms ease;
+    will-change: opacity, transform;
+  }
+</style>
+
 <div class="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
   <div class="px-6 pt-6 pb-3 bg-white border-b border-gray-100 shrink-0">
     <div class="flex items-center justify-between mb-4">
@@ -36,8 +59,8 @@
 
   {% if user.role != 'student' %}{% endif %}
 
-  <div id="global-chat-panel" class="flex flex-col flex-1 min-h-0 overflow-hidden">
-    <div id="messages" class="flex-1 overflow-y-auto px-6 py-4 space-y-3"></div>
+  <div id="global-chat-panel" class="chat-panel flex flex-col flex-1 min-h-0 overflow-hidden">
+    <div id="messages" class="chat-feed flex-1 overflow-y-auto px-6 py-4 space-y-3"></div>
 
     <div class="shrink-0 bg-white border-t border-gray-100 px-6 py-4">
       <form id="global-chat-form" class="flex gap-3 items-end">
@@ -68,8 +91,8 @@
     </div>
   </div>
 
-  <div id="announcements-panel" class="hidden flex-col flex-1 min-h-0 overflow-hidden">
-    <div id="announcements" class="flex-1 overflow-y-auto px-6 py-4 space-y-4"></div>
+  <div id="announcements-panel" class="chat-panel hidden flex-col flex-1 min-h-0 overflow-hidden">
+    <div id="announcements" class="chat-feed flex-1 overflow-y-auto px-6 py-4 space-y-4"></div>
 
     <div class="shrink-0 bg-white border-t border-gray-100 px-6 py-4 space-y-3">
       {% if can_post_global_announcement %}
@@ -142,10 +165,20 @@ function switchTab(tab) {
     button.classList.toggle('shadow-sm', isActive);
     button.classList.toggle('text-gray-500', !isActive);
   });
-  globalChatPanel.classList.toggle('hidden', tab !== 'global_chat');
-  globalChatPanel.classList.toggle('flex', tab === 'global_chat');
-  announcementsPanel.classList.toggle('hidden', tab !== 'announcements');
-  announcementsPanel.classList.toggle('flex', tab === 'announcements');
+
+  const showPanel = tab === 'global_chat' ? globalChatPanel : announcementsPanel;
+  const hidePanel = tab === 'global_chat' ? announcementsPanel : globalChatPanel;
+
+  hidePanel.classList.add('is-entering');
+  window.setTimeout(() => {
+    hidePanel.classList.add('hidden');
+    hidePanel.classList.remove('flex');
+    showPanel.classList.remove('hidden');
+    showPanel.classList.add('flex', 'is-entering');
+    requestAnimationFrame(() => {
+      showPanel.classList.remove('is-entering');
+    });
+  }, 120);
 }
 
 function escapeHtml(value) {
@@ -172,11 +205,13 @@ function renderMessages(messages) {
     return;
   }
 
-  messagesEl.innerHTML = messages.map((msg) => {
+  messagesEl.classList.add('is-refreshing');
+  messagesEl.innerHTML = messages.map((msg, index) => {
+    const delay = Math.min(index * 18, 180);
     const avatar = escapeHtml(msg.avatar || defaultAvatar);
     if (msg.is_self) {
       return `
-        <div class="chat-item flex gap-3 items-end justify-end opacity-0 translate-y-2 transition-all duration-200 ease-out">
+        <div class="chat-item flex gap-3 items-end justify-end opacity-0 translate-y-2" style="transition-delay:${delay}ms">
           <div class="flex flex-col items-end gap-1 max-w-sm">
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400">${escapeHtml(msg.time)}</span>
@@ -194,7 +229,7 @@ function renderMessages(messages) {
     }
 
     return `
-      <div class="chat-item flex gap-3 items-end opacity-0 translate-y-2 transition-all duration-200 ease-out">
+      <div class="chat-item flex gap-3 items-end opacity-0 translate-y-2" style="transition-delay:${delay}ms">
         <div class="w-8 h-8 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm">
           <img src="${avatar}" alt="avatar" class="w-full h-full object-cover" />
         </div>
@@ -218,6 +253,7 @@ function renderMessages(messages) {
     messagesEl.querySelectorAll('.chat-item').forEach((item) => {
       item.classList.remove('opacity-0', 'translate-y-2');
     });
+    messagesEl.classList.remove('is-refreshing');
   });
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -247,10 +283,12 @@ function renderAnnouncements(orgAnnouncements, globalAnnouncements) {
     return;
   }
 
-  announcementsEl.innerHTML = items.map((item) => {
+  announcementsEl.classList.add('is-refreshing');
+  announcementsEl.innerHTML = items.map((item, index) => {
+    const delay = Math.min(index * 22, 220);
     if (item.scope === 'global') {
       return `
-        <div class="chat-item flex gap-3 items-start opacity-0 translate-y-2 transition-all duration-200 ease-out">
+        <div class="chat-item flex gap-3 items-start opacity-0 translate-y-2" style="transition-delay:${delay}ms">
           <div class="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center shrink-0 shadow-sm">
             <i data-lucide="megaphone" class="w-5 h-5"></i>
           </div>
@@ -271,7 +309,7 @@ function renderAnnouncements(orgAnnouncements, globalAnnouncements) {
 
     const logo = escapeHtml(item.logo || defaultAvatar);
     return `
-      <div class="chat-item flex gap-3 items-start opacity-0 translate-y-2 transition-all duration-200 ease-out">
+      <div class="chat-item flex gap-3 items-start opacity-0 translate-y-2" style="transition-delay:${delay}ms">
         <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-blue-100 shrink-0 shadow-sm">
           <img src="${logo}" alt="org logo" class="w-full h-full object-cover" />
         </div>
@@ -294,6 +332,7 @@ function renderAnnouncements(orgAnnouncements, globalAnnouncements) {
     announcementsEl.querySelectorAll('.chat-item').forEach((item) => {
       item.classList.remove('opacity-0', 'translate-y-2');
     });
+    announcementsEl.classList.remove('is-refreshing');
   });
 }
 

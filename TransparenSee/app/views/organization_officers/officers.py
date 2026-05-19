@@ -302,6 +302,8 @@ class ChatView(RoleRequireMixin, TemplateView):
             organization_name = msg.user.officer.organization.name
         elif msg.user.role in ['adviser', 'co_adviser'] and hasattr(msg.user, 'adviser'):
             organization_name = msg.user.adviser.organization.name
+        elif msg.user.role == 'student' and hasattr(msg.user, 'student') and msg.user.student.organization:
+            organization_name = msg.user.student.organization.name
 
         return {
             "id": msg.id,
@@ -346,28 +348,6 @@ class ChatView(RoleRequireMixin, TemplateView):
 
     def get_feed_payload(self, user):
         org = self.get_organization(user)
-        student = self.is_student(user)
-
-        # Students only see their org's announcements — no global chat, no global announcements
-        if student:
-            if org:
-                announcements = OrganizationAnnouncement.objects.filter(
-                    organization=org
-                ).select_related("author", "organization").order_by("-createdAt")[:20]
-            else:
-                announcements = OrganizationAnnouncement.objects.none()
-
-            return {
-                "global_messages": [],
-                "organization_announcements": [self.serialize_org_announcement(item) for item in announcements],
-                "global_announcements": [],
-                "permissions": {
-                    "can_post_global_announcement": False,
-                    "can_post_org_announcement": False,  # students read-only
-                }
-            }
-
-        # Officers / advisers / heads / campus_admin — full feed
         global_messages = GlobalChat.objects.select_related("user").order_by("createdAt")[:50]
         global_announcements = GlobalAnnouncement.objects.select_related("author").order_by("-createdAt")[:20]
 
@@ -399,30 +379,18 @@ class ChatView(RoleRequireMixin, TemplateView):
         context["can_post_global_announcement"] = self.can_post_global_announcement(user)
         context["can_post_org_announcement"] = bool(org and self.can_post_org_announcement(user))
 
-        if student:
-            # Students only see their own org's announcements
-            context["global_messages"] = GlobalChat.objects.none()
-            context["global_announcements"] = GlobalAnnouncement.objects.none()
-            if org:
-                context["announcements"] = OrganizationAnnouncement.objects.filter(
-                    organization=org
-                ).select_related("author").order_by("createdAt")
-            else:
-                context["announcements"] = OrganizationAnnouncement.objects.none()
+        context["global_messages"] = GlobalChat.objects.select_related(
+            "user"
+        ).order_by("createdAt")[:50]
+        context["global_announcements"] = GlobalAnnouncement.objects.select_related(
+            "author"
+        ).order_by("-createdAt")[:20]
+        if org:
+            context["announcements"] = OrganizationAnnouncement.objects.filter(
+                organization=org
+            ).select_related("author").order_by("createdAt")
         else:
-            # Officers and above see everything
-            context["global_messages"] = GlobalChat.objects.select_related(
-                "user"
-            ).order_by("createdAt")[:50]
-            context["global_announcements"] = GlobalAnnouncement.objects.select_related(
-                "author"
-            ).order_by("-createdAt")[:20]
-            if org:
-                context["announcements"] = OrganizationAnnouncement.objects.filter(
-                    organization=org
-                ).select_related("author").order_by("createdAt")
-            else:
-                context["announcements"] = OrganizationAnnouncement.objects.none()
+            context["announcements"] = OrganizationAnnouncement.objects.none()
 
         role_templates = {
             "treasurer":    "app/officer/treasurer/sidebar.html",
@@ -660,7 +628,7 @@ class ProductListView(RoleRequireMixin, ListView):
 class BlockchainRecordsView(RoleRequireMixin, TemplateView):
     template_name = 'app/blockchain_records.html'
     role_required = ["treasurer", "auditor", "president", "vice_president",
-                     "adviser", "co_adviser", "head", "campus_admin", "admin", "secretary"]
+                      "adviser", "co_adviser", "head", "campus_admin", "admin", "secretary"]
 
     def get_organization(self, user):
         if hasattr(user, 'officer'):
@@ -690,7 +658,6 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
         context["base_template"] = self.role_templates.get(user.role, 'app/base.html')
         return context
 
-    # ── DELETE the old compute_report_hash method entirely ──
 
     def get(self, request):
         context = self.get_context_data()
@@ -1310,10 +1277,6 @@ class AccomplishmentReportView(RoleRequireMixin, ListView):
             return user.adviser.organization
         return None
 
-
-   
-        
-    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
