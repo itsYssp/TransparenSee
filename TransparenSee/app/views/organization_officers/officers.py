@@ -879,13 +879,14 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
 
             try:
                 first_name     = str(row[0]).strip() if row[0] is not None else ""
-                last_name      = str(row[1]).strip() if row[1] is not None else ""
-                email          = str(row[2]).strip() if row[2] is not None else ""
-                student_id_raw = row[3]
-                program        = str(row[4]).strip() if row[4] is not None else ""
-                year_raw       = row[5]
-                section        = str(row[6]).strip() if row[6] is not None else ""
-                status         = str(row[7]).strip() if row[7] is not None else ""
+                middle_name     = str(row[1]).strip() if row[0] is not None else ""
+                last_name      = str(row[2]).strip() if row[1] is not None else ""
+                email          = str(row[3]).strip() if row[2] is not None else ""
+                student_id_raw = row[4]
+                program        = str(row[5]).strip() if row[4] is not None else ""
+                year_raw       = row[6]
+                section        = str(row[7]).strip() if row[6] is not None else ""
+                status         = str(row[8]).strip() if row[7] is not None else ""
                 
             except IndexError:
                 error_rows.append(f"Row {idx}: Not enough columns.")
@@ -893,6 +894,7 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
 
             missing = []
             if not first_name:     missing.append("first_name")
+            if not middle_name:     missing.append("middle_name")
             if not last_name:      missing.append("last_name")
             if not email:          missing.append("email")
             if not student_id_raw: missing.append("student_id")
@@ -948,6 +950,7 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
 
             preview_data.append({
                 "first_name": first_name,
+                "middle_name": middle_name,
                 "last_name":  last_name,
                 "email":      email,
                 "student_id": student_id,
@@ -996,6 +999,7 @@ class ConfirmImportStudentsView(LoginRequiredMixin, View):
                         username=row["email"],
                         email=row["email"],
                         first_name=row["first_name"],
+                        middle_name=row["middle_name"],
                         last_name=row["last_name"],
                         password=temp_password,
                         role="student",
@@ -1059,14 +1063,15 @@ class DownloadStudentTemplateView(LoginRequiredMixin, TemplateView):
         ws.title = "Students"
 
         headers = [
-            "first_name",
-            "last_name",
-            "email",
-            "student_id",
-            "program",
-            "year (1-4)",
-            "section",
-            "status",
+            "First Name",
+            "Middle Name",
+            "Last Name",
+            "Email",
+            "Student id",
+            "Program",
+            "Year (1-4)",
+            "Section",
+            "Status",
         ]
 
         header_font  = Font(bold=True, color="FFFFFF")
@@ -1079,11 +1084,11 @@ class DownloadStudentTemplateView(LoginRequiredMixin, TemplateView):
             cell.fill      = header_fill
             cell.alignment = center_align
 
-        sample = ["Juan", "Dela Cruz", "juan.delacruz@school.edu", 20240001, "BSIT", 2, "A", "active"]
+        sample = ["Juan", "Pagar" ,"Dela Cruz", "juan.delacruz@school.edu", 20240001, "BSIT", 2, "3-1", "active"]
         for col_idx, val in enumerate(sample, start=1):
             ws.cell(row=2, column=col_idx, value=val)
 
-        col_widths = [14, 14, 30, 14, 10, 12, 10, 12]
+        col_widths = [20, 20, 20, 30, 14, 10, 15, 15, 15]
         for col_idx, width in enumerate(col_widths, start=1):
             ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = width
 
@@ -1260,6 +1265,7 @@ class OfficerProfileView(RoleRequireMixin, TemplateView):
             user = request.user
             user.profile_image = request.POST.get('profile_image', user.profile_image)
             user.first_name = request.POST.get('first_name', user.first_name)
+            user.middle_name = request.POST.get('middle_name', user.middle_name)
             user.last_name = request.POST.get('last_name', user.last_name)
             user.username = request.POST.get('username', user.username)
             user.email = request.POST.get('email', user.email)

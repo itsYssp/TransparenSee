@@ -29,6 +29,7 @@ class UserRolesView(RoleRequireMixin,ListView ):
     template_name = 'app/superadmin/user_role.html'
     context_object_name = 'users'
     paginate_by = 8
+    role_required = 'admin'
 
     def get_queryset(self):
         user_type = self.request.GET.get("type")

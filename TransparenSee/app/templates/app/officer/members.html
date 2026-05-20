@@ -40,6 +40,7 @@
                     <tr>
                         <th class="px-5 py-3 text-left font-bold uppercase tracking-widest text-xs text-gray-400">Last name</th>
                         <th class="px-5 py-3 text-left font-bold uppercase tracking-widest text-xs text-gray-400">First name</th>
+                        <th class="px-5 py-3 text-left font-bold uppercase tracking-widest text-xs text-gray-400">Middle name</th>
                         <th class="px-5 py-3 text-left font-bold uppercase tracking-widest text-xs text-gray-400">Student ID</th>
                         <th class="px-5 py-3 text-left font-bold uppercase tracking-widest text-xs text-gray-400">Email</th>
                         <th class="px-5 py-3 text-left font-bold uppercase tracking-widest text-xs text-gray-400">Program</th>
@@ -52,6 +53,7 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-5 py-3 text-gray-800 font-medium">{{ student.last_name }}</td>
                         <td class="px-5 py-3 text-gray-800 font-medium">{{ student.first_name }}</td>
+                        <td class="px-5 py-3 text-gray-800 font-medium">{{ student.middle_name }}</td>
                         <td class="px-5 py-3 text-gray-600 font-mono text-xs">{{ student.student.student_id }}</td>
                         <td class="px-5 py-3 text-gray-600 text-xs">{{ student.student.user.email }}</td>
                         <td class="px-5 py-3 text-gray-600">{{ student.student.program }}</td>
@@ -171,6 +173,7 @@
             </tr>
             {% empty %}
             <tr><td class="px-3 py-2 font-mono font-bold text-blue-700">A</td><td class="px-3 py-2 text-gray-700 font-semibold">Firstname</td><td class="px-3 py-2 text-gray-400">Required</td></tr>
+            <tr><td class="px-3 py-2 font-mono font-bold text-blue-700">A</td><td class="px-3 py-2 text-gray-700 font-semibold">Middlename</td><td class="px-3 py-2 text-gray-400">Required</td></tr>
             <tr><td class="px-3 py-2 font-mono font-bold text-blue-700">B</td><td class="px-3 py-2 text-gray-700 font-semibold">Lastname</td><td class="px-3 py-2 text-gray-400">Required</td></tr>
             <tr><td class="px-3 py-2 font-mono font-bold text-blue-700">C</td><td class="px-3 py-2 text-gray-700 font-semibold">Email</td><td class="px-3 py-2 text-gray-400">Required · used as username</td></tr>
             <tr><td class="px-3 py-2 font-mono font-bold text-blue-700">D</td><td class="px-3 py-2 text-gray-700 font-semibold">Student ID</td><td class="px-3 py-2 text-gray-400">Required · whole number</td></tr>
