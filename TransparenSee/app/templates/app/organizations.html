@@ -95,10 +95,12 @@
       </div>
       <p class="text-sm font-semibold text-gray-400">No organizations yet</p>
       <p class="text-xs text-gray-300 mt-1">Create the first one</p>
+      {% if user.role == 'head' %}
       <a href="{% url 'head_create_organization' %}"
          class="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors">
         <i data-lucide="plus" class="w-4 h-4"></i> New Organization
       </a>
+      {% endif %}
     </div>
     {% endfor %}
   </div>

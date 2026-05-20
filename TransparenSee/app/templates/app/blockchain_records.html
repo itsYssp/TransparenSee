@@ -147,10 +147,11 @@
             {% if user.role == 'head' or user.role == 'campus_admin' %}
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Organization</th>
             {% endif %}
-            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Blockchain Hash</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">TX Hash</th>
+            <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Report Hash</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
             <th class="px-4 py-3 text-right text-xs font-bold tracking-widest text-green-500 uppercase">Income (₱)</th>
-            <th class="px-4 py-3 text-right text-xs font-bold tracking-widest text-red-400 uppercase">Expense (₱)</th>
+            <th class="px-4 py-3 text-right text-xs font-bold tracking-widests text-red-400 uppercase">Expense (₱)</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Recorded</th>
             <th class="px-4 py-3 w-10"></th>
           </tr>
@@ -200,6 +201,22 @@
             {% endif %}
 
             <td class="px-4 py-3">
+              {% if report.tx_hash %}
+                <div class="flex items-center gap-2">
+                  <span class="font-mono text-xs text-blue-600">
+                  {{ report.tx_hash|slice:":8" }}...{{ report.tx_hash|slice:"-6:" }}
+                </span>
+                <button onclick="event.stopPropagation();copyHash('{{ report.tx_hash }}', this)"
+                  class="text-xs px-1.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                  copy
+                </button>
+                </div>
+              {% else %}
+                <span class="text-xs text-gray-300">—</span>
+              {% endif %}
+            </td>
+
+            <td class="px-4 py-3">
               {% if report.blockchain_hash %}
               <div class="flex items-center gap-2">
                 <span class="font-mono text-xs text-gray-500">
@@ -215,7 +232,6 @@
               {% endif %}
             </td>
 
-            <!-- Integrity Status Cell -->
             <td class="px-4 py-3">
               {% if report.is_verified %}
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">
@@ -298,7 +314,7 @@
       {% if report.blockchain_hash %}
       <div class="rounded-xl p-4 border
         {% if not report.is_verified %}bg-red-50 border-red-200{% else %}bg-slate-50 border-slate-100{% endif %}">
-        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">Stored Blockchain Hash</p>
+        <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">Stored Report Hash</p>
         <p class="font-mono text-xs {% if not report.is_verified %}text-red-700{% else %}text-blue-700{% endif %} break-all leading-relaxed">
           {{ report.blockchain_hash }}
         </p>
@@ -332,6 +348,47 @@
         {% endif %}
       </div>
       {% endif %}
+
+       <!-- ══ TX Hash from remarks ════════════════════════════════ -->
+      {% for log in report.blockchain_logs %}
+        {% if log.remarks %}
+        <div class="rounded-xl border border-blue-100 bg-blue-50 p-4"
+             data-remarks="{{ log.remarks }}"
+             data-txhash-container>
+          <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">Transaction Info</p>
+
+          <!-- TX Hash row -->
+          <div class="mb-2">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">TX Hash</p>
+            <div class="flex items-center gap-2 bg-white border border-blue-200 rounded-lg px-3 py-2">
+              <i data-lucide="link-2" class="w-3.5 h-3.5 text-blue-400 shrink-0"></i>
+              <span class="font-mono text-xs text-blue-700 truncate flex-1 tx-hash-text">—</span>
+              <button
+                type="button"
+                onclick="copyTxHash(this)"
+                title="Copy TX Hash"
+                class="shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-blue-500 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 transition-colors copy-tx-btn">
+                <i data-lucide="copy" class="w-3 h-3"></i>
+                <span class="copy-label">Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Block + Report Hash row -->
+          <div class="grid grid-cols-2 gap-2 mt-2 block-reporthash-row ">
+            <div>
+              <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Block</p>
+              <p class="font-mono text-xs text-gray-700 bg-white border border-gray-100 rounded-lg px-3 py-2 tx-block-text">—</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Report Hash</p>
+              <p class="font-mono text-xs text-gray-600 bg-white border border-gray-100 rounded-lg px-3 py-2 truncate tx-reporthash-text" title="">—</p>
+            </div>
+          </div>
+
+        </div>
+        {% endif %}
+      {% endfor %}
 
       <!-- Approval Chain -->
       <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -452,9 +509,91 @@ function applyFilters() {
   });
 }
 
+
+
+    // ── Parse TX hash / Block / Report Hash from remarks ─────────
+    // Pattern: TX Hash: <hex> | Block: <num> | Report Hash: <hex>
+    document.querySelectorAll('[data-txhash-container]').forEach(function (el) {
+      const remarks = el.dataset.remarks || '';
+
+      const txMatch      = remarks.match(/TX Hash:\s*([a-f0-9]+)/i);
+      const blockMatch   = remarks.match(/Block:\s*(\d+)/i);
+      const rHashMatch   = remarks.match(/Report Hash:\s*([a-f0-9]+)/i);
+
+      const txHash    = txMatch    ? txMatch[1]    : null;
+      const block     = blockMatch ? blockMatch[1] : null;
+      const rHash     = rHashMatch ? rHashMatch[1] : null;
+
+      const txSpan    = el.querySelector('.tx-hash-text');
+      const blockSpan = el.querySelector('.tx-block-text');
+      const rHashSpan = el.querySelector('.tx-reporthash-text');
+      const blockRow  = el.querySelector('.block-reporthash-row');
+      const copyBtn   = el.querySelector('.copy-tx-btn');
+
+      if (txHash) {
+        // Show truncated in the pill: first8…last6
+        txSpan.textContent  = txHash.slice(0, 8) + '…' + txHash.slice(-6);
+        txSpan.title        = txHash;
+        el.dataset.txhash   = txHash;
+      } else {
+        txSpan.textContent = 'No TX hash found';
+        if (copyBtn) copyBtn.disabled = true;
+      }
+
+      if (block && blockSpan) {
+        blockSpan.textContent = '#' + block;
+        if (blockRow) blockRow.classList.remove('hidden');
+      }
+
+      if (rHash && rHashSpan) {
+        rHashSpan.textContent = rHash.slice(0, 8) + '…' + rHash.slice(-6);
+        rHashSpan.title       = rHash;
+        if (blockRow) blockRow.classList.remove('hidden');
+      }
+    });
+
+  // ── Copy TX hash ────────────────────────────────────────────────
+  function copyTxHash(btn) {
+    const container = btn.closest('[data-txhash-container]');
+    const txHash    = container?.dataset?.txhash;
+    if (!txHash) return;
+
+    navigator.clipboard.writeText(txHash).then(function () {
+      const icon  = btn.querySelector('[data-lucide]');
+      const label = btn.querySelector('.copy-label');
+
+      icon.setAttribute('data-lucide', 'check');
+      lucide.createIcons({ nodes: [icon] });
+      if (label) label.textContent = 'Copied!';
+      btn.classList.add('text-green-600', 'border-green-300', 'bg-green-50');
+      btn.classList.remove('text-blue-500', 'border-blue-200', 'bg-blue-50');
+
+      setTimeout(function () {
+        icon.setAttribute('data-lucide', 'copy');
+        lucide.createIcons({ nodes: [icon] });
+        if (label) label.textContent = 'Copy';
+        btn.classList.remove('text-green-600', 'border-green-300', 'bg-green-50');
+        btn.classList.add('text-blue-500', 'border-blue-200', 'bg-blue-50');
+      }, 1500);
+    });
+  }
+
+  // ── Blockchain hash inline copy (table) ─────────────────────────
+  function copyHash(hash, btn) {
+    navigator.clipboard.writeText(hash).catch(function () {});
+    btn.textContent = 'copied!';
+    btn.classList.add('text-green-600');
+    setTimeout(function () {
+      btn.textContent = 'copy';
+      btn.classList.remove('text-green-600');
+    }, 1500);
+  }
+
 document.getElementById('search-input').addEventListener('input',  applyFilters);
 document.getElementById('ay-filter').addEventListener('change',    applyFilters);
 document.getElementById('status-filter').addEventListener('change', applyFilters);
+
+
 </script>
 
 {% endblock con %}

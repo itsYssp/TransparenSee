@@ -1,3 +1,5 @@
+import re
+
 from django.utils import timezone
 from django.shortcuts import render
 from django.contrib import messages
@@ -6,7 +8,7 @@ from django.http import JsonResponse
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from ...forms import *
 from ..mixins import *
-from django.db.models import Sum, Q, Count, ExpressionWrapper, DecimalField
+from django.db.models import Prefetch, Sum, Q, Count, ExpressionWrapper, DecimalField
 from ...blockchain import verify_report_hash
 from itertools import groupby  
 import openpyxl
@@ -666,7 +668,16 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
 
         base_qs = FinancialReport.objects.filter(
             status='on_blockchain'
-        ).prefetch_related('entries').order_by('-blockchain_recorded_at')
+        ).prefetch_related(
+            'entries',
+            Prefetch(
+                'approval_logs',
+                queryset=ReportApprovalLog.objects.filter(
+                    action='blockchain'
+                ).select_related('action_by').order_by('-created_at'),
+                to_attr='blockchain_logs'
+            )
+        ).order_by('-blockchain_recorded_at')
 
         if org:
             base_qs = base_qs.filter(organization=org)
@@ -693,6 +704,18 @@ class BlockchainRecordsView(RoleRequireMixin, TemplateView):
                 trusted_count += 1
             else:
                 tampered_count += 1
+
+            blockchain_log = report.blockchain_logs[0] if report.blockchain_logs else None
+            report.blockchain_remarks = blockchain_log.remarks if blockchain_log else None
+            report.blockchain_recorded_by = blockchain_log.action_by if blockchain_log else None
+
+            tx_hash = None
+            if blockchain_log and blockchain_log.remarks:
+                match = re.search(r"TX Hash:\s*([a-f0-9]+)", blockchain_log.remarks, re.IGNORECASE)
+                if match:
+                    tx_hash = match.group(1)
+
+            report.tx_hash = tx_hash
 
         context.update({
             'reports':        reports,

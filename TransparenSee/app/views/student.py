@@ -12,10 +12,11 @@ import os
 from dotenv import load_dotenv
 from ..models import *
 from .mixins import *
-from django.db.models import Sum, Q
+from django.db.models import Prefetch, Sum, Q
 from ..blockchain import verify_report_hash
 from ..blockchain_utils import build_report_snapshot, generate_report_hash
 from decimal import Decimal
+import re
 
 class StudentDashboardView(RoleRequireMixin, TemplateView):
     template_name = "app/student/dashboard.html"
@@ -39,7 +40,16 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
         # ── Blockchain / Financial records ─────────────────────────
         base_qs = FinancialReport.objects.filter(
             status='on_blockchain'
-        ).prefetch_related('entries').order_by('-blockchain_recorded_at')
+        ).prefetch_related(
+            'entries',
+            Prefetch(
+                'approval_logs',
+                queryset=ReportApprovalLog.objects.filter(
+                    action='blockchain'
+                ).select_related('action_by').order_by('-created_at'),
+                to_attr='blockchain_logs'
+            )
+        ).order_by('-blockchain_recorded_at')
 
         if org:
             base_qs = base_qs.filter(organization=org)
@@ -66,6 +76,17 @@ class StudentDashboardView(RoleRequireMixin, TemplateView):
                 trusted_count += 1
             else:
                 tampered_count += 1
+            blockchain_log = report.blockchain_logs[0] if report.blockchain_logs else None
+            report.blockchain_remarks = blockchain_log.remarks if blockchain_log else None
+            report.blockchain_recorded_by = blockchain_log.action_by if blockchain_log else None
+
+            tx_hash = None
+            if blockchain_log and blockchain_log.remarks:
+                match = re.search(r"TX Hash:\s*([a-f0-9]+)", blockchain_log.remarks, re.IGNORECASE)
+                if match:
+                    tx_hash = match.group(1)
+
+            report.tx_hash = tx_hash
 
         # ── All financial reports (for the financial tab table) ────
         financial_reports = FinancialReport.objects.filter(
@@ -164,25 +185,41 @@ class OtherOrganizationDashboardView(RoleRequireMixin, DetailView):
         context = super().get_context_data(**kwargs)
         org = self.object
 
-        # ── Active tab ─────────────────────────────────────────────
         active_tab = self.request.GET.get('type', 'financial')
 
-        # ── Blockchain records ─────────────────────────────────────
+        # ── Blockchain records ───────────────────────────────
         base_qs = FinancialReport.objects.filter(
-            organization=org,
             status='on_blockchain',
-        ).prefetch_related('entries').order_by('-blockchain_recorded_at')
+            organization=org
+        ).prefetch_related(
+            'entries',
+            Prefetch(
+                'approval_logs',
+                queryset=ReportApprovalLog.objects.filter(
+                    action='blockchain'
+                ).select_related('action_by').order_by('-created_at'),
+                to_attr='blockchain_logs'
+            )
+        ).order_by('-blockchain_recorded_at')
 
-        reports = list(base_qs)
-
-        trusted_count  = 0
+        trusted_count = 0
         tampered_count = 0
 
-        for report in reports:
-            report.total_income  = report.entries.filter(entry_type='income').aggregate(t=Sum('amount'))['t'] or 0
-            report.total_expense = report.entries.filter(entry_type='expense').aggregate(t=Sum('amount'))['t'] or 0
-            report.net           = report.total_income - report.total_expense
+        reports = base_qs  # keep queryset (no need for list)
 
+        for report in reports:
+            # ── financial computation ──
+            report.total_income = report.entries.filter(
+                entry_type='income'
+            ).aggregate(t=Sum('amount'))['t'] or 0
+
+            report.total_expense = report.entries.filter(
+                entry_type='expense'
+            ).aggregate(t=Sum('amount'))['t'] or 0
+
+            report.net = report.total_income - report.total_expense
+
+            # ── verification ──
             report.is_verified = verify_report_hash(report)
 
             if not report.is_verified and report.blockchain_hash:
@@ -191,32 +228,53 @@ class OtherOrganizationDashboardView(RoleRequireMixin, DetailView):
             else:
                 report.recomputed_hash = None
 
+            # ── counters ──
             if report.is_verified:
                 trusted_count += 1
             else:
                 tampered_count += 1
 
-        # ── All financial reports (for tab badge/table) ────────────
+            # ── blockchain log (latest) ──
+            blockchain_log = report.blockchain_logs[0] if report.blockchain_logs else None
+
+            report.blockchain_remarks = blockchain_log.remarks if blockchain_log else None
+            report.blockchain_recorded_by = blockchain_log.action_by if blockchain_log else None
+
+            # ── TX HASH extraction from remarks ──
+            tx_hash = None
+            if blockchain_log and blockchain_log.remarks:
+                match = re.search(
+                    r"TX Hash:\s*([a-f0-9]+)",
+                    blockchain_log.remarks,
+                    re.IGNORECASE
+                )
+                if match:
+                    tx_hash = match.group(1)
+
+            report.tx_hash = tx_hash
+
+        # ── Financial reports (tab table) ──
         financial_reports = FinancialReport.objects.filter(
             organization=org
         ).prefetch_related('entries').order_by('-created_at')
 
-        # ── Accomplishment reports ─────────────────────────────────
+        # ── Accomplishment reports ──
         accomplishment_report = AccomplishmentReport.objects.filter(
             organization=org
         ).order_by('-created_at')
 
         context.update({
-            'active_tab':            active_tab,
-            'reports':               reports,
-            'financial_reports':     financial_reports,
+            'active_tab': active_tab,
+            'reports': reports,
+            'financial_reports': financial_reports,
             'accomplishment_report': accomplishment_report,
-            'total_income':          sum(r.total_income  for r in reports),
-            'total_expense':         sum(r.total_expense for r in reports),
-            'academic_years':        AcademicYear.objects.order_by('-academic_year'),
-            'trusted_count':         trusted_count,
-            'tampered_count':        tampered_count,
-            'tx_count':              len(reports),
+            'total_income': sum(r.total_income for r in reports),
+            'total_expense': sum(r.total_expense for r in reports),
+            'academic_years': AcademicYear.objects.order_by('-academic_year'),
+            'trusted_count': trusted_count,
+            'tampered_count': tampered_count,
+            'tx_count': len(list(reports)),  # safe count
+            'current_org_pk': self.object.pk,
         })
 
         return context
