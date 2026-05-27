@@ -39,7 +39,7 @@ class UserRolesView(RoleRequireMixin,ListView ):
         elif user_type == "adviser":
             roles = ["adviser"]
         else:
-            roles = ["campus_admin", "super_admin"]
+            roles = ["campus_admin", "super_admin", "head"]
         return CustomUser.objects.filter(role__in=roles).order_by('date_joined')
 
 class CreateCampusAdminView(RoleRequireMixin,CreateView):

@@ -22,7 +22,7 @@
         {% else %}
           text-gray-500 hover:bg-blue-50 hover:text-blue-700
         {% endif %}">
-      System Users
+      Organzation Heads
     </a>
     <a href="?type=adviser"
       class="text-sm font-semibold py-2 px-5 rounded-lg transition-all duration-200
@@ -209,14 +209,17 @@
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Department</th>
-            <th class="px-5 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase ">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
           {% for user in users %}
           <tr class="hover:bg-blue-50/40 transition-colors duration-150">
             <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-            <td class="px-5 py-3.5 text-gray-500 font-semibold text-xs">{{ user.campus_admin.employee_id }}</td>
+            <td class="px-5 py-3.5 text-gray-500 font-semibold text-xs">{% if user.role == 'campus_admin' %}
+            {{ user.campus_admin.employee_id }}
+            {% else %}
+            {{ user.heads.employee_id }}
+            {% endif %}</td>
             <td class="px-5 py-3.5">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-gray-100 shrink-0">
@@ -236,15 +239,12 @@
             <td class="px-5 py-3.5">
               <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg">{{ user.get_role_display }}</span>
             </td>
-            <td class="px-5 py-3.5 text-xs text-gray-600 font-medium">{{ user.campus_admin.department }}</td>
-            <td class="px-5 py-3.5">
-              <div class="flex justify-center items-center">
-                <a class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
-                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                </a>
-                
-              </div>
-            </td>
+            <td class="px-5 py-3.5 text-xs text-gray-600 font-medium">{% if user.role == 'campus_admin' %}
+            {{ user.campus_admin.department }}
+            {% else %}
+            {{ user.heads.get_department_display }}
+            {% endif %}</td>
+            
           </tr>
           {% empty %}
           <tr>

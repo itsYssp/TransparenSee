@@ -1,21 +1,12 @@
 {% extends "app/base.html" %} {% load static %} {% block content %}
 
 <style>
-  @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(3deg); }
-  }
-  @keyframes float2 {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-14px) rotate(-2deg); }
-  }
+  
   @keyframes fadein {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .float-1 { animation: float 7s ease-in-out infinite; }
-  .float-2 { animation: float2 9s ease-in-out infinite; animation-delay: 1s; }
-  .float-3 { animation: float 11s ease-in-out infinite; animation-delay: 2.5s; }
+
   .fadein { animation: fadein 0.6s ease both; }
   .fadein-1 { animation: fadein 0.6s ease 0.1s both; }
   .fadein-2 { animation: fadein 0.6s ease 0.2s both; }
@@ -33,44 +24,7 @@
    <div class="hidden lg:flex flex-col justify-center flex-1 px-16 relative z-10">
  
 
-    <div class="absolute top-[12%] left-[60%] -translate-x-[60%] float-1">
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-md px-5 py-4 w-52">
-        <div class="flex items-center gap-2 mb-2">
-          <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i>
-          </div>
-          <span class="text-xs font-semibold text-gray-400">Blockchain Verified</span>
-        </div>
-        <p class="text-gray-900 font-extrabold text-xl tracking-tight">₱ 2.4M</p>
-        <p class="text-gray-400 text-xs mt-0.5">Total funds tracked</p>
-      </div>
-    </div>
-
-    <div class="absolute bottom-[18%] left-[60%] -translate-x-[25%] float-2">
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-md px-5 py-4 w-48">
-        <div class="flex items-center gap-2 mb-2">
-          <div class="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center">
-            <i data-lucide="building-2" class="w-3.5 h-3.5 text-green-600"></i>
-          </div>
-          <span class="text-xs font-semibold text-gray-400">Organizations</span>
-        </div>
-        <p class="text-gray-900 font-extrabold text-xl tracking-tight">{{ organization_count }}</p>
-        <p class="text-gray-400 text-xs mt-0.5">Registered orgs</p>
-      </div>
-    </div>
-
-    <div class="absolute top-[40%] left-[60%] -translate-x-[75%] float-3">
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-md px-5 py-4 w-44">
-        <div class="flex items-center gap-2 mb-2">
-          <div class="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
-            <i data-lucide="link" class="w-3.5 h-3.5 text-amber-500"></i>
-          </div>
-          <span class="text-xs font-semibold text-gray-400">On-chain</span>
-        </div>
-        <p class="text-gray-900 font-extrabold text-xl tracking-tight">100%</p>
-        <p class="text-gray-400 text-xs mt-0.5">Transparent</p>
-      </div>
-    </div>
+    
 
   
     <div class="fadein mb-10">
@@ -80,7 +34,7 @@
         </div>
         <div class="max-w-30 ">
           <p class="text-gray-900 font-extrabold text-base tracking-tight">TransparenSee</p>
-          <p class="text-gray-400 text-[6px] text-justify leading-tight">A Blockchain Solution for Academic and Non-Academic School Organization Funds</p>
+          <p class="text-gray-400 text-[6px] text-justify leading-tight">A Blockchain Solution for Recognized Student Organizations at Cavite State University - Bacoor City Campus</p>
         </div>
       </div>
     </div>
@@ -129,7 +83,7 @@
       </div>
       <div class="max-w-30 ">
           <p class="text-gray-900 font-extrabold text-base tracking-tight">TransparenSee</p>
-          <p class="text-gray-400 text-[6px] text-justify leading-tight">A Blockchain Solution for Academic and Non-Academic School Organization Funds</p>
+          <p class="text-gray-400 text-[6px] text-justify leading-tight">A Blockchain Solution for Recognized Student Organizations at Cavite State University - Bacoor City Campus</p>
         </div>
     </div>
 

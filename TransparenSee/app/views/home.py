@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 from ..models import *
 from accounts.models import *
-
+from django.db.models import Sum
 class HomeTemplateView(TemplateView):
     template_name = 'app/home.html'
     def dispatch(self, request, *args, **kwargs):
@@ -43,5 +43,8 @@ class LandingPage(TemplateView):
         context = super().get_context_data(**kwargs)
         context["orgs"] = Organization.objects.all()
         context["total_user"] = CustomUser.objects.count()
+        context['org_balance'] = Organization.objects.aggregate(
+            total_balance=Sum('balance')
+        )
         return context
     

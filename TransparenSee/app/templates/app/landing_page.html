@@ -1,4 +1,4 @@
-{% extends "app/base.html" %} {% load static %} {% block content %}
+{% extends "app/base.html" %} {% load static %} {% load humanize %} {% block content %}
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap');
@@ -85,7 +85,7 @@
          
           <div class="max-w-30 ">
           <p class="text-sm text-gray-900 font-extrabold  tracking-tight">TransparenSee</p>
-          <p class="text-gray-400 text-[5px] leading-tight">A Blockchain Solution for Academic and Non-Academic School Organization Funds</p>
+          <p class="text-gray-400 text-[5px] leading-tight text-justify">A Blockchain Solution for Recognized Student Organizations at Cavite State University - Bacoor City Campus</p>
         </div>
         </div>
       </div>
@@ -278,7 +278,7 @@
           <p class="text-sm text-gray-400 font-medium mt-1">Transparent</p>
         </div>
         <div class="text-center">
-          <p class="text-4xl font-extrabold text-blue-700 tracking-tight">₱2.4M</p>
+          <p class="text-4xl font-extrabold text-blue-700 tracking-tight">₱ {{ org_balance.total_balance|intcomma|default:0.0 }}</p>
           <p class="text-sm text-gray-400 font-medium mt-1">Funds Tracked</p>
         </div>
       </div>

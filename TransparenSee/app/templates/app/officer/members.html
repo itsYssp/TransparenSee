@@ -14,7 +14,7 @@
             <i data-lucide="upload" class="w-4 h-4"></i>
             Import Students
             </button>
-        {% elif user.officer.organization.category != 'student_council' %}
+        {% elif user.officer.organization.category != 'student_council' and user.officer.organization.category != 'academic'  %}
           <button onclick="document.getElementById('add_member_modal').showModal()"
             class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
             <i data-lucide="user-plus" class="w-4 h-4"></i>

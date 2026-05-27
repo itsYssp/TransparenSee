@@ -880,7 +880,7 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
             try:
                 first_name     = str(row[0]).strip() if row[0] is not None else ""
                 middle_name     = str(row[1]).strip() if row[0] is not None else ""
-                last_name      = str(row[2]).strip() if row[1] is not None else ""
+                last_name      = str(row[2]).strip() if row[0] is not None else ""
                 email          = str(row[3]).strip() if row[2] is not None else ""
                 student_id_raw = row[4]
                 program        = str(row[5]).strip() if row[4] is not None else ""
