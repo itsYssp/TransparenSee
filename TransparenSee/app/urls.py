@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from app import views
 
+
 urlpatterns = [
     path('home', HomeTemplateView.as_view(), name='home'),
     path('student/', StudentDashboardView.as_view(), name='student_dashboard'),
@@ -79,7 +80,9 @@ urlpatterns = [
     path("confirm-import/", ConfirmImportStudentsView.as_view(), name="confirm_import_students"),
     path("logs/", LogsView.as_view(), name='logs'),
     path('', LandingPage.as_view(), name='landing_page'),
-
+    path("notifications/", views.notification_list, name="notification_list"),
+    path("notifications/<int:pk>/redirect/", views.notification_redirect, name="notification_redirect"),
+    path("notifications/mark-all-read/", views.mark_all_read, name="mark_all_read"),
 ]
 
 if settings.DEBUG:

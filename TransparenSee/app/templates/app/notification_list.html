@@ -1,0 +1,67 @@
+{% extends base_template %}
+{% load static %}
+
+{% block con %}
+<div class="py-6 px-6 flex flex-col gap-6 bg-gray-50">
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-xl font-extrabold text-gray-900">Notifications</h1>
+      <p class="text-sm text-gray-500 mt-0.5">
+        {{ unread_count }} unread of {{ notifications|length }} total
+      </p>
+    </div>
+
+    {% if unread_count %}
+    <form action="{% url 'mark_all_read' %}" method="post">
+      {% csrf_token %}
+      <button type="submit"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-blue-600 border border-blue-100 hover:bg-blue-50 transition-colors">
+        <i data-lucide="check-check" class="w-4 h-4"></i>
+        Mark all as read
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+
+    {% for notification in notifications %}
+    <a href="{% url 'notification_redirect' notification.pk %}"
+      class="flex items-start justify-between gap-3 px-5 py-4 hover:bg-blue-50 transition-colors {% if not forloop.last %}border-b border-gray-50{% endif %}">
+
+      <div class="flex items-start gap-3 min-w-0">
+        <div class="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center
+          {% if not notification.is_read %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-400{% endif %}">
+          <i data-lucide="bell" class="w-4 h-4"></i>
+        </div>
+
+        <div class="min-w-0">
+          <p class="text-sm {% if not notification.is_read %}font-bold text-gray-900{% else %}font-medium text-gray-600{% endif %}">
+            {{ notification.title }}
+          </p>
+          <p class="text-sm text-gray-500 mt-0.5">
+            {{ notification.message }}
+          </p>
+          <small class="text-xs text-gray-400 mt-1 block">
+            {{ notification.created_at|timesince }} ago
+          </small>
+        </div>
+      </div>
+
+      {% if not notification.is_read %}
+      <div class="w-2 h-2 rounded-full bg-blue-600 mt-2 shrink-0"></div>
+      {% endif %}
+
+    </a>
+    {% empty %}
+    <div class="p-10 text-center">
+      <i data-lucide="bell-off" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
+      <p class="text-sm text-gray-400">No notifications yet.</p>
+    </div>
+    {% endfor %}
+
+  </div>
+
+</div>
+{% endblock %}

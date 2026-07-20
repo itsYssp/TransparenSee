@@ -11,3 +11,4 @@ from .campus .campus_head import *
 from .campus .head import *
 from .super_admin import *
 from .student import *
+from .notification.notification import *
