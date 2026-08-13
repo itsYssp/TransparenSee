@@ -11,6 +11,7 @@ from ..mixins import *
 from django.db import transaction
 from django.http import JsonResponse
 from decimal import Decimal
+from ..notification.notification import create_notification, get_officer_by_role, get_adviser_by_role
 
 class TreasurerDashboardView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/dashboard.html'
@@ -533,6 +534,35 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                     action='submitted',
                     remarks='Report submitted for approval.',
                 )
+                
+                organization = getattr(request.user.officer, 'organization', None)
+
+                president = get_officer_by_role(
+                    organization,
+                    'president'
+                )
+            
+                auditor = get_officer_by_role(
+                    organization,
+                    'auditor'
+                    )
+                
+                adviser = get_adviser_by_role(
+                    organization,
+                    'adviser'
+                    )
+                
+                co_adviser = get_adviser_by_role(
+                    organization,
+                    'co_adviser'
+                    )
+
+                create_notification(
+                    [president, auditor, adviser, co_adviser],
+                    report.title,
+                    f"A new Financial report has been submitted for your review and approval",
+                    f"/reports/{report.id}"
+            )
 
         if form_action == 'draft':
             messages.success(request, f'Financial report "{title}" has been saved as draft.')

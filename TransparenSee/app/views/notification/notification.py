@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
-
+from accounts.models import CustomUser
 from app.models import Notification
 
 
@@ -64,3 +64,40 @@ def notification_redirect(request, pk):
 def mark_all_read(request):
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
     return redirect("notification_list")
+
+def create_notification(recipients, title, message, url=""):
+    if recipients is None:
+        return
+
+    if not isinstance(recipients, (list, tuple)):
+        recipients = [recipients]
+
+    notifications = []
+
+    for recipient in recipients:
+        if recipient:
+            notifications.append(
+                Notification(
+                    recipient=recipient,
+                    title=title,
+                    message=message,
+                    url=url
+                )
+            )
+
+    if notifications:
+        Notification.objects.bulk_create(notifications)
+
+def get_officer_by_role(organization, role):
+    return CustomUser.objects.filter(
+        officer__organization=organization,
+        role=role
+    ).first()
+
+def get_adviser_by_role(organization, role):
+    if organization is None:
+        return None
+    return CustomUser.objects.filter(
+        adviser__organization=organization,
+        role=role
+    ).first()

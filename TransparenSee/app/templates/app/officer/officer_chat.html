@@ -177,6 +177,9 @@ function switchTab(tab) {
     showPanel.classList.add('flex', 'is-entering');
     requestAnimationFrame(() => {
       showPanel.classList.remove('is-entering');
+      // NEW: scroll the now-visible feed to the bottom
+      const feed = tab === 'global_chat' ? messagesEl : announcementsEl;
+      feed.scrollTop = feed.scrollHeight;
     });
   }, 120);
 }
@@ -263,9 +266,7 @@ function renderAnnouncements(orgAnnouncements, globalAnnouncements) {
     ...globalAnnouncements.map((item) => ({ ...item, priority: 0 })),
     ...orgAnnouncements.map((item) => ({ ...item, priority: 1 })),
   ].sort((a, b) => {
-  if (a.priority !== b.priority) {
-    return a.priority - b.priority; // global first
-  }
+  
   return new Date(a.time) - new Date(b.time); // newest first
 });
 
@@ -333,6 +334,7 @@ function renderAnnouncements(orgAnnouncements, globalAnnouncements) {
       item.classList.remove('opacity-0', 'translate-y-2');
     });
     announcementsEl.classList.remove('is-refreshing');
+    announcementsEl.scrollTop = announcementsEl.scrollHeight;
   });
 }
 
