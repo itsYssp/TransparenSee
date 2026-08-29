@@ -7,5 +7,6 @@
   "prettier.endOfLine": "lf",
   "prettier.experimentalTernaries": false,
   "prettier.printWidth": 120,
-  "djlint.showInstallError": false
+  "djlint.showInstallError": false,
+  "editor.fontSize": 12
 }

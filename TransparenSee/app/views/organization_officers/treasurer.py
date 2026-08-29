@@ -562,7 +562,7 @@ class CreateFinancialReportView(RoleRequireMixin, TemplateView):
                     report.title,
                     f"A new Financial report has been submitted for your review and approval",
                     f"/reports/{report.id}"
-            )
+                )
 
         if form_action == 'draft':
             messages.success(request, f'Financial report "{title}" has been saved as draft.')

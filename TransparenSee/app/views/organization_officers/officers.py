@@ -25,16 +25,51 @@ from ...blockchain import  verify_report_hash
 from ...blockchain_utils import build_report_snapshot, generate_report_hash
 from django.db.models.functions import Coalesce
 from decimal import Decimal
+from ..notification.notification import create_notification, get_adviser_by_role, get_officer_by_role
 
 
 class ApproveReportView(RoleRequireMixin, TemplateView):
     role_required = ['auditor', 'president', 'adviser', 'co_adviser' ]
+
+    
 
     def post(self, request, pk):
         report = get_object_or_404(FinancialReport, pk=pk)
         action = request.POST.get('action')
         remarks = request.POST.get('remarks', '')
         user = request.user
+
+        if hasattr(request.user, 'officer'):
+            organization = request.user.officer.organization
+        elif hasattr(request.user, 'adviser'):
+            organization = request.user.adviser.organization
+                
+        president = get_officer_by_role(
+                    organization,
+                    'president'
+                )
+                            
+        auditor = get_officer_by_role(
+                    organization,
+                    'auditor'
+                )
+
+        treasurer = get_officer_by_role(
+                    organization,
+                    'treasurer'
+                        )
+
+        adviser = get_adviser_by_role(
+                    organization,
+                    'adviser'
+                )
+
+        co_adviser = get_adviser_by_role(
+                    organization,
+                    'co_adviser'
+                )
+                
+                    
 
         if action == 'approve':
             if user.role == 'auditor' and report.status == 'pending_auditor':
@@ -47,7 +82,15 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
                     report=report, action_by=user,
                     action='approved', remarks=remarks
                 )
+                
                 messages.success(request, 'Report approved. Sent to President.')
+                
+                create_notification(
+                    [president, treasurer, adviser, co_adviser],
+                    f"Auditor approves {report.title}", 
+                    f"A Financial Report titled {report.title} has been reviewed and approved by Auditor ",
+                    f"/reports/{report.id}"
+                )
 
             elif user.role == 'president' and report.status == 'pending_president':
                 report.president_approved_by = user
@@ -59,6 +102,14 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
                     report=report, action_by=user,
                     action='approved', remarks=remarks
                 )
+
+                create_notification(
+                    [auditor, treasurer, adviser, co_adviser],
+                    f"President approves {report.title}",
+                    f"A Financial Report titled {report.title} has been reviewed and approved by President ",
+                    f"/reports/{report.id}"
+                )
+                
                 messages.success(request, 'Report approved. Sent to Co-Adviser.')
 
             elif user.role == 'co_adviser' and report.status == 'pending_co_adviser':
@@ -70,6 +121,12 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
                 ReportApprovalLog.objects.create(
                     report=report, action_by=user,
                     action='approved', remarks=remarks
+                )
+                create_notification(
+                    [president, treasurer, adviser, auditor],
+                    f"Co-Adviser approves {report.title}",
+                    f"A Financial Report titled {report.title} has been reviewed and approved by Co-Adviser ",
+                    f"/reports/{report.id}"
                 )
                 messages.success(request, 'Report approved. Sent to Adviser.')
 
@@ -92,6 +149,12 @@ class ApproveReportView(RoleRequireMixin, TemplateView):
                 ReportApprovalLog.objects.create(
                     report=report, action_by=user,
                     action='approved', remarks=remarks
+                )
+                create_notification(
+                    [president, treasurer, auditor, co_adviser],
+                    f"Adviser approves {report.title}",
+                    f"A report titled {report.title} Financial report was been fully verified and ready for blockchain ",
+                    f"/reports/{report.id}"
                 )
                 messages.success(request, 'Report fully approved and ready for blockchain.')
 

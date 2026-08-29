@@ -1,8 +1,8 @@
-  {% extends base_template %} {% load static %} {% block con %}
+{% extends base_template %} {% load static %} {% block con %}
 
   <div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 ">
 
-    <!-- Header -->
+
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <a href="{% url 'reports' %}"
@@ -15,7 +15,6 @@
         </div>
       </div>
 
-      <!-- Status badge -->
       <div>
         {% if report.status == 'draft' %}
         <span class="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1.5 rounded-xl">Draft</span>
@@ -48,12 +47,12 @@
       </div>
     </div>
 
-    <!-- Approval Progress -->
+
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-4">Approval Progress</p>
       <div class="flex items-center gap-0">
 
-        <!-- Treasurer -->
+
         <div class="flex flex-col items-center gap-2 flex-1">
           <div class="w-10 h-10 rounded-xl bg-green-50 border-2 border-green-500 flex items-center justify-center">
             <i data-lucide="circle-check" class="w-5 h-5 text-green-600"></i>
@@ -65,7 +64,7 @@
 
         <div class="h-px flex-1 {% if report.status != 'pending_auditor' and report.status != 'draft' %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
 
-        <!-- Auditor -->
+
         <div class="flex flex-col items-center gap-2 flex-1">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
             {% if report.auditor_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_auditor' %}bg-amber-50 border-amber-400{% else %}bg-gray-50 border-gray-200{% endif %}">
@@ -84,7 +83,7 @@
 
         <div class="h-px flex-1 {% if report.president_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
 
-        <!-- President -->
+
         <div class="flex flex-col items-center gap-2 flex-1">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
             {% if report.president_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_president' %}bg-blue-50 border-blue-400{% else %}bg-gray-50 border-gray-200{% endif %}">
@@ -102,7 +101,7 @@
         </div>
         <div class="h-px flex-1 {% if report.adviser_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
 
-        <!-- Co-Adviser -->
+
         <div class="flex flex-col items-center gap-2 flex-1">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
             {% if report.co_adviser_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_co_adviser' %}bg-purple-50 border-purple-400{% else %}bg-gray-50 border-gray-200{% endif %}">
@@ -121,7 +120,7 @@
 
         <div class="h-px flex-1 {% if report.adviser_approved_by %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
 
-        <!-- Adviser -->
+
         <div class="flex flex-col items-center gap-2 flex-1">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
             {% if report.adviser_approved_by %}bg-green-50 border-green-500{% elif report.status == 'pending_adviser' %}bg-purple-50 border-purple-400{% else %}bg-gray-50 border-gray-200{% endif %}">
@@ -140,7 +139,7 @@
 
         <div class="h-px flex-1 {% if report.status == 'on_blockchain' %}bg-green-400{% else %}bg-gray-200{% endif %} mb-8"></div>
 
-        <!-- Blockchain -->
+
         <div class="flex flex-col items-center gap-2 flex-1">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2
             {% if report.status == 'on_blockchain' %}bg-indigo-50 border-indigo-500{% else %}bg-gray-50 border-gray-200{% endif %}">
@@ -159,7 +158,7 @@
       </div>
     </div>
 
-    <!-- Approval Action (shown to relevant role) -->
+
     {% if user.role == 'auditor' and report.status == 'pending_auditor' %}
     <div class="bg-white rounded-2xl border border-amber-200 shadow-sm p-6">
       <div class="flex items-center gap-2 mb-4">
@@ -293,54 +292,53 @@
     {% endif %}
 
     {% if request.user.role == 'adviser' and report.status == 'approved' %}
-<form method="post" action="{% url 'record_blockchain' pk=report.pk %}">
-  {% csrf_token %}
-  <button
-    type="submit"
-    onclick="return confirm('Record this report on the blockchain? This cannot be undone.')"
-    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-600/20 transition-all duration-200">
-    <i data-lucide="link" class="w-4 h-4"></i>
-    Record on Blockchain
-  </button>
-</form>
-{% endif %}
+    <form id="blockchainForm" method="post" action="{% url 'record_blockchain' pk=report.pk %}">
+      {% csrf_token %}
+      <button
+        type="button"
+        onclick="document.getElementById('blockchainConfirmModal').showModal()"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-600/20 transition-all duration-200">
+        <i data-lucide="link" class="w-4 h-4"></i>
+        Record on Blockchain
+      </button>
+    </form>
+    {% endif %}
 
-{% if report.status == 'on_blockchain' %}
-<div class="flex flex-col gap-3 mt-2">
+    {% if report.status == 'on_blockchain' %}
+    <div class="flex flex-col gap-3 mt-2">
 
-  <!-- Recorded badge -->
-  <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 w-fit">
-    <i data-lucide="link" class="w-3.5 h-3.5 text-indigo-600"></i>
-    <span class="text-xs font-semibold text-indigo-700">Recorded on Blockchain</span>
-    <span class="text-xs text-indigo-400 font-mono">{{ report.blockchain_recorded_at|date:"M d, Y h:i A" }}</span>
-  </div>
 
-  <!-- Verified / Tampered -->
-  {% if blockchain_verified == True %}
-  <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 w-fit">
-    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
-    <span class="text-xs font-semibold text-emerald-700">Verified — Data matches blockchain record</span>
-  </div>
-  {% elif blockchain_verified == False %}
-  <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 border border-red-200 w-fit">
-    <i data-lucide="shield-alert" class="w-4 h-4 text-red-600"></i>
-    <span class="text-xs font-semibold text-red-700">Tampered — Data does not match blockchain record</span>
-  </div>
-  {% endif %}
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 w-fit">
+        <i data-lucide="link" class="w-3.5 h-3.5 text-indigo-600"></i>
+        <span class="text-xs font-semibold text-indigo-700">Recorded on Blockchain</span>
+        <span class="text-xs text-indigo-400 font-mono">{{ report.blockchain_recorded_at|date:"M d, Y h:i A" }}</span>
+      </div>
 
-  <!-- TX Hash from log -->
-  {% for log in approval_logs %}
-    {% if log.action == 'blockchain' %}
-    <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200">
-      <i data-lucide="receipt" class="w-4 h-4 text-gray-400 mt-0.5 shrink-0"></i>
-      <p class="text-xs text-gray-500 font-mono leading-relaxed break-all">{{ log.remarks }}</p>
+
+      {% if blockchain_verified == True %}
+      <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 w-fit">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+        <span class="text-xs font-semibold text-emerald-700">Verified — Data matches blockchain record</span>
+      </div>
+      {% elif blockchain_verified == False %}
+      <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 border border-red-200 w-fit">
+        <i data-lucide="shield-alert" class="w-4 h-4 text-red-600"></i>
+        <span class="text-xs font-semibold text-red-700">Tampered — Data does not match blockchain record</span>
+      </div>
+      {% endif %}
+
+      {% for log in approval_logs %}
+        {% if log.action == 'blockchain' %}
+        <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200">
+          <i data-lucide="receipt" class="w-4 h-4 text-gray-400 mt-0.5 shrink-0"></i>
+          <p class="text-xs text-gray-500 font-mono leading-relaxed break-all">{{ log.remarks }}</p>
+        </div>
+        {% endif %}
+      {% endfor %}
+
     </div>
     {% endif %}
-  {% endfor %}
 
-</div>
-{% endif %}
-      <!-- Financial Statement Table -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -396,12 +394,11 @@
           {{ item.entry.description }}
         </td>
 
-        <!-- NEW: Quantity -->
+
         <td class="px-5 py-3 text-center text-sm text-gray-700">
           {{ item.entry.quantity|default:1 }}
         </td>
 
-        <!-- NEW: Unit Price -->
         <td class="px-5 py-3 text-right text-sm text-gray-700">
           ₱{{ item.entry.unit_price|default:0|floatformat:2 }}
         </td>
@@ -424,7 +421,7 @@
     </tr>
     {% endfor %}
 
-    <!-- Per-date subtotal -->
+
     <tr class="bg-gray-50 border-b-2 border-gray-200">
       <td class="px-5 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-wide border-r border-gray-100">
         {{ group.date }}
@@ -503,7 +500,7 @@
     </div>
   </div>
 
-    <!-- Approval Log -->
+
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-100">
         <div class="flex items-center gap-2">
@@ -598,7 +595,29 @@
   {% endif %}
 {% endfor %}
 
-  <dialog id="loadingModal" class="modal modal-middle">
+  <dialog id="blockchainConfirmModal" class="modal modal-middle">
+  <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+    <div class="flex flex-col items-center gap-4 px-8 py-8">
+      <div class="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center">
+        <i data-lucide="link" class="w-8 h-8 text-indigo-600"></i>
+      </div>
+      <div class="text-center">
+        <p class="font-extrabold text-gray-900 text-base tracking-tight">Record on Blockchain?</p>
+        <p class="text-sm text-gray-500 mt-1">This action cannot be undone once the report is recorded.</p>
+      </div>
+      <div class="flex gap-3 w-full">
+        <button type="button" onclick="document.getElementById('blockchainConfirmModal').close()"
+          class="flex-1 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">Cancel</button>
+        <button type="button" id="blockchainConfirmSubmit"
+          class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors">Confirm</button>
+      </div>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+
+  <dialog id="blockchainLoadingModal" class="modal modal-middle">
   <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
     <div class="h-1.5 bg-blue-700 w-full"></div>
     <div class="flex flex-col items-center gap-5 px-8 py-8">
@@ -616,6 +635,22 @@
       </div>
     </div>
     <div class="h-1.5 bg-blue-700 w-full"></div>
+  </div>
+</dialog>
+
+  <!-- Generic network/processing loading modal -->
+  <dialog id="genericLoadingModal" class="modal modal-middle">
+  <div class="modal-box rounded-2xl max-w-sm p-0 overflow-hidden shadow-xl">
+    <div class="flex flex-col items-center gap-5 px-8 py-8">
+      <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
+        <i data-lucide="loader-circle" class="w-8 h-8 text-gray-500 animate-spin"></i>
+      </div>
+      <div class="text-center">
+        <p class="font-extrabold text-gray-900 text-base tracking-tight">Processing your request</p>
+        <p class="text-sm text-gray-500 mt-1">This may take a moment depending on your connection.</p>
+      </div>
+      <span class="loading loading-dots loading-md text-gray-500"></span>
+    </div>
   </div>
 </dialog>
 
@@ -640,16 +675,32 @@
 
 
   <script>
-    const loadingModal = document.getElementById('loadingModal');
+    const blockchainLoadingModal = document.getElementById('blockchainLoadingModal');
+    const genericLoadingModal = document.getElementById('genericLoadingModal');
+    const blockchainForm = document.getElementById('blockchainForm');
+    const blockchainConfirmModal = document.getElementById('blockchainConfirmModal');
+    const blockchainConfirmSubmit = document.getElementById('blockchainConfirmSubmit');
+
+    if (blockchainConfirmSubmit) {
+      blockchainConfirmSubmit.addEventListener('click', () => {
+        blockchainConfirmModal.close();
+        blockchainForm.submit();
+      });
+    }
 
     document.querySelectorAll('form').forEach(form => {
       form.addEventListener('submit', () => {
-        loadingModal.classList.add('modal-open'); 
+        if (form === blockchainForm) {
+          blockchainLoadingModal.showModal();
+        } else {
+          genericLoadingModal.showModal();
+        }
       });
     });
 
     window.addEventListener('load', () => {
-      loadingModal.classList.remove('modal-open'); 
+      blockchainLoadingModal.close();
+      genericLoadingModal.close();
     });
 
     function openReceiptDetailModal(imageUrl, date, title, description) {
