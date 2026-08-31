@@ -93,7 +93,7 @@ class ProductCreateView(RoleRequireMixin, CreateView):
         sizes   = self.request.POST.getlist('size[]')
         colors  = self.request.POST.getlist('color[]')
         prices  = self.request.POST.getlist('price[]')
-        images  = self.request.FILES.getlist('product_img[]')  # ← was missing entirely
+        images  = self.request.FILES.getlist('product_img[]') 
 
         errors = []
 
@@ -110,7 +110,7 @@ class ProductCreateView(RoleRequireMixin, CreateView):
                     is_active=True,
                 )
 
-                # Only assign image if one was uploaded for this index
+            
                 if i < len(images) and images[i]:
                     variant.product_img = images[i]
 

@@ -915,18 +915,21 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
         excel_file = request.FILES.get("excel_file")
 
         if not excel_file:
-            messages.error(request, "No file uploaded.")
+            messages.error(request, "No file uploaded. Please choose an .xlsx file.")
             return redirect(request.META.get("HTTP_REFERER", "/"))
 
         if not excel_file.name.endswith(".xlsx"):
-            messages.error(request, "Only .xlsx files are supported.")
+            messages.error(
+                request,
+                f"'{excel_file.name}' is not a .xlsx file. Only .xlsx files are supported.",
+            )
             return redirect(request.META.get("HTTP_REFERER", "/"))
 
         try:
             wb = openpyxl.load_workbook(excel_file, data_only=True)
             ws = wb.active
-        except Exception:
-            messages.error(request, "Invalid Excel file.")
+        except Exception as e:
+            messages.error(request, f"Could not read '{excel_file.name}': {e}")
             return redirect(request.META.get("HTTP_REFERER", "/"))
 
         preview_data = []
@@ -936,28 +939,37 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
 
         rows = list(ws.iter_rows(min_row=2, values_only=True))
 
+        EXPECTED_COLUMNS = 9  # first, middle, last, email, student_id, program, year, section, status
+
         for idx, row in enumerate(rows, start=2):
             if not any(row):
                 continue
 
-            try:
-                first_name     = str(row[0]).strip() if row[0] is not None else ""
-                middle_name     = str(row[1]).strip() if row[0] is not None else ""
-                last_name      = str(row[2]).strip() if row[0] is not None else ""
-                email          = str(row[3]).strip() if row[2] is not None else ""
-                student_id_raw = row[4]
-                program        = str(row[5]).strip() if row[4] is not None else ""
-                year_raw       = row[6]
-                section        = str(row[7]).strip() if row[6] is not None else ""
-                status         = str(row[8]).strip() if row[7] is not None else ""
-                
-            except IndexError:
-                error_rows.append(f"Row {idx}: Not enough columns.")
+            if len(row) < EXPECTED_COLUMNS:
+                error_rows.append(
+                    f"Row {idx}: Expected {EXPECTED_COLUMNS} columns, found {len(row)}."
+                )
                 continue
+
+            # NOTE: each field must check its OWN index for None, not a
+            # neighboring one — that was the original bug (e.g. middle_name
+            # was gated on row[0] instead of row[1], so a blank first_name
+            # would silently blank out middle_name too, and so on down the row).
+            first_name  = str(row[0]).strip() if row[0] is not None else ""
+            middle_name = str(row[1]).strip() if row[1] is not None else ""
+            last_name   = str(row[2]).strip() if row[2] is not None else ""
+            email       = str(row[3]).strip() if row[3] is not None else ""
+            student_id_raw = row[4]
+            program     = str(row[5]).strip() if row[5] is not None else ""
+            year_raw    = row[6]
+            section     = str(row[7]).strip() if row[7] is not None else ""
+            status      = str(row[8]).strip() if row[8] is not None else ""
 
             missing = []
             if not first_name:     missing.append("first_name")
-            if not middle_name:     missing.append("middle_name")
+            # middle_name is intentionally optional — remove the next two
+            # lines if you want to keep it that way, or delete this comment
+            # if middle_name is genuinely required.
             if not last_name:      missing.append("last_name")
             if not email:          missing.append("email")
             if not student_id_raw: missing.append("student_id")
@@ -970,42 +982,48 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
                 error_rows.append(f"Row {idx}: Missing {', '.join(missing)}")
                 continue
 
-
             try:
                 student_id = int(float(student_id_raw))
             except (ValueError, TypeError):
-                error_rows.append(f"Row {idx}: Invalid student_id '{student_id_raw}'")
+                error_rows.append(
+                    f"Row {idx}: student_id '{student_id_raw}' is not a valid number."
+                )
                 continue
-
 
             try:
                 year = int(float(year_raw))
                 if year not in (1, 2, 3, 4):
                     raise ValueError
             except (ValueError, TypeError):
-                error_rows.append(f"Row {idx}: Year must be 1-4")
+                error_rows.append(
+                    f"Row {idx}: year '{year_raw}' is invalid — must be 1, 2, 3, or 4."
+                )
                 continue
 
             valid_programs = [p[0] for p in Student.PROGRAM_CHOICE]
             if program not in valid_programs:
-                error_rows.append(f"Row {idx}: Invalid program '{program}'")
+                error_rows.append(
+                    f"Row {idx}: program '{program}' is not valid. "
+                    f"Expected one of: {', '.join(valid_programs)}."
+                )
                 continue
 
             if CustomUser.objects.filter(email=email).exists():
-                error_rows.append(f"Row {idx}: Email already exists '{email}'")
+                error_rows.append(f"Row {idx}: Email '{email}' is already registered.")
                 continue
 
-
             if email in seen_emails:
-                error_rows.append(f"Row {idx}: Duplicate email in file '{email}'")
+                error_rows.append(f"Row {idx}: Email '{email}' is duplicated elsewhere in this file.")
                 continue
 
             if Student.objects.filter(student_id=student_id).exists():
-                error_rows.append(f"Row {idx}: Student ID already exists '{student_id}'")
+                error_rows.append(f"Row {idx}: Student ID '{student_id}' already exists.")
                 continue
 
             if student_id in seen_student_ids:
-                error_rows.append(f"Row {idx}: Duplicate student_id in file '{student_id}'")
+                error_rows.append(
+                    f"Row {idx}: Student ID '{student_id}' is duplicated elsewhere in this file."
+                )
                 continue
 
             seen_emails.add(email)
@@ -1021,12 +1039,26 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
                 "year":       year,
                 "section":    section,
                 "status":     status,
-                
             })
 
         if not preview_data:
-            messages.error(request, "No valid rows found.")
+            if error_rows:
+                messages.error(
+                    request,
+                    f"No valid rows found. {len(error_rows)} row(s) had errors — "
+                    "see the error list below."
+                )
+            else:
+                messages.error(request, "No data rows found in the uploaded file.")
+            request.session["import_errors"] = error_rows
             return redirect(request.META.get("HTTP_REFERER", "/"))
+
+        if error_rows:
+            messages.warning(
+                request,
+                f"{len(preview_data)} row(s) ready to import, "
+                f"{len(error_rows)} row(s) skipped due to errors."
+            )
 
         request.session["import_preview"] = preview_data
         request.session["import_errors"]  = error_rows
