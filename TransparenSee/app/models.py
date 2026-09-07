@@ -466,3 +466,33 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.title
+
+class StudentRewardProfile(models.Model):
+    student = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    points = models.PositiveIntegerField(default=0)
+
+class Badge(models.Model):
+    name = models.CharField(max_length=100)
+    icon = models.CharField(max_length=50)
+    threshold = models.PositiveIntegerField()
+
+class StudentBadge(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
+    earned_at = models.DateTimeField(auto_now_add=True)
+
+class ReportView(models.Model):
+    report = models.ForeignKey(
+        FinancialReport,
+        on_delete=models.CASCADE,
+        related_name='views'
+    )
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='report_views'
+    )
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('report', 'student')

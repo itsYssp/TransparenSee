@@ -950,11 +950,7 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
                     f"Row {idx}: Expected {EXPECTED_COLUMNS} columns, found {len(row)}."
                 )
                 continue
-
-            # NOTE: each field must check its OWN index for None, not a
-            # neighboring one — that was the original bug (e.g. middle_name
-            # was gated on row[0] instead of row[1], so a blank first_name
-            # would silently blank out middle_name too, and so on down the row).
+                        
             first_name  = str(row[0]).strip() if row[0] is not None else ""
             middle_name = str(row[1]).strip() if row[1] is not None else ""
             last_name   = str(row[2]).strip() if row[2] is not None else ""
@@ -967,9 +963,6 @@ class BulkImportStudentsView(LoginRequiredMixin, TemplateView):
 
             missing = []
             if not first_name:     missing.append("first_name")
-            # middle_name is intentionally optional — remove the next two
-            # lines if you want to keep it that way, or delete this comment
-            # if middle_name is genuinely required.
             if not last_name:      missing.append("last_name")
             if not email:          missing.append("email")
             if not student_id_raw: missing.append("student_id")

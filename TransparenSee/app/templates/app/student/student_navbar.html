@@ -1,4 +1,4 @@
-{% load static %}
+{% load static %} {% load humanize %}
 
 <div class="navbar bg-white border-b border-gray-100 shadow-sm flex justify-between z-99 px-4 h-16">
 
@@ -17,6 +17,16 @@
 
   <!-- RIGHT: User dropdown -->
   <div class="hidden lg:flex items-center gap-3">
+
+    <a   href="{% url 'eyecoin' %}" class="tooltip tooltip-bottom " data-tip="Eye Coin">
+        <div class="flex items-center justify-center gap-2 px-5 py-1.5 rounded-xl  hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+        <div class="w-4.5 h-4.5 ">
+          <img src="{% static 'images/TransparenSeeCoin.png' %}" class="w-full h-full" alt="">
+        </div>
+        <h2 id="navbar-reward-points"  class=" text-sm font-bold  text-gray-600 ">{{ user.studentrewardprofile.points|floatformat:2|intcomma|default:0.0 }}</h2>
+      </div>
+    </a>
+
 
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors duration-200">

@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, render, redirect
-from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views.generic import View, TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from ..forms import *
 from ..blockchain import contract_abi
 from datetime import datetime
@@ -17,6 +17,9 @@ from ..blockchain import verify_report_hash
 from ..blockchain_utils import build_report_snapshot, generate_report_hash
 from decimal import Decimal
 import re
+from django.http import JsonResponse
+
+from django.utils import timezone
 
 class StudentDashboardView(RoleRequireMixin, TemplateView):
     template_name = "app/student/dashboard.html"
@@ -328,3 +331,67 @@ class StudentProfileView(RoleRequireMixin, TemplateView):
             return redirect(request.path)
 
         return self.render_to_response(self.get_context_data(form=form))
+
+
+POINTS_PER_VIEW = 1
+TIMELY_BONUS = 5
+TIMELY_WINDOW_DAYS = 7
+
+
+class MarkReportViewedView(RoleRequireMixin, View):
+    role_required = ['student']
+
+    def post(self, request, pk):
+        report = get_object_or_404(
+            FinancialReport, pk=pk, status__in=['approved', 'on_blockchain']
+        )
+
+        student = request.user.student
+        allowed_org_ids = {student.organization_id} | set(
+            student.other_organization.values_list('id', flat=True)
+        )
+        if report.organization_id not in allowed_org_ids:
+            return JsonResponse({'error': 'forbidden'}, status=403)
+
+        view, created = ReportView.objects.get_or_create(report=report, student=request.user)
+        if not created:
+            profile, _ = StudentRewardProfile.objects.get_or_create(student=request.user)
+            return JsonResponse({'awarded': False, 'total_points': profile.points})
+
+        profile, _ = StudentRewardProfile.objects.get_or_create(student=request.user)
+        points = POINTS_PER_VIEW
+        if report.blockchain_recorded_at and \
+           (timezone.now() - report.blockchain_recorded_at).days <= TIMELY_WINDOW_DAYS:
+            points += TIMELY_BONUS
+        profile.points += points
+        profile.save()
+
+        new_badges = self._check_and_award_badges(request.user)
+
+        return JsonResponse({
+            'awarded': True,
+            'points_earned': points,
+            'total_points': profile.points,
+            'new_badges': [b.name for b in new_badges],
+        })
+
+    def _check_and_award_badges(self, student):
+        total_views = ReportView.objects.filter(student=student).count()
+        already = set(StudentBadge.objects.filter(student=student).values_list('badge_id', flat=True))
+        new_badges = []
+        for badge in Badge.objects.filter(threshold__lte=total_views).exclude(id__in=already):
+            StudentBadge.objects.create(student=student, badge=badge)
+            new_badges.append(badge)
+        return new_badges
+
+class EyecoinInfoView(RoleRequireMixin,TemplateView):
+    template_name = 'app/student/eyecoin.html'
+    role_required = 'student'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['reward_details'] = ReportView.objects.filter(student=user)
+        context['reward_points'] = POINTS_PER_VIEW
+        return context 
+    

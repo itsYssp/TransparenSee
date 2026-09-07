@@ -10,6 +10,7 @@ urlpatterns = [
     path('home', HomeTemplateView.as_view(), name='home'),
     path('student/', StudentDashboardView.as_view(), name='student_dashboard'),
     path('student/organization/<int:pk>/', OtherOrganizationDashboardView.as_view(), name='other_dashboard'),
+    path('student/eyecoin/', EyecoinInfoView.as_view(), name='eyecoin'),
     path('student/profile/', StudentProfileView.as_view(), name='student_profile'),
     path('password-change/', auth_views.PasswordChangeView.as_view(template_name='app/student/student_profile.html',success_url='/profile/'), name='password_change'),
     path('chat', ChatView.as_view(), name='chat'),
@@ -83,6 +84,7 @@ urlpatterns = [
     path("notifications/", views.notification_list, name="notification_list"),
     path("notifications/<int:pk>/redirect/", views.notification_redirect, name="notification_redirect"),
     path("notifications/mark-all-read/", views.mark_all_read, name="mark_all_read"),
+    path('reports/<int:pk>/mark-viewed/', MarkReportViewedView.as_view(), name='mark_report_viewed'),
 ]
 
 if settings.DEBUG:
