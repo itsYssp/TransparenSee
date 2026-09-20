@@ -85,6 +85,7 @@ urlpatterns = [
     path("notifications/<int:pk>/redirect/", views.notification_redirect, name="notification_redirect"),
     path("notifications/mark-all-read/", views.mark_all_read, name="mark_all_read"),
     path('reports/<int:pk>/mark-viewed/', MarkReportViewedView.as_view(), name='mark_report_viewed'),
+    path('accomplishment-reports/<int:pk>/comments/',AccomplishmentReportCommentsView.as_view(), name='accomplishment_report_comments'),
 ]
 
 if settings.DEBUG:

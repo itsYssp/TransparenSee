@@ -496,3 +496,9 @@ class ReportView(models.Model):
 
     class Meta:
         unique_together = ('report', 'student')
+
+class AccomplishmentReportComments(models.Model):
+    report = models.ForeignKey(AccomplishmentReport, on_delete=models.CASCADE, related_name='comments')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.TextField()
+    created_at = models.DateTimeField( auto_now_add=True)

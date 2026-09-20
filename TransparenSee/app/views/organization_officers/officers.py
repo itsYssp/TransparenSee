@@ -1365,11 +1365,41 @@ class OfficerProfileView(RoleRequireMixin, TemplateView):
 
         return self.render_to_response(self.get_context_data(form=form))
     
-class AccomplishmentReportView(RoleRequireMixin, ListView):
+ACCOMPLISHMENT_REPORT_ROLES = [
+    'treasurer', 'auditor', 'president', 'vice_president', 'co_adviser',
+    'adviser', 'head', 'campus_admin', 'admin', 'secretary',
+]
+ 
+ 
+class OrgScopeMixin:
+    """Your get_organization(), moved out so the list view and the
+    comments endpoint scope reports the same way."""
+ 
+    def get_organization(self):
+        user = self.request.user
+        if hasattr(user, 'officer'):
+            return user.officer.organization
+        elif hasattr(user, 'adviser'):
+            return user.adviser.organization
+        elif hasattr(user, 'co_adviser'):
+            # NOTE: your original read user.adviser here, which would raise
+            # if the user only has a co_adviser profile. Fix to match your model.
+            return user.co_adviser.organization
+        return None
+ 
+    def reports_for_user(self):
+        qs = AccomplishmentReport.objects.all()
+        org = self.get_organization()
+        if org:
+            qs = qs.filter(organization=org)
+        return qs
+ 
+ 
+class AccomplishmentReportView(OrgScopeMixin, RoleRequireMixin, ListView):
     template_name = 'app/officer/accomplishment_report.html'
-    role_required = ['treasurer', 'auditor', 'president', 'vice_president', 'co_adviser', 'adviser', 'head', 'campus_admin', 'admin', 'secretary']
+    role_required = ACCOMPLISHMENT_REPORT_ROLES
     model = AccomplishmentReport
-
+ 
     role_templates = {
         'treasurer': 'app/officer/treasurer/sidebar.html',
         'auditor': 'app/officer/auditor/sidebar.html',
@@ -1380,28 +1410,68 @@ class AccomplishmentReportView(RoleRequireMixin, ListView):
         'head': 'app/heads/sidebar.html',
         'campus_admin': 'app/campus_admin/sidebar.html',
         'admin': 'app/superadmin/sidebar.html',
-        "secretary":    "app/officer/secretary/sidebar.html",
-
+        'secretary': 'app/officer/secretary/sidebar.html',
     }
-
-    def get_organization(self):
-        user = self.request.user
-        if hasattr(user, 'officer'):
-            return user.officer.organization
-        elif hasattr(user, 'adviser'):
-            return user.adviser.organization
-        elif hasattr(user, 'co_adviser'):
-            return user.adviser.organization
-        return None
-
+ 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        org = self.get_organization()
-        qs = AccomplishmentReport.objects.all()
-        if org:
-            qs = AccomplishmentReport.objects.filter(organization=org)
-        context['accomplishment_report'] = qs
-        context['base_template'] = self.role_templates.get(user.role, 'app/base.html')
+        context['accomplishment_report'] = (
+            self.reports_for_user().select_related('created_by', 'organization')
+        )
+        # the template uses `org` to decide whether to show the Organization column
+        context['org'] = self.get_organization()
+        context['base_template'] = self.role_templates.get(
+            self.request.user.role, 'app/base.html'
+        )
         return context
-    
+
+
+class AccomplishmentReportCommentsView(OrgScopeMixin, RoleRequireMixin, View):
+    """
+    GET  ?after=<id>  -> comments newer than <id> (initial load + polling)
+    POST comment=...  -> creates a comment
+    """
+    role_required = ACCOMPLISHMENT_REPORT_ROLES
+ 
+    def get_report(self, pk):
+        # Users tied to an org can only read/post on their own org's reports.
+        return get_object_or_404(self.reports_for_user(), pk=pk)
+ 
+    def serialize(self, c):
+        return {
+            'id': c.id,
+            'author': c.sender.get_full_name() or c.sender.username,
+            'text': c.comment,
+            'created_at': timezone.localtime(c.created_at).strftime('%b %d, %Y %I:%M %p'),
+            'is_mine': c.sender_id == self.request.user.id,
+        }
+ 
+    def get(self, request, pk):
+        report = self.get_report(pk)
+        try:
+            after = int(request.GET.get('after', 0))
+        except ValueError:
+            after = 0
+ 
+        comments = (
+            AccomplishmentReportComments.objects
+            .filter(report=report, pk__gt=after)
+            .select_related('sender')
+            .order_by('id')
+        )
+        return JsonResponse({'comments': [self.serialize(c) for c in comments]})
+ 
+    def post(self, request, pk):
+        report = self.get_report(pk)
+        text = request.POST.get('comment', '').strip()
+        if not text:
+            return JsonResponse({'error': 'Comment cannot be empty.'}, status=400)
+        if len(text) > 1000:
+            return JsonResponse({'error': 'Comment is too long (1000 characters max).'}, status=400)
+ 
+        comment = AccomplishmentReportComments.objects.create(
+            report=report,
+            sender=request.user,
+            comment=text,
+        )
+        return JsonResponse({'comment': self.serialize(comment)}, status=201)

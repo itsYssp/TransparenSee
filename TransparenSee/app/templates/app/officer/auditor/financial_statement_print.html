@@ -304,7 +304,7 @@
         <div class="value">{{ record_count }}</div>
       </div>
       <div class="card">
-        <div class="label">Total Income</div>
+        <div class="label">Total Funds</div>
         <div class="value">PHP {{ total_income|floatformat:2|intcomma }}</div>
       </div>
       <div class="card">
@@ -325,7 +325,7 @@
             <th>Report</th>
             <th>Status</th>
             <th>Academic Year</th>
-            <th class="num">Income</th>
+            <th class="num">Funds</th>
             <th class="num">Expense</th>
             <th class="num">Net</th>
             <th>Blockchain</th>
@@ -401,7 +401,7 @@
           </tbody>
         </table>
         <div class="group-foot">
-          <span>Income<strong>PHP {{ group.income_total|floatformat:2|intcomma }}</strong></span>
+          <span>Funds<strong>PHP {{ group.income_total|floatformat:2|intcomma }}</strong></span>
           <span>Expense<strong>PHP {{ group.expense_total|floatformat:2|intcomma }}</strong></span>
           <span>Net<strong>PHP {{ group.net_total|floatformat:2|intcomma }}</strong></span>
         </div>
