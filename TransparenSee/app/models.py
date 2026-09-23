@@ -13,8 +13,8 @@ class Organization(models.Model):
         ("BSED", "Bachelor of Secondary Education"),
         ("BSHM", "Bachelor of Science in Hospitality Management"),
         ("BSC", "Bachelor of Science in Criminology"),
-        ("BSBA-MM", "Bachelor of Science in Bussiness Administration - Marketing Management"),
-        ("BSBA-HR", "Bachelor of Science in Bussiness Admisnustration - Human Resource Management"),
+        ("BSBA-MM", "Bachelor of Science in Business Administration - Marketing Management"),
+        ("BSBA-HR", "Bachelor of Science in Business Administration - Human Resource Management"),
         ("all_program", "All Program"),
     ]
     ORG_CATEGORY = [
@@ -45,8 +45,8 @@ class Student(models.Model):
         ("BSED-ENG", "Bachelor of Secondary Education - English"),
         ("BSHM", "Bachelor of Science in Hospitality Management"),
         ("BSC", "Bachelor of Science in Criminology"),
-        ("BSBA-MM", "Bachelor of Science in Bussiness Administration - Marketing Management"),
-        ("BSBA-HR", "Bachelor of Science in Bussiness Admisnustration - Human Resource Management"),
+        ("BSBA-MM", "Bachelor of Science in Business Administration - Marketing Management"),
+        ("BSBA-HR", "Bachelor of Science in Business Administration - Human Resource Management"),
     ]
     YEAR_CHOICES = [
     (1, "1st Year"),
@@ -84,8 +84,8 @@ class Officer(models.Model):
         ("BSED-ENG", "Bachelor of Secondary Education - English"),
         ("BSHM", "Bachelor of Science in Hospitality Management"),
         ("BSC", "Bachelor of Science in Criminology"),
-        ("BSBA-MM", "Bachelor of Science in Bussiness Administration - Marketing Management"),
-        ("BSBA-HR", "Bachelor of Science in Bussiness Admisnustration - Human Resource Management"),
+        ("BSBA-MM", "Bachelor of Science in Business Administration - Marketing Management"),
+        ("BSBA-HR", "Bachelor of Science in Business Administration - Human Resource Management"),
     ]
     YEAR_CHOICES = [
     (1, "1st Year"),

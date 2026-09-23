@@ -1,5 +1,79 @@
 {% extends base_template %} {% load static %} {% block con %}
 
+<style>
+  /*
+    Thermal printer target specs — POS-58 class printers:
+    - Paper roll width: 58mm
+    - Actual PRINT HEAD width: ~48mm (384 dots at 8 dots/mm). Anything
+      wider than ~48mm gets clipped on the right edge on real hardware,
+      even though the paper itself is 58mm. So the receipt content is
+      sized to 48mm and centered on the 58mm page.
+    - Font A (default): 12x24 dots -> 32 columns per line
+    Used by the Receipt Modal below (#receipt-content) so the on-screen
+    preview, browser print, and generated PDF all match the printer output.
+  */
+  .receipt-58mm {
+    width: 48mm;
+    box-sizing: border-box;
+    padding: 2mm;
+    margin: 0 auto;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 9px;
+    line-height: 1.45;
+    color: #000;
+    background: #fff;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .receipt-58mm .center { text-align: center; }
+  .receipt-58mm .bold { font-weight: 700; }
+  .receipt-58mm .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .receipt-58mm .hr {
+    border-top: 1px dashed #000;
+    margin: 6px 0;
+  }
+  .receipt-58mm .hr-solid {
+    border-top: 1px solid #000;
+    margin: 6px 0;
+  }
+  .receipt-58mm .logo-wrap {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 4px;
+    overflow: hidden;
+  }
+  .receipt-58mm .logo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(100%) contrast(1.2);
+  }
+  .receipt-58mm .store-name {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  .receipt-58mm .store-name2 {
+    font-size: 14px;
+    font-weight: 900;
+  }
+  .receipt-58mm .tiny { font-size: 8.5px; }
+  .receipt-58mm .status-box {
+    border: 1px solid #000;
+    text-align: center;
+    padding: 4px 0;
+    font-weight: 800;
+    letter-spacing: 1px;
+    font-size: 10px;
+    width: 100%;
+  }
+</style>
+
 <div class="px-6 py-6 flex flex-col gap-6">
 
   <!-- Header -->
@@ -499,9 +573,9 @@
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
-<!-- Receipt Modal -->
+<!-- Receipt Modal (48mm printable / 58mm paper thermal receipt layout) -->
 <dialog id="receipt_modal" class="modal modal-middle">
-  <div class="modal-box rounded-2xl max-w-lg p-0 overflow-hidden">
+  <div class="modal-box rounded-2xl max-w-md p-0 overflow-hidden">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -529,102 +603,80 @@
       </div>
     </div>
 
-    <!-- Receipt Content -->
-    <div class="p-5 overflow-y-auto max-h-[80vh]">
-      <div id="receipt-content" class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+    <!-- Receipt Content: 48mm printable / 58mm paper thermal layout -->
+    <div class="p-5 overflow-y-auto max-h-[80vh] bg-gray-50 flex justify-center">
+      <div id="receipt-content" class="receipt-58mm bg-white border border-gray-200">
 
-        <div class="h-1.5 bg-blue-700 w-full"></div>
-
-        <div class="p-6">
-
-          <!-- Receipt Header -->
-          <div class="flex items-start justify-between mb-5">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-blue-100">
-                <img
-                  id="receipt-org-logo"
-                  src="{% static 'images/default_profile_pic.jpg' %}"
-                  alt="org"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <p id="receipt-org-name" class="font-extrabold text-gray-900 text-base tracking-tight"></p>
-                <p class="text-xs text-gray-400">Society Fee Receipt</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="text-xs text-gray-400 font-mono uppercase tracking-widests">Receipt No.</p>
-              <p id="receipt-no" class="text-base font-extrabold text-gray-900 font-mono"></p>
-              <p id="receipt-date" class="text-xs text-gray-400 mt-1 font-mono"></p>
-            </div>
+        <!-- Store / Org header -->
+        <div class="center">
+          <div class="logo-wrap">
+            <img id="receipt-org-logo" src="{% static 'images/default_profile_pic.jpg' %}" alt="org" />
           </div>
-
-          <div class="border-t-2 border-dashed border-gray-200 my-4"></div>
-
-          <!-- Student Info -->
-          <div class="grid grid-cols-2 gap-4 mb-5">
-            <div>
-              <p class="text-xs text-gray-400 uppercase tracking-widests font-bold mb-1">Received From</p>
-              <p id="receipt-student-name" class="text-base font-extrabold text-gray-900"></p>
-              <p id="receipt-student-id" class="text-xs text-gray-500 font-mono mt-0.5"></p>
-              <p id="receipt-program" class="text-xs text-gray-500 mt-0.5"></p>
-              <p id="receipt-year-section" class="text-xs text-gray-500"></p>
-            </div>
-            <div class="text-right">
-              <p class="text-xs text-gray-400 uppercase tracking-widests font-bold mb-1">Academic Year</p>
-              <p id="receipt-ay" class="text-base font-bold text-gray-900"></p>
-            </div>
-          </div>
-
-          <!-- Fee Table -->
-          <div class="bg-gray-50 rounded-xl overflow-hidden mb-5">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-blue-700 text-white">
-                  <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-widests">Description</th>
-                  <th class="px-4 py-2.5 text-right text-xs font-bold uppercase tracking-widests">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-gray-200">
-                  <td class="px-4 py-2.5 text-gray-700 text-xs" id="receipt-fee-desc"></td>
-                  <td class="px-4 py-2.5 text-right font-semibold text-gray-900 text-xs" id="receipt-amount"></td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr class="bg-blue-50">
-                  <td class="px-4 py-2.5 font-extrabold text-gray-900 text-xs uppercase">Total Paid</td>
-                  <td class="px-4 py-2.5 text-right font-extrabold text-blue-700 text-sm" id="receipt-amount-paid"></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <!-- Status + Signature -->
-          <div class="flex items-center justify-between mb-4">
-            <div id="receipt-status-badge"></div>
-            <div class="text-center">
-              <div class="w-28 border-b border-gray-400 mb-1 mx-auto"></div>
-              <p class="text-xs text-gray-500 font-semibold">{{ request.user.get_full_name }}</p>
-              <p class="text-xs text-gray-400">{{ request.user.get_role_display }}</p>
-            </div>
-          </div>
-
-          <div class="border-t-2 border-dashed border-gray-200 my-4"></div>
-
-          <!-- Footer -->
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-gray-300 font-mono">TransparenSee — Blockchain-Verified</p>
-            <div class="flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-xl">
-              <i data-lucide="shield-check" class="w-3 h-3 text-blue-600"></i>
-              <span class="text-xs font-bold text-blue-700">Verified</span>
-            </div>
-          </div>
-
+          <div id="receipt-org-name" class="store-name"></div>
+          <div class="store-name2">SOCIETY FEE RECEIPT</div>
         </div>
 
-        <div class="h-1.5 bg-blue-700 w-full"></div>
+        <div class="hr"></div>
+
+        <!-- Receipt meta -->
+        <div class="row">
+          <span>Receipt No.</span>
+          <span id="receipt-no" class="bold"></span>
+        </div>
+        <div class="row">
+          <span>Date</span>
+          <span id="receipt-date"></span>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Student info -->
+        <div>Received From:</div>
+        <div id="receipt-student-name" class="bold"></div>
+        <div id="receipt-student-id" class="tiny"></div>
+        <div id="receipt-program" class="tiny"></div>
+        <div id="receipt-year-section" class="tiny"></div>
+        <div class="row" style="margin-top:4px;">
+          <span> A.Y.</span>
+          <span id="receipt-ay" class=""></span>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Line items -->
+        <div class="row">
+          <span id="receipt-fee-desc"></span>
+          <span id="receipt-amount"></span>
+        </div>
+
+        <div class="hr-solid"></div>
+
+        <div class="row bold" style="font-size:11px;">
+          <span>TOTAL PAID</span>
+          <span id="receipt-amount-paid"></span>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Status -->
+        <div class="center" id="receipt-status-badge" style="margin: 6px 0;"></div>
+
+        <div class="hr"></div>
+
+        <!-- Issuer -->
+        <div class="center">
+          <div>Issued by:</div>
+          <div class="bold">{{ request.user.get_full_name }}</div>
+          <div class="tiny">{{ request.user.get_role_display }}</div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="center tiny">
+          <div>TransparenSee</div>
+          <div>Blockchain-Verified</div>
+          <div style="margin-top:6px;">* * * * *</div>
+        </div>
 
       </div>
     </div>
@@ -915,11 +967,12 @@
     "{{ fee.pk }}": {
       id: "{{ fee.pk }}",
       receiptNo: "#{{ fee.pk|stringformat:'06d' }}",
-      date: "{{ fee.created_at|date:'F d, Y' }}",
+      date: "{{ fee.created_at|date:'m/d/Y' }}",
       studentName: "{{ fee.student.get_full_name|escapejs }}",
       studentId: "{% if fee.student.student %}{{ fee.student.student.student_id|default:''|escapejs }}{% endif %}",
-      program: "{% if fee.student.student %}{{ fee.student.student.get_program_display|default:''|escapejs }}{% endif %}",
-      yearSection: "{% if fee.student.student %}{{ fee.student.student.year|default:'' }}{% if fee.student.student.year %} Year{% endif %} - {{ fee.student.student.section|default:''|escapejs }}{% endif %}",
+     program: "{% if fee.student.student %}{{ fee.student.student.get_program_display|default:''|escapejs }}{% endif %}",
+    year: "{% if fee.student.student %}{{ fee.student.student.year|default:'' }}{% endif %}", 
+    section: "{% if fee.student.student %}{{ fee.student.student.section|default:''|escapejs }}{% endif %}",
       orgName: "{{ fee.organization.name|escapejs }}",
       orgLogo: "{% if fee.organization.logo %}{{ fee.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}",
       academicYear: "{{ fee.academic_year|escapejs }}",
@@ -934,6 +987,32 @@
     const fee = feesData[feeId];
     if (!fee) return;
 
+let programShort = fee.program;
+
+if (fee.program.toLowerCase().includes('information technology')) {
+    programShort = 'BSIT';
+} else if (fee.program.toLowerCase().includes('computer science')) {
+    programShort = 'BSCS';
+} else if (fee.program.toLowerCase().includes('psychology')) {
+    programShort = 'BSP';
+} else if (fee.program.toLowerCase().includes('criminology')) {
+    programShort = 'BSC';
+} else if (fee.program.toLowerCase().includes('education')) {
+    programShort = 'BSE';
+} else if (fee.program.toLowerCase().includes('business administration')) {
+    programShort = 'BSBA';
+}
+
+let yearSection = '';
+
+if (fee.section) {
+    yearSection +=  fee.section;
+}
+
+document.getElementById('receipt-year-section').textContent =
+    programShort + (yearSection ? ' ' + yearSection : '');
+
+
     document.getElementById('receipt-no').textContent = fee.receiptNo;
     document.getElementById('receipt-date').textContent = fee.date;
     document.getElementById('receipt-org-name').textContent = fee.orgName;
@@ -941,46 +1020,530 @@
     document.getElementById('receipt-student-name').textContent = fee.studentName;
     document.getElementById('receipt-student-id').textContent = fee.studentId ? 'ID: ' + fee.studentId : '';
     document.getElementById('receipt-program').textContent = fee.program;
-    document.getElementById('receipt-year-section').textContent = fee.yearSection;
     document.getElementById('receipt-ay').textContent = fee.academicYear;
-    document.getElementById('receipt-fee-desc').textContent = 'Society Fee — ' + fee.academicYear;
+    document.getElementById('receipt-fee-desc').textContent = 'Society Fee';
     document.getElementById('receipt-amount').textContent = fee.amount;
     document.getElementById('receipt-amount-paid').textContent = fee.amountPaid;
 
     const statusEl = document.getElementById('receipt-status-badge');
     const statusMap = {
-      paid: { label: 'PAID IN FULL', classes: 'bg-green-50 border-green-500 text-green-700', icon: 'circle-check' },
-      partial: { label: 'PARTIAL PAYMENT', classes: 'bg-amber-50 border-amber-500 text-amber-700', icon: 'clock' },
-      unpaid: { label: 'UNPAID', classes: 'bg-red-50 border-red-500 text-red-700', icon: 'x-circle' },
+      paid: 'PAID IN FULL',
+      partial: 'PARTIAL PAYMENT',
+      unpaid: 'UNPAID',
     };
-    const s = statusMap[fee.status] || statusMap.unpaid;
-    statusEl.innerHTML = `
-      <div class="inline-flex items-center gap-2 border-2 font-extrabold px-3 py-1.5 rounded-xl text-xs uppercase tracking-wide ${s.classes}">
-        <i data-lucide="${s.icon}" class="w-3.5 h-3.5"></i>
-        ${s.label}
-      </div>
-    `;
-    lucide.createIcons();
+    const label = statusMap[fee.status] || statusMap.unpaid;
+    statusEl.innerHTML = `<div class="status-box">${label}</div>`;
 
     document.getElementById('receipt_modal').showModal();
   }
 
-  function printReceipt() {
-    const content = document.getElementById('receipt-content').outerHTML;
-    const win = window.open('', '_blank');
-    win.document.write(`
-      <html>
-        <head>
-          <title>Receipt</title>
-          <script src="https://cdn.tailwindcss.com"><\/script>
-          <style>body { margin: 0; padding: 16px; font-family: sans-serif; }</style>
-        </head>
-        <body>${content}<script>window.onload=()=>window.print()<\/script></body>
-      </html>
-    `);
-    win.document.close();
-  }
+function printReceipt() {
+    const receipt = document.getElementById('receipt-content');
 
+    if (!receipt) {
+        alert('Receipt content not found.');
+        return;
+    }
+
+    const origin = window.location.origin;
+
+    const win = window.open('', '_blank');
+
+    if (!win) {
+        alert('Please allow pop-ups for this website.');
+        return;
+    }
+
+    /*
+     * Keep the receipt as HTML text.
+     * We are NOT converting the receipt into an image.
+     */
+    const content = receipt.innerHTML;
+
+    win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+
+            <meta charset="UTF-8">
+
+            <title>Receipt</title>
+
+            <base href="${origin}/">
+
+            <style>
+
+                /* ==================================================
+                   POS-58 PAPER
+                   ================================================== */
+
+                @page {
+                    size: 58mm auto;
+                    margin: 0;
+                }
+
+
+                /* ==================================================
+                   PAGE
+                   ================================================== */
+
+                html {
+                    width: 58mm !important;
+
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    font-weight: bold;
+                    background: #ffffff;
+                }
+
+
+                body {
+                    width: 58mm !important;
+
+                    min-width: 58mm !important;
+                    max-width: 58mm !important;
+
+                    margin: 0 !important;
+                    padding: 0 !important;
+
+                    background: #ffffff;
+
+                    color: #000000;
+
+                    font-family:
+                        "Courier New",
+                        monospace;
+
+                    font-size: 10px;
+
+                    line-height: 1.3;
+
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+
+
+                /* ==================================================
+                   BOX SIZING
+                   ================================================== */
+
+                *,
+                *::before,
+                *::after {
+                    box-sizing: border-box;
+                }
+
+
+                /* ==================================================
+                   RECEIPT
+
+                   48mm usable width
+                   Height is automatic.
+                   ================================================== */
+
+                .receipt-58mm {
+
+                    width: 58mm !important;
+
+                    height: auto !important;
+
+                    min-height: 0 !important;
+
+                    max-height: none !important;
+
+                    margin-left: auto !important;
+                    margin-right: auto !important;
+
+                    margin-top: 0 !important;
+                    margin-bottom: 0 !important;
+
+                    padding: 1.5mm !important;
+
+                    position: static !important;
+
+                    left: auto !important;
+                    right: auto !important;
+
+                    top: auto !important;
+                    bottom: auto !important;
+
+                    transform: none !important;
+
+                    overflow: visible !important;
+
+                    background: #ffffff !important;
+
+                    color: #000000 !important;
+
+                    font-family:
+                        "Courier New",
+                        monospace !important;
+
+                    font-size: 10px !important;
+
+                    line-height: 1.3 !important;
+
+                    word-break: normal;
+
+                    overflow-wrap: break-word;
+                }
+
+
+                /* ==================================================
+                   CENTER
+                   ================================================== */
+
+                .receipt-58mm .center {
+                    text-align: center !important;
+                }
+
+
+                /* ==================================================
+                   BOLD
+                   ================================================== */
+
+                .receipt-58mm .bold {
+                    font-weight: 700 !important;
+                }
+
+
+                /* ==================================================
+                   ROW
+                   ================================================== */
+
+                .receipt-58mm .row {
+
+                    display: flex !important;
+
+                    width: 100% !important;
+
+                    justify-content: space-between !important;
+
+                    align-items: flex-start !important;
+
+                    gap: 2px;
+
+                    line-height: 1.3;
+                }
+
+
+                /* ==================================================
+                   DASHED LINE
+                   ================================================== */
+
+                .receipt-58mm .hr {
+
+                    width: 100% !important;
+
+                    height: 0 !important;
+
+                    border: 0 !important;
+
+                    border-top:
+                        1px dashed #000000 !important;
+
+                    margin-top: 6px !important;
+
+                    margin-bottom: 6px !important;
+                }
+
+
+                /* ==================================================
+                   SOLID LINE
+                   ================================================== */
+
+                .receipt-58mm .hr-solid {
+
+                    width: 100% !important;
+
+                    height: 0 !important;
+
+                    border: 0 !important;
+
+                    border-top:
+                        1px solid #000000 !important;
+
+                    margin-top: 6px !important;
+
+                    margin-bottom: 6px !important;
+                }
+
+
+                /* ==================================================
+                   LOGO
+                   ================================================== */
+
+                .receipt-58mm .logo-wrap {
+
+                    width: 40px !important;
+
+                    height: 40px !important;
+
+                    margin-left: auto !important;
+
+                    margin-right: auto !important;
+
+                    margin-bottom: 4px !important;
+
+                    overflow: hidden !important;
+                }
+
+
+                .receipt-58mm .logo-wrap img {
+
+                    width: 100% !important;
+
+                    height: 100% !important;
+
+                    display: block !important;
+
+                    object-fit: cover !important;
+
+                    filter:
+                        grayscale(100%)
+                        contrast(1.2);
+                }
+
+
+                /* ==================================================
+                   STORE NAME
+                   ================================================== */
+
+                .receipt-58mm .store-name {
+
+                    font-size: 12px !important;
+
+                    line-height: 1.25 !important;
+
+                    font-weight: 700 !important;
+
+                    letter-spacing: 0.3px;
+
+                    text-align: center !important;
+                }
+
+                .receipt-58mm .store-name2 {
+
+                    font-size: 14px !important;
+
+                    line-height: 1.25 !important;
+
+                    font-weight: 900 !important;
+
+                    letter-spacing: 0.3px;
+
+                    text-align: center !important;
+                }
+
+
+                /* ==================================================
+                   SMALL TEXT
+                   ================================================== */
+
+                .receipt-58mm .tiny {
+
+                    font-size: 8.5px !important;
+
+                    line-height: 1.25 !important;
+                }
+
+
+                /* ==================================================
+                   STATUS BOX
+                   ================================================== */
+
+                .receipt-58mm .status-box {
+
+                    width: 100% !important;
+
+                    box-sizing: border-box !important;
+
+                    border:
+                        1px solid #000000 !important;
+
+                    text-align: center !important;
+
+                    padding: 2px 0 !important;
+
+                    font-weight: 700 !important;
+
+                    letter-spacing: 0.5px;
+
+                    font-size: 10px !important;
+
+                    line-height: 1.2 !important;
+                }
+
+
+                /* ==================================================
+                   IMAGES
+                   ================================================== */
+
+                .receipt-58mm img {
+
+                    max-width: 40px !important;
+
+                    height: auto !important;
+                }
+
+
+                /* ==================================================
+                   REMOVE BROWSER IMAGE EFFECTS
+                   ================================================== */
+
+                .receipt-58mm canvas {
+
+                    max-width: 100% !important;
+
+                    height: auto !important;
+                }
+
+
+                /* ==================================================
+                   PRINT
+                   ================================================== */
+
+                @media print {
+
+                    html {
+
+                        width: 58mm !important;
+
+                        margin: 0 !important;
+
+                        padding: 0 !important;
+                    }
+
+
+                    body {
+
+                        width: 58mm !important;
+
+                        min-width: 58mm !important;
+
+                        max-width: 58mm !important;
+
+                        margin: 0 !important;
+
+                        padding: 0 !important;
+
+                        overflow: visible !important;
+                    }
+
+
+                    .receipt-58mm {
+
+                        width: 48mm !important;
+
+                        height: auto !important;
+
+                        min-height: 0 !important;
+
+                        max-height: none !important;
+
+                        margin-left: auto !important;
+
+                        margin-right: auto !important;
+
+                        margin-top: 0 !important;
+
+                        margin-bottom: 0 !important;
+
+                        padding: 1.5mm !important;
+
+                        position: static !important;
+
+                        left: auto !important;
+
+                        right: auto !important;
+
+                        transform: none !important;
+
+                        overflow: visible !important;
+                    }
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            <div class="receipt-58mm">
+
+                ${content}
+
+            </div>
+
+        </body>
+
+        </html>
+    `);
+
+    win.document.close();
+
+
+    /* ==================================================
+       WAIT FOR IMAGES
+       ================================================== */
+
+    const waitForImages = () => {
+
+        const images =
+            Array.from(win.document.images);
+
+        if (images.length === 0) {
+            return Promise.resolve();
+        }
+
+        return Promise.all(
+
+            images.map(image => {
+
+                if (image.complete) {
+                    return Promise.resolve();
+                }
+
+                return new Promise(resolve => {
+
+                    image.addEventListener(
+                        'load',
+                        resolve
+                    );
+
+                    image.addEventListener(
+                        'error',
+                        resolve
+                    );
+
+                });
+
+            })
+
+        );
+    };
+
+
+    /* ==================================================
+       PRINT
+       ================================================== */
+
+    win.onload = () => {
+
+        waitForImages().then(() => {
+
+            setTimeout(() => {
+
+                win.focus();
+
+                win.print();
+
+            }, 500);
+
+        });
+
+    };
+}
   async function downloadReceiptPDF() {
     const btn = document.querySelector('[onclick="downloadReceiptPDF()"]');
     const originalHTML = btn.innerHTML;
@@ -993,9 +1556,10 @@
       const receiptWidth = receipt.offsetWidth;
       const receiptHeight = receipt.offsetHeight;
 
+      // Higher pixelRatio since the receipt is only ~48mm wide - keeps text sharp.
       const dataUrl = await htmlToImage.toPng(receipt, {
         backgroundColor: '#ffffff',
-        pixelRatio: 2,
+        pixelRatio: 4,
         width: receiptWidth,
         height: receiptHeight,
         style: {
@@ -1007,12 +1571,14 @@
       });
 
       const { jsPDF } = window.jspdf;
+      // receipt-content is fixed at CSS width 48mm, so its offsetWidth already
+      // corresponds to 48mm - convert with the standard 96dpi px->mm factor.
       const pxToMm = px => px * 0.264583;
       const pdfWidth = pxToMm(receiptWidth);
       const pdfHeight = pxToMm(receiptHeight);
 
       const pdf = new jsPDF({
-        orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+        orientation: 'portrait',
         unit: 'mm',
         format: [pdfWidth, pdfHeight]
       });

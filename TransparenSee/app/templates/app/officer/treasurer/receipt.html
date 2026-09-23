@@ -1,16 +1,83 @@
 {% extends "app/officer/treasurer/sidebar.html" %} {% load static %} {% block con %}
 
 <style>
+  /*
+    Thermal printer target specs:
+    - Paper width: 57.5mm ± 0.5mm (58mm roll)
+    - Font A (default): 12x24 dots -> 32 columns per line
+    - Font B: 9x17 dots -> 42 columns per line
+    We render the receipt at 58mm width using a monospace font so the
+    on-screen preview, the browser print, and the generated PDF all match
+    what the physical printer will output.
+  */
+  #receipt-printable {
+    width: 58mm;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 9.5px;      /* tuned so long lines stay within 32 cols at 58mm */
+    line-height: 1.5;
+    color: #000;
+    background: #fff;
+  }
+  #receipt-printable .center { text-align: center; }
+  #receipt-printable .right { text-align: right; }
+  #receipt-printable .bold { font-weight: 700; }
+  #receipt-printable .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  #receipt-printable .hr {
+    border-top: 1px dashed #000;
+    margin: 6px 0;
+  }
+  #receipt-printable .hr-solid {
+    border-top: 1px solid #000;
+    margin: 6px 0;
+  }
+  #receipt-printable .logo-wrap {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 4px;
+    overflow: hidden;
+  }
+  #receipt-printable .logo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(100%) contrast(1.2);
+  }
+  #receipt-printable .store-name {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  #receipt-printable .tiny {
+    font-size: 8.5px;
+  }
+  #receipt-printable .status-box {
+    border: 1px solid #000;
+    text-align: center;
+    padding: 4px 0;
+    font-weight: 800;
+    letter-spacing: 1px;
+    font-size: 10px;
+  }
+
   @media print {
+    @page {
+      size: 58mm auto;
+      margin: 0;
+    }
     body * { visibility: hidden !important; }
     #receipt-printable, #receipt-printable * { visibility: visible !important; }
     #receipt-printable {
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100% !important;
+      width: 58mm !important;
       z-index: 9999 !important;
       background: white !important;
+      padding: 2mm !important;
     }
     .no-print { display: none !important; }
   }
@@ -23,6 +90,7 @@
     <div>
       <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-0.5">Society Fee</p>
       <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Receipt Generator</h1>
+      <p class="text-xs text-gray-400 mt-1">Formatted for 58mm thermal receipt printers (32-column)</p>
     </div>
     <div class="flex items-center gap-2">
       <button onclick="window.print()"
@@ -106,143 +174,118 @@
         </div>
       </div>
 
+      <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-2">
+        <i data-lucide="info" class="w-4 h-4 text-blue-600 mt-0.5 shrink-0"></i>
+        <p class="text-xs text-blue-700 leading-relaxed">
+          The preview on the right is sized to 58mm (57.5mm ± 0.5mm) to match your thermal
+          receipt printer's paper width and 32-column Font A layout.
+        </p>
+      </div>
+
     </div>
 
-    <!-- Right: Receipt Preview -->
-    <div class="flex-1">
-      <div id="receipt-printable" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <!-- Right: Receipt Preview (58mm thermal layout) -->
+    <div class="flex-1 flex justify-center">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 inline-block">
+        <div id="receipt-printable" class="mx-auto">
 
-        <!-- Receipt top accent -->
-        <div class="h-2 bg-blue-700 w-full"></div>
-
-        <div class="p-8">
-
-          <!-- Receipt Header -->
-          <div class="flex items-start justify-between mb-6">
-            <div class="flex items-center gap-3">
-              <div class="w-14 h-14 rounded-2xl overflow-hidden border-2 border-blue-100">
-                <img
-                  src="{% if fee.organization.logo %}{{ fee.organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}"
-                  alt="org logo"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <p class="font-extrabold text-gray-900 text-lg tracking-tight leading-tight">{{ fee.organization.name }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">Society Fee Receipt</p>
-              </div>
+          <!-- Store / Org header -->
+          <div class="center">
+            {% if fee.organization.logo %}
+            <div class="logo-wrap">
+              <img src="{{ fee.organization.logo.url }}" alt="org logo" />
             </div>
-            <div class="text-right">
-              <p class="text-xs text-gray-400 font-mono uppercase tracking-widests">Receipt No.</p>
-              <p class="text-base font-extrabold text-gray-900 font-mono">#{{ fee.pk|stringformat:"06d" }}</p>
-              <p class="text-xs text-gray-400 mt-1 font-mono">{{ fee.created_at|date:"F d, Y" }}</p>
-            </div>
+            {% endif %}
+            <div class="store-name">{{ fee.organization.name }}</div>
+            <div class="tiny">SOCIETY FEE RECEIPT</div>
           </div>
 
-          <!-- Divider -->
-          <div class="border-t-2 border-dashed border-gray-200 my-5"></div>
+          <div class="hr"></div>
 
-          <!-- Student Info -->
-          <div class="grid grid-cols-2 gap-6 mb-6">
-            <div>
-              <p class="text-xs text-gray-400 uppercase tracking-widests font-bold mb-1">Received From</p>
-              <p class="text-base font-extrabold text-gray-900">{{ fee.student.get_full_name }}</p>
-              <p class="text-xs text-gray-500 font-mono mt-0.5">
-                ID: {% if fee.student.student %}{{ fee.student.student.student_id|default:"—" }}{% else %}—{% endif %}
-              </p>
-              {% if fee.student.student %}
-              <p class="text-xs text-gray-500 mt-0.5">{{ fee.student.student.get_program_display }}</p>
-              <p class="text-xs text-gray-500">{{ fee.student.student.year|default:"" }}{% if fee.student.student.year %} Year{% endif %} - {{ fee.student.student.section|default:"" }}</p>
-              {% endif %}
-            </div>
-            <div class="text-right">
-              <p class="text-xs text-gray-400 uppercase tracking-widests font-bold mb-1">Academic Year</p>
-              <p class="text-base font-bold text-gray-900">{{ fee.academic_year }}</p>
-            </div>
+          <!-- Receipt meta -->
+          <div class="row">
+            <span>Receipt No.</span>
+            <span class="bold">#{{ fee.pk|stringformat:"06d" }}</span>
+          </div>
+          <div class="row">
+            <span>Date</span>
+            <span>{{ fee.created_at|date:"m/d/Y" }}</span>
+          </div>
+          <div class="row">
+            <span>Time</span>
+            <span>{{ fee.created_at|date:"h:i A" }}</span>
           </div>
 
-          <!-- Fee Table -->
-          <div class="bg-gray-50 rounded-xl overflow-hidden mb-6">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-blue-700 text-white">
-                  <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-widests">Description</th>
-                  <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-widests">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-gray-200">
-                  <td class="px-4 py-3 text-gray-700">Society Fee — {{ fee.academic_year }}</td>
-                  <td class="px-4 py-3 text-right font-semibold text-gray-900">₱{{ fee.amount|floatformat:2 }}</td>
-                </tr>
-                {% if fee.status == 'partial' %}
-                <tr class="border-b border-gray-200">
-                  <td class="px-4 py-3 text-gray-500 text-xs italic">Remaining Balance</td>
-                  <td class="px-4 py-3 text-right text-xs text-red-500 font-semibold">
-                    ₱{% widthratio fee.amount_paid 1 1 as paid %}{{ fee.amount|floatformat:2 }}
-                  </td>
-                </tr>
-                {% endif %}
-              </tbody>
-              <tfoot>
-                <tr class="bg-blue-50">
-                  <td class="px-4 py-3 font-extrabold text-gray-900 text-sm uppercase tracking-wide">Total Paid</td>
-                  <td class="px-4 py-3 text-right font-extrabold text-blue-700 text-base">₱{{ fee.amount_paid|floatformat:2 }}</td>
-                </tr>
-              </tfoot>
-            </table>
+          <div class="hr"></div>
+
+          <!-- Student info -->
+          <div>Received From:</div>
+          <div class="bold">{{ fee.student.get_full_name }}</div>
+          <div class="tiny">
+            ID: {% if fee.student.student %}{{ fee.student.student.student_id|default:"-" }}{% else %}-{% endif %}
+          </div>
+          {% if fee.student.student %}
+          <div class="tiny">{{ fee.student.student.get_program_display }}</div>
+          <div class="tiny">{{ fee.student.student.year|default:"" }}{% if fee.student.student.year %} Year{% endif %} - {{ fee.student.student.section|default:"" }}</div>
+          {% endif %}
+          <div class="row" style="margin-top:4px;">
+            <span>Academic Year</span>
+            <span class="bold">{{ fee.academic_year }}</span>
           </div>
 
-          <!-- Status stamp -->
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <p class="text-xs text-gray-400 uppercase tracking-widests font-bold mb-1">Payment Status</p>
-              {% if fee.status == 'paid' %}
-              <div class="inline-flex items-center gap-2 bg-green-50 border-2 border-green-500 text-green-700 font-extrabold px-4 py-2 rounded-xl text-sm uppercase tracking-wide">
-                <i data-lucide="circle-check" class="w-4 h-4"></i>
-                PAID IN FULL
-              </div>
-              {% elif fee.status == 'partial' %}
-              <div class="inline-flex items-center gap-2 bg-amber-50 border-2 border-amber-500 text-amber-700 font-extrabold px-4 py-2 rounded-xl text-sm uppercase tracking-wide">
-                <i data-lucide="clock" class="w-4 h-4"></i>
-                PARTIAL PAYMENT
-              </div>
-              {% else %}
-              <div class="inline-flex items-center gap-2 bg-red-50 border-2 border-red-500 text-red-700 font-extrabold px-4 py-2 rounded-xl text-sm uppercase tracking-wide">
-                <i data-lucide="x-circle" class="w-4 h-4"></i>
-                UNPAID
-              </div>
-              {% endif %}
-            </div>
+          <div class="hr"></div>
 
-            <!-- Signature area -->
-            <div class="text-center">
-              <div class="w-32 border-b border-gray-400 mb-1 mx-auto"></div>
-              <p class="text-xs text-gray-500 font-semibold">{{ request.user.get_full_name }}</p>
-              <p class="text-xs text-gray-400">{{ request.user.get_role_display }}</p>
-            </div>
+          <!-- Line items -->
+          <div class="row">
+            <span>Society Fee</span>
+            <span>₱{{ fee.amount|floatformat:2 }}</span>
+          </div>
+          {% if fee.status == 'partial' %}
+          <div class="row tiny">
+            <span>Remaining Balance</span>
+            <span>₱{{ fee.amount|add:"-1"|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+
+          <div class="hr-solid"></div>
+
+          <div class="row bold" style="font-size:11px;">
+            <span>TOTAL PAID</span>
+            <span>₱{{ fee.amount_paid|floatformat:2 }}</span>
           </div>
 
-          <!-- Divider -->
-          <div class="border-t-2 border-dashed border-gray-200 my-5"></div>
+          <div class="hr"></div>
 
-          <!-- Footer -->
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs text-gray-400">Issued on {{ fee.updated_at|date:"F d, Y" }}</p>
-              <p class="text-xs text-gray-300 font-mono mt-0.5">TransparenSee — Blockchain-Verified</p>
-            </div>
-            <div class="flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-xl">
-              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i>
-              <span class="text-xs font-bold text-blue-700">Verified</span>
-            </div>
+          <!-- Status -->
+          <div class="center" style="margin: 6px 0;">
+            {% if fee.status == 'paid' %}
+            <div class="status-box">PAID IN FULL</div>
+            {% elif fee.status == 'partial' %}
+            <div class="status-box">PARTIAL PAYMENT</div>
+            {% else %}
+            <div class="status-box">UNPAID</div>
+            {% endif %}
+          </div>
+
+          <div class="hr"></div>
+
+          <!-- Issuer -->
+          <div class="center">
+            <div>Issued by:</div>
+            <div class="bold">{{ request.user.get_full_name }}</div>
+            <div class="tiny">{{ request.user.get_role_display }}</div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="center tiny">
+            <div>Issued on {{ fee.updated_at|date:"m/d/Y" }}</div>
+            <div style="margin-top:2px;">TransparenSee</div>
+            <div>Blockchain-Verified</div>
+            <div style="margin-top:6px;">* * * * *</div>
           </div>
 
         </div>
-
-        <!-- Receipt bottom accent -->
-        <div class="h-2 bg-blue-700 w-full"></div>
-
       </div>
     </div>
 
@@ -262,20 +305,28 @@
     const receipt = document.getElementById('receipt-printable');
 
     try {
+      // Render at 4x so the 58mm-wide capture stays sharp when scaled to PDF.
       const canvas = await html2canvas(receipt, {
-        scale: 2,
+        scale: 4,
         useCORS: true,
         backgroundColor: '#ffffff',
       });
 
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      // Build a PDF page sized to the actual 58mm receipt paper instead of A4,
+      // so the printed/exported PDF matches the printer's 57.5mm ± 0.5mm width.
+      const pdfWidthMM = 58;
+      const pdfHeightMM = (canvas.height * pdfWidthMM) / canvas.width;
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [pdfWidthMM, pdfHeightMM],
+      });
 
       const imgData = canvas.toDataURL('image/png');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidthMM, pdfHeightMM);
       pdf.save(`receipt-{{ fee.pk|stringformat:"06d" }}-{{ fee.student.get_full_name|slugify }}.pdf`);
     } catch (err) {
       console.error(err);
@@ -287,4 +338,4 @@
   }
 </script>
 
-{% endblock con %}
+{% endblock con %} 
