@@ -74,6 +74,7 @@ urlpatterns = [
         DownloadStudentTemplateView.as_view(),
         name="student_import_template",
     ),
+    path("treasurer/society-fee/paid-template/", DownloadPaidStudentTemplateView.as_view(), name="download_paid_student_template"),
     path("members/import/clear-credentials/",
     ClearImportCredentialsView.as_view(),
     name="clear_import_credentials",),

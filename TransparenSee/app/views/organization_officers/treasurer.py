@@ -10,8 +10,9 @@ from django.db.models import Q, Sum, Count
 from ..mixins import *
 from django.db import transaction
 from django.http import JsonResponse
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from ..notification.notification import create_notification, get_officer_by_role, get_adviser_by_role
+import openpyxl
 
 class TreasurerDashboardView(RoleRequireMixin, TemplateView):
     template_name = 'app/officer/treasurer/dashboard.html'
@@ -72,6 +73,132 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
         'adviser': 'app/adviser/sidebar.html',
         'co_adviser': 'app/adviser/sidebar.html',
     }
+
+    HEADER_MAP = {
+        "first name": "first_name", "middle name": "middle_name", "last name": "last_name",
+        "email": "email", "student id": "student_id", "program": "program",
+        "year (1-4)": "year", "section": "section",
+        "paid (yes/no)": "paid", "amount paid": "amount_paid", "amount due": "amount",
+    }
+
+    @staticmethod
+    def _dec(value):
+        try:
+            return Decimal(str(value or "0").replace("₱", "").replace(",", "").strip() or "0")
+        except InvalidOperation:
+            return None
+
+    def import_paid(self, request, org):
+        ay = get_object_or_404(AcademicYear, pk=request.POST.get('academic_year'))
+        semester = ay.semester          # same value the rest of the app filters SocietyFee by
+        file = request.FILES.get('file')
+
+        if not file:
+            messages.error(request, 'Please upload a file.')
+            return redirect('treasurer_society_fee')
+
+        try:
+            ws = openpyxl.load_workbook(file, data_only=True)['Students']
+        except Exception:
+            messages.error(request, "Could not read the file. Use the provided template (sheet named 'Students').")
+            return redirect('treasurer_society_fee')
+
+        rows = list(ws.iter_rows(values_only=True))
+        cols = {}
+        for idx, h in enumerate(rows[0] if rows else []):
+            key = self.HEADER_MAP.get(str(h or '').strip().lower())
+            if key:
+                cols[key] = idx
+
+        if not {'email', 'student_id', 'paid'} <= cols.keys():
+            messages.error(request, 'Missing required columns. Please use the latest template.')
+            return redirect('treasurer_society_fee')
+
+        def get(row, key):
+            i = cols.get(key)
+            v = row[i] if i is not None and i < len(row) else None
+            if v is None:
+                return ''
+            if isinstance(v, float) and v.is_integer():   # 20240001.0 -> "20240001"
+                v = int(v)
+            return str(v).strip()
+
+        created_users = created_fees = updated = 0
+        skipped = []          # reasons, so nothing is skipped silently
+        errors = []
+
+        with transaction.atomic():
+            for line_no, row in enumerate(rows[1:], start=2):
+                if not any(row):
+                    continue
+
+                if get(row, 'paid').lower() not in ('yes', 'y', 'paid', 'true', '1'):
+                    skipped.append(f'Row {line_no}: Paid is not "Yes"')
+                    continue
+
+                email = get(row, 'email').lower()
+                student_id = get(row, 'student_id')
+                if not email and not student_id:
+                    errors.append(f'Row {line_no}: email or student ID required.')
+                    continue
+
+                amount_paid = self._dec(get(row, 'amount_paid'))
+                amount = self._dec(get(row, 'amount'))
+                if amount_paid is None or amount is None:
+                    errors.append(f'Row {line_no}: invalid amount.')
+                    continue
+
+                if amount <= 0:
+                    amount = org.society_fee_amount
+                if amount_paid <= 0:              # marked Yes but no amount: treat as fully paid
+                    amount_paid = amount
+
+                user = None
+                if student_id:
+                    user = CustomUser.objects.filter(role='student', student__student_id=student_id).first()
+                if not user and email:
+                    user = CustomUser.objects.filter(email__iexact=email).first()
+
+                if not user:
+                    if not (get(row, 'first_name') and get(row, 'last_name') and email and student_id):
+                        errors.append(f'Row {line_no}: first name, last name, email and student ID needed to create an account.')
+                        continue
+                    user = CustomUser.objects.create_user(      # adjust to your CustomUser fields
+                        username=email,
+                        email=email,
+                        password=student_id,                     # placeholder: use your default-password logic
+                        first_name=get(row, 'first_name'),
+                        last_name=get(row, 'last_name'),
+                        role='student',
+                    )
+                    Student.objects.create(                      # adjust to your Student fields
+                        user=user,
+                        student_id=student_id,
+                        program=get(row, 'program'),
+                        year=get(row, 'year') or None,
+                        section=get(row, 'section'),
+                        organization=org,
+                    )
+                    created_users += 1
+
+                status = 'paid' if amount_paid >= amount else 'partial'
+                _, was_created = SocietyFee.objects.update_or_create(
+                    student=user, organization=org, academic_year=ay, semester=semester,
+                    defaults={'amount': amount, 'amount_paid': amount_paid, 'status': status},
+                )
+                created_fees += was_created
+                updated += (not was_created)
+
+        summary = (f'{created_fees} fee record(s) created, {updated} updated, '
+                   f'{created_users} new account(s), {len(skipped)} row(s) skipped.')
+        details = errors + skipped
+        if details:
+            more = f' (+{len(details) - 5} more)' if len(details) > 5 else ''
+            msg = summary + ' ' + ' | '.join(details[:5]) + more
+            (messages.error if errors else messages.success)(request, msg)
+        else:
+            messages.success(request, summary)
+        return redirect('treasurer_society_fee')
 
     def get_organization(self):
         user = self.request.user
@@ -201,7 +328,12 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             messages.success(request, f'{len(records)} fee record(s) created successfully.')
             return redirect('treasurer_society_fee')
         
-
+        if action == 'import_paid':
+            if request.user.role != 'treasurer':
+                messages.error(request, 'Only the treasurer can import records.')
+                return redirect('treasurer_society_fee')
+            return self.import_paid(request, org)
+        
         if action == 'delete':
             fee = get_object_or_404(SocietyFee, pk=request.POST.get('fee_id'), organization=org)
             fee.delete()
@@ -665,3 +797,81 @@ class VoluntaryFundsMembersView(RoleRequireMixin, TemplateView):
             for m in members
         ]
         return JsonResponse({'members': data})
+
+class DownloadPaidStudentTemplateView( RoleRequireMixin, TemplateView):
+    role_required = ["treasurer"]
+
+    def get(self, request, *args, **kwargs):
+        import io
+        from django.http import HttpResponse
+        from openpyxl.styles import Font, PatternFill, Alignment
+        from openpyxl.utils import get_column_letter
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Students"   # the import view reads a sheet with this name
+
+        headers = [
+            "First Name", "Middle Name", "Last Name", "Email", "Student id",
+            "Program", "Year (1-4)", "Section",
+            "Paid (Yes/No)", "Amount Paid", "Amount Due",
+        ]
+
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill("solid", start_color="1D4ED8")
+        center_align = Alignment(horizontal="center", vertical="center")
+
+        for col_idx, header in enumerate(headers, start=1):
+            cell = ws.cell(row=1, column=col_idx, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+
+        sample = ["Juan", "Pagar", "Dela Cruz", "juan.delacruz@school.edu",
+                  20240001, "BSIT", 2, "3-1", "Yes", 100, 100]
+        for col_idx, val in enumerate(sample, start=1):
+            ws.cell(row=2, column=col_idx, value=val)
+
+        for col_idx, width in enumerate([20, 20, 20, 30, 14, 10, 15, 15, 15, 15, 15], start=1):
+            ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+        # Notes sheet: program codes + how the paid columns work
+        ws_note = wb.create_sheet("Notes")
+        ws_note["A1"] = "Valid Program Codes"
+        ws_note["A1"].font = Font(bold=True)
+        programs = [
+            ("BSIT", "Bachelor of Science in Information Technology"),
+            ("BSCS", "Bachelor of Science in Computer Science"),
+            ("BSP", "Bachelor of Science in Psychology"),
+            ("BSED-MTH", "Bachelor of Secondary Education - Mathematics"),
+            ("BSED-ENG", "Bachelor of Secondary Education - English"),
+            ("BSHM", "Bachelor of Science in Hospitality Management"),
+            ("BSC", "Bachelor of Science in Criminology"),
+            ("BSBA-MM", "Bachelor of Science in Business Administration - Marketing Management"),
+            ("BSBA-HR", "Bachelor of Science in Business Administration - Human Resource Management"),
+        ]
+        for row_idx, (code, label) in enumerate(programs, start=2):
+            ws_note.cell(row=row_idx, column=1, value=code)
+            ws_note.cell(row=row_idx, column=2, value=label)
+
+        r = len(programs) + 4
+        ws_note.cell(row=r, column=1, value="Payment columns").font = Font(bold=True)
+        ws_note.cell(row=r + 1, column=1, value="Paid (Yes/No)")
+        ws_note.cell(row=r + 1, column=2, value="Only rows marked Yes are imported.")
+        ws_note.cell(row=r + 2, column=1, value="Amount Paid")
+        ws_note.cell(row=r + 2, column=2, value="How much the student paid.")
+        ws_note.cell(row=r + 3, column=1, value="Amount Due")
+        ws_note.cell(row=r + 3, column=2, value="Total fee. Leave 0 to use the organization's default fee. Paid less than due = Partial.")
+        ws_note.column_dimensions["A"].width = 16
+        ws_note.column_dimensions["B"].width = 75
+
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+
+        response = HttpResponse(
+            buf.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = 'attachment; filename="paid_students_import_template.xlsx"'
+        return response
