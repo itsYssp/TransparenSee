@@ -95,15 +95,24 @@ class HeadUserRoleView(RoleRequireMixin, ListView):
 
     def get_queryset(self):
         user_type = self.request.GET.get("type", "advisers")
+        status = self.request.GET.get("status")  # "active", "inactive", or None
 
         if user_type == "officers":
-            roles = ["president", "treasurer", "auditor", 'secretary']
+            roles = ["president", "treasurer", "auditor", "secretary"]
         elif user_type == "advisers":
             roles = ["adviser", "co_adviser"]
         else:
             return CustomUser.objects.none()
 
-        return CustomUser.objects.filter(role__in=roles).order_by('date_joined')
+        qs = CustomUser.objects.filter(role__in=roles)
+
+        if status == "active":
+            qs = qs.filter(is_active=True)
+        elif status == "inactive":
+            qs = qs.filter(is_active=False)
+
+        return qs.order_by('-is_active', 'date_joined')
+
     
 class CreateOrganizationView(RoleRequireMixin, CreateView):
     model = Organization
@@ -186,8 +195,9 @@ class UpdateAdviserView(RoleRequireMixin, UpdateView):
         user.middle_name = self.request.POST.get('middle_name', user.middle_name)
         user.username = self.request.POST.get('username', user.username)
         user.email = self.request.POST.get('email', user.email)
+        user.is_active = 'is_active' in self.request.POST   # <-- new
         user.save()
-        
+
         return render(self.request, self.template_name, {
             'form': form,
             'adviser': adviser,
@@ -195,10 +205,7 @@ class UpdateAdviserView(RoleRequireMixin, UpdateView):
             'modal_type': 'success',
             'modal_message': 'Adviser updated successfully.',
         })
-
-    def get_success_url(self):
-        return reverse('head_user_role')
-    
+        
 class UpdateOfficerView(RoleRequireMixin, UpdateView):
     model = Officer
     context_object_name = 'officer'
@@ -217,6 +224,8 @@ class UpdateOfficerView(RoleRequireMixin, UpdateView):
         user.middle_name = self.request.POST.get('middle_name', user.middle_name)
         user.username = self.request.POST.get('username', user.username)
         user.email = self.request.POST.get('email', user.email)
+        user.role = self.request.POST.get('role', user.role)      # <-- see note below
+        user.is_active = 'is_active' in self.request.POST         # <-- new
         user.save()
         
         return render(self.request, self.template_name, {

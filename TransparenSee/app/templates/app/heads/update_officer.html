@@ -198,6 +198,29 @@
         </div>
       </div>
 
+   <!-- Status -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+            <i data-lucide="toggle-right" class="w-4 h-4 text-blue-700"></i>
+          </div>
+          <p class="font-bold text-gray-800 text-sm">Account Status</p>
+        </div>
+
+        <label class="flex items-center justify-between cursor-pointer">
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Active</p>
+            <p class="text-xs text-gray-500">Inactive officers cannot log in.</p>
+          </div>
+          <input
+            type="checkbox"
+            name="is_active"
+            class="toggle toggle-primary"
+            {% if officer.user.is_active %}checked{% endif %}
+          />
+        </label>
+      </div>
+
       {% if form.errors %}
       <div class="alert alert-error rounded-xl text-sm">
         <i data-lucide="circle-alert" class="w-5 h-5 shrink-0"></i>

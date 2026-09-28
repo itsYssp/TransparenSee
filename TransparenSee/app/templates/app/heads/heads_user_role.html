@@ -63,12 +63,13 @@
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Organization</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
           {% for user in users %}
-          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150 {% if not user.is_active %}opacity-60{% endif %}">
             <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ page_obj.start_index|add:forloop.counter0 }}</td>
             <td class="px-5 py-3.5">
               <div class="flex items-center gap-3">
@@ -101,6 +102,17 @@
                 <span class="text-xs text-gray-600 font-medium">{{ user.officer.organization.name }}</span>
               </div>
             </td>
+            <td class="px-5 py-3.5">
+            {% if user.is_active %}
+            <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-lg">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1.5 bg-gray-100 text-gray-500 text-xs font-bold px-2.5 py-1 rounded-lg">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>Inactive
+            </span>
+            {% endif %}
+          </td>
             <td class="px-5 py-3.5">
               <div class="flex items-center gap-1.5">
                 <a href='{% url "head_update_officer" user.pk %}' 
@@ -181,12 +193,13 @@
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Department</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widests text-gray-400 uppercase">Role</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Organization</th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
             <th class="px-5 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
           {% for user in users %}
-          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150 {% if not user.is_active %}opacity-60{% endif %}">
             <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ page_obj.start_index|add:forloop.counter0 }}</td>
             <td class="px-5 py-3.5 text-gray-500 text-xs font-semibold">{{ user.adviser.employee_id }}</td>
             <td class="px-5 py-3.5">
@@ -221,6 +234,17 @@
                 <span class="text-xs text-gray-600 font-medium">{{ user.adviser.organization.name }}</span>
               </div>
             </td>
+            <td class="px-5 py-3.5">
+            {% if user.is_active %}
+            <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-lg">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1.5 bg-gray-100 text-gray-500 text-xs font-bold px-2.5 py-1 rounded-lg">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>Inactive
+            </span>
+            {% endif %}
+          </td>
             <td class="px-5 py-3.5">
               <div class="flex items-center justify-center">
                 <a href="{% url 'head_update_adviser' user.pk %}"
