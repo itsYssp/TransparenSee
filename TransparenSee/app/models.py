@@ -63,7 +63,7 @@ class Student(models.Model):
     student_id = models.IntegerField()
     program = models.CharField( max_length=20, choices=PROGRAM_CHOICE)
     year = models.IntegerField(choices=YEAR_CHOICES)
-    section = models.CharField( max_length=10)
+    section = models.CharField(max_length=10, blank=True, null=True)
     status = models.CharField(choices=STATUS_CHOCIES)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
     other_organization = models.ManyToManyField(

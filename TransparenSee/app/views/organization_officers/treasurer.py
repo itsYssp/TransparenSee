@@ -190,7 +190,7 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
                 updated += (not was_created)
 
         summary = (f'{created_fees} fee record(s) created, {updated} updated, '
-                   f'{created_users} new account(s), {len(skipped)} row(s) skipped.')
+                    f'{created_users} new account(s), {len(skipped)} row(s) skipped.')
         details = errors + skipped
         if details:
             more = f' (+{len(details) - 5} more)' if len(details) > 5 else ''
@@ -198,6 +198,87 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             (messages.error if errors else messages.success)(request, msg)
         else:
             messages.success(request, summary)
+        return redirect('treasurer_society_fee')
+
+    def add_freshman(self, request, org):
+        if request.user.role != 'treasurer':
+            messages.error(request, 'Only the treasurer can add freshmen.')
+            return redirect('treasurer_society_fee')
+
+        # Latest academic year (same ordering used for the fee list)
+        ay = AcademicYear.objects.order_by('-academic_year', '-id').first()
+        if not ay:
+            messages.error(request, 'No academic year found. Create one first.')
+            return redirect('treasurer_society_fee')
+
+        p = request.POST
+        first_name = p.get('first_name', '').strip()
+        last_name = p.get('last_name', '').strip()
+        middle_name = p.get('middle_name', '').strip()
+        email = p.get('email', '').strip().lower()
+        student_id = p.get('student_id', '').strip()
+        program = p.get('program', '').strip()
+
+        if not (first_name and last_name and email and student_id and program):
+            messages.error(request, 'First name, last name, email, student ID and program are required.')
+            return redirect('treasurer_society_fee')
+
+        amount = self._dec(p.get('amount'))
+        amount_paid = self._dec(p.get('amount_paid'))
+        if amount is None or amount_paid is None:
+            messages.error(request, 'Invalid amount.')
+            return redirect('treasurer_society_fee')
+
+        if amount <= 0:
+            amount = org.society_fee_amount
+        if amount_paid < 0 or amount_paid > amount:
+            messages.error(request, 'Amount paid must be between 0 and the amount due.')
+            return redirect('treasurer_society_fee')
+
+        if CustomUser.objects.filter(email__iexact=email).exists() or \
+        Student.objects.filter(student_id=student_id).exists():
+            messages.error(request, 'A student with that email or student ID already exists.')
+            return redirect('treasurer_society_fee')
+
+        if amount_paid >= amount:
+            status = 'paid'
+        elif amount_paid > 0:
+            status = 'partial'
+        else:
+            status = 'unpaid'
+
+        with transaction.atomic():
+            user = CustomUser.objects.create_user(
+                username=email,
+                email=email,
+                password="TransparenSee",          # or whichever option you chose
+                first_name=first_name,
+                middle_name=middle_name,
+                last_name=last_name,
+                role='student',
+            )
+            Student.objects.create(                      # adjust to your Student fields
+                user=user,
+                student_id=student_id,
+                program=program,
+                year=1,                                  # freshman
+                section='',                              # no section yet
+                organization=org,
+            )
+            SocietyFee.objects.create(
+                student=user,
+                organization=org,
+                academic_year=ay,
+                semester=ay.semester,
+                amount=amount,
+                amount_paid=amount_paid,
+                status=status,
+            )
+
+        messages.success(
+            request,
+            f'Freshman {user.get_full_name()} added with a fee record for {ay.academic_year} - {ay.get_semester_display()}.'
+        )
         return redirect('treasurer_society_fee')
 
     def get_organization(self):
@@ -221,10 +302,16 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
         org = self.get_organization()
 
         fees = SocietyFee.objects.filter(
-            organization=org
-        ).select_related(
-            'student', 'student__student', 'academic_year'
-        ).order_by('-academic_year__academic_year', '-academic_year__id')
+                organization=org
+            ).select_related(
+                'student',
+                'student__student',
+                'academic_year'
+            ).order_by(
+                '-academic_year__academic_year',
+                '-academic_year__id',
+                '-id'
+            )
 
         search = request.GET.get('search', '').strip()
         academic_year = request.GET.get('academic_year', '')
@@ -255,7 +342,7 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
         paid_percent = round((paid_count / total_students) * 100,2) if total_students else 0
         unpaid_percent = round((unpaid_count / total_students) * 100, 2) if total_students else 0
         paid_total_percent = round(( paid_total / target_amount ) * 100,2 ) if target_amount else 0
-        paginator = Paginator(fees, 8)
+        paginator = Paginator(fees, 30)
         page_obj = paginator.get_page(request.GET.get('page'))
 
         academic_years = AcademicYear.objects.order_by('-academic_year')
@@ -280,6 +367,8 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             'unpaid_percent': unpaid_percent,
             'paginator': paginator,           
             'is_paginated': paginator.num_pages > 1, 
+            'latest_ay': academic_years.first(),
+            'program_choices': Student._meta.get_field('program').choices,
         })
 
         return render(request, self.template_name, context)
@@ -327,6 +416,9 @@ class SocietyFeeView(RoleRequireMixin, TemplateView):
             SocietyFee.objects.bulk_create(records, ignore_conflicts=True)
             messages.success(request, f'{len(records)} fee record(s) created successfully.')
             return redirect('treasurer_society_fee')
+
+        if action == 'add_freshman':
+            return self.add_freshman(request, org)
         
         if action == 'import_paid':
             if request.user.role != 'treasurer':
