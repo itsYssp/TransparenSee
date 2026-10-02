@@ -149,9 +149,9 @@
         <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
           <i data-lucide="trending-up" class="w-4 h-4 text-blue-700"></i>
         </div>
-        <span class="text-xs font-bold tracking-wide text-gray-400 uppercase">Total Income</span>
+        <span class="text-xs font-bold tracking-wide text-gray-400 uppercase">Total Fund</span>
       </div>
-      <p class="text-2xl font-extrabold text-gray-900">₱{{ total_income|floatformat:2 }}</p>
+      <p class="text-2xl font-extrabold text-gray-900">₱{{ total_income|floatformat:2|intcomma }}</p>
       <p class="text-xs text-gray-400 mt-1">across all records</p>
     </div>
 
@@ -162,7 +162,7 @@
         </div>
         <span class="text-xs font-bold tracking-wide text-gray-400 uppercase">Total Expense</span>
       </div>
-      <p class="text-2xl font-extrabold text-gray-900">₱{{ total_expense|floatformat:2 }}</p>
+      <p class="text-2xl font-extrabold text-gray-900">₱{{ total_expense|floatformat:2|intcomma }}</p>
       <p class="text-xs text-gray-400 mt-1">across all records</p>
     </div>
 
@@ -210,7 +210,7 @@
             
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Report Hash</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
-            <th class="px-4 py-3 text-right text-xs font-bold tracking-widest text-green-500 uppercase">Income (₱)</th>
+            <th class="px-4 py-3 text-right text-xs font-bold tracking-widest text-green-500 uppercase">Fund (₱)</th>
             <th class="px-4 py-3 text-right text-xs font-bold tracking-widests text-red-400 uppercase">Expense (₱)</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Recorded</th>
             <th class="px-4 py-3 w-10"></th>
@@ -295,10 +295,10 @@
             </td>
 
             <td class="px-4 py-3 text-right font-bold text-green-700 text-xs whitespace-nowrap">
-              ₱{{ report.total_income|floatformat:2 }}
+              ₱{{ report.total_income|floatformat:2|intcomma }}
             </td>
             <td class="px-4 py-3 text-right font-bold text-red-500 text-xs whitespace-nowrap">
-              ₱{{ report.total_expense|floatformat:2 }}
+              ₱{{ report.total_expense|floatformat:2|intcomma }}
             </td>
 
             <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
@@ -356,7 +356,7 @@
         </thead>
         <tbody>
           {% for report in accomplishment_report %}
-          <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+          <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors" onclick="document.getElementById('acc-modal-{{ report.pk }}').showModal()">
             <td class="px-4 py-3 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-2">
@@ -567,15 +567,15 @@
       <div class="grid grid-cols-3 gap-3">
         <div class="bg-green-50 rounded-xl p-3 text-center border border-green-100">
           <p class="text-xs font-bold text-green-600 uppercase tracking-wide mb-1">Income</p>
-          <p class="text-base font-extrabold text-green-700">₱{{ report.total_income|floatformat:2 }}</p>
+          <p class="lg:text-base text-xs font-extrabold text-green-700">₱{{ report.total_income|floatformat:2|intcomma }}</p>
         </div>
         <div class="bg-red-50 rounded-xl p-3 text-center border border-red-100">
           <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-1">Expense</p>
-          <p class="text-base font-extrabold text-red-600">₱{{ report.total_expense|floatformat:2 }}</p>
+          <p class="lg:text-base text-xs font-extrabold text-red-600">₱{{ report.total_expense|floatformat:2|intcomma }}</p>
         </div>
         <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
           <p class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Net</p>
-          <p class="text-base font-extrabold text-blue-700">₱{{ report.net|floatformat:2 }}</p>
+          <p class="lg:text-base text-xs font-extrabold text-blue-700">₱{{ report.net|floatformat:2|intcomma }}</p>
         </div>
       </div>
 
@@ -593,7 +593,7 @@
               <p class="text-xs text-gray-400 truncate">{{ entry.description }}</p>
             </div>
             <span class="text-xs font-bold whitespace-nowrap {% if entry.entry_type == 'income' %}text-green-700{% else %}text-red-500{% endif %}">
-              {% if entry.entry_type == 'income' %}+{% else %}-{% endif %}₱{{ entry.amount|floatformat:2 }}
+              {% if entry.entry_type == 'income' %}+{% else %}-{% endif %}₱{{ entry.amount|floatformat:2|intcomma }}
             </span>
           </div>
           {% endfor %}
@@ -609,112 +609,6 @@
       </button>
     </div>
 
-  </div>
-  <form method="dialog" class="modal-backdrop"><button>close</button></form>
-</dialog>
-{% endfor %}
-
-<!-- ══ FINANCIAL REPORT DETAIL MODALS ══════════════════════════ -->
-{% for report in financial_reports %}
-<dialog id="report-modal-{{ report.pk }}" class="modal">
-  <div class="modal-box rounded-2xl border border-gray-200 shadow-xl max-w-lg p-0 overflow-hidden">
-
-    <div class="bg-blue-700 px-6 py-4 flex items-start justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <i data-lucide="file-text" class="w-4 h-4 text-blue-200"></i>
-          <span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Financial Report</span>
-        </div>
-        <h3 class="font-extrabold text-white text-sm leading-snug">{{ report.title }}</h3>
-        <p class="text-xs text-blue-200 mt-0.5">{{ report.academic_year|default:"No academic year" }}</p>
-      </div>
-      <button onclick="document.getElementById('report-modal-{{ report.pk }}').close()" class="text-blue-200 hover:text-white mt-1">
-        <i data-lucide="x" class="w-4 h-4"></i>
-      </button>
-    </div>
-
-    <div class="p-6 flex flex-col gap-5">
-
-      {% if report.blockchain_hash %}
-      <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
-        <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-2">Blockchain Hash</p>
-        <p class="font-mono text-xs text-blue-700 break-all leading-relaxed">{{ report.blockchain_hash }}</p>
-        <div class="flex items-center gap-3 mt-3">
-          <span class="inline-flex items-center gap-1.5 text-xs text-green-600 font-semibold">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verified & Immutable
-          </span>
-          {% if report.blockchain_recorded_at %}
-          <span class="text-xs text-gray-400">{{ report.blockchain_recorded_at|date:"M d, Y · g:i A" }}</span>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-
-      <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-        <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-3">Approval Chain</p>
-        <div class="flex flex-col gap-2 text-xs">
-          <div class="flex items-center justify-between">
-            <span class="text-gray-500 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5"></i> Auditor</span>
-            {% if report.auditor_approved_by %}<span class="font-semibold text-green-700">{{ report.auditor_approved_by.get_full_name }} · {{ report.auditor_approved_at|date:"M d, Y" }}</span>{% else %}<span class="text-gray-300">—</span>{% endif %}
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-gray-500 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5"></i> President</span>
-            {% if report.president_approved_by %}<span class="font-semibold text-green-700">{{ report.president_approved_by.get_full_name }} · {{ report.president_approved_at|date:"M d, Y" }}</span>{% else %}<span class="text-gray-300">—</span>{% endif %}
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-gray-500 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5"></i> Co-Adviser</span>
-            {% if report.co_adviser_approved_by %}<span class="font-semibold text-green-700">{{ report.co_adviser_approved_by.get_full_name }} · {{ report.co_adviser_approved_at|date:"M d, Y" }}</span>{% else %}<span class="text-gray-300">—</span>{% endif %}
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-gray-500 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5"></i> Adviser</span>
-            {% if report.adviser_approved_by %}<span class="font-semibold text-green-700">{{ report.adviser_approved_by.get_full_name }} · {{ report.adviser_approved_at|date:"M d, Y" }}</span>{% else %}<span class="text-gray-300">—</span>{% endif %}
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-3 gap-3">
-        <div class="bg-green-50 rounded-xl p-3 text-center border border-green-100">
-          <p class="text-xs font-bold text-green-600 uppercase tracking-wide mb-1">Income</p>
-          <p class="text-base font-extrabold text-green-700">₱{{ report.total_income|default:"0.00"|floatformat:2 }}</p>
-        </div>
-        <div class="bg-red-50 rounded-xl p-3 text-center border border-red-100">
-          <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-1">Expense</p>
-          <p class="text-base font-extrabold text-red-600">₱{{ report.total_expense|default:"0.00"|floatformat:2 }}</p>
-        </div>
-        <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
-          <p class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Net</p>
-          <p class="text-base font-extrabold text-blue-700">₱{{ report.net|default:"0.00"|floatformat:2 }}</p>
-        </div>
-      </div>
-
-      <div>
-        <p class="text-xs font-bold tracking-widests text-gray-400 uppercase mb-3">Entries ({{ report.entries.count }})</p>
-        <div class="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-50 max-h-56 overflow-y-auto">
-          {% for entry in report.entries.all %}
-          <div class="flex items-center gap-3 px-4 py-2.5">
-            <span class="w-2 h-2 rounded-full shrink-0 {% if entry.entry_type == 'income' %}bg-green-500{% else %}bg-red-400{% endif %}"></span>
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-semibold text-gray-800">{{ entry.category }}</p>
-              <p class="text-xs text-gray-400 truncate">{{ entry.description }}</p>
-            </div>
-            <span class="text-xs font-bold whitespace-nowrap {% if entry.entry_type == 'income' %}text-green-700{% else %}text-red-500{% endif %}">
-              {% if entry.entry_type == 'income' %}+{% else %}-{% endif %}₱{{ entry.amount|floatformat:2 }}
-            </span>
-          </div>
-          {% empty %}
-          <div class="px-4 py-6 text-center text-xs text-gray-400">No entries found.</div>
-          {% endfor %}
-        </div>
-      </div>
-
-    </div>
-
-    <div class="px-6 pb-6 flex justify-end">
-      <button onclick="document.getElementById('report-modal-{{ report.pk }}').close()"
-        class="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50">
-        Close
-      </button>
-    </div>
   </div>
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>

@@ -1,5 +1,5 @@
 {% extends base_template %}
-{% load static %}
+{% load static humanize %}
 {% block con %}
 
 <div class="px-6 py-6 flex flex-col gap-6 bg-gray-50 ">
@@ -77,18 +77,18 @@
             </td>
             <td class="px-4 py-3">
               {% if report.income_count %}
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Income</span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Fund</span>
               {% endif %}
               {% if report.expense_count %}
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
               {% endif %}
               <div class="flex px-2 flex-col gap-0.5">
-                <span class="text-xs font-semibold text-green-700">▲ ₱{{ report.total_income|floatformat:2|default:"0.00" }}</span>
-                <span class="text-xs font-semibold text-red-600">▼ ₱{{ report.total_expense|floatformat:2|default:"0.00" }}</span>
+                <span class="text-xs font-semibold text-green-700">▲ ₱{{ report.total_income|floatformat:2|default:"0.00"|intcomma }}</span>
+                <span class="text-xs font-semibold text-red-600">▼ ₱{{ report.total_expense|floatformat:2|default:"0.00"|intcomma }}</span>
               </div>
             </td>
             <td class="px-4 py-3 text-gray-600">{{ report.academic_year }}</td>
-            <td class="px-4 py-3 font-semibold text-gray-900">₱ {{ report.net_amount|floatformat:2 }}</td>
+            <td class="px-4 py-3 font-semibold text-gray-900">₱ {{ report.net_amount|floatformat:2|intcomma }}</td>
             <td class="px-4 py-3">
               <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide
                 {% if report.status == 'approved' %}bg-green-100 text-green-700
@@ -193,19 +193,19 @@
             <td class="px-4 py-3">
               <!-- ✅ Fixed typo: was "rejeted" -->
               {% if rejected.income_count %}
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Income</span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-green-100 text-green-700">▲ Fund</span>
               {% endif %}
               {% if rejected.expense_count %}
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-700">▼ Expense</span>
               {% endif %}
               <div class="flex px-2 flex-col gap-0.5">
                 <!-- ✅ Fixed: was using "report." instead of "rejected." -->
-                <span class="text-xs font-semibold text-green-700">▲ ₱{{ rejected.total_income|floatformat:2|default:"0.00" }}</span>
-                <span class="text-xs font-semibold text-red-600">▼ ₱{{ rejected.total_expense|floatformat:2|default:"0.00" }}</span>
+                <span class="text-xs font-semibold text-green-700">▲ ₱{{ rejected.total_income|floatformat:2|default:"0.00"|intcomma }}</span>
+                <span class="text-xs font-semibold text-red-600">▼ ₱{{ rejected.total_expense|floatformat:2|default:"0.00"|intcomma }}</span>
               </div>
             </td>
             <td class="px-4 py-3 text-gray-600">{{ rejected.academic_year }}</td>
-            <td class="px-4 py-3 font-semibold text-gray-900">₱ {{ rejected.total_amount|floatformat:2 }}</td>
+            <td class="px-4 py-3 font-semibold text-gray-900">₱ {{ rejected.total_amount|floatformat:2|intcomma}}</td>
             <td class="px-4 py-3">
               <span class="px-2 py-1 text-[10px] font-bold rounded-full tracking-wide bg-red-100 text-red-700">
                 {{ rejected.get_status_display }}

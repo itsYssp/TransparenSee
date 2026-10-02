@@ -282,7 +282,7 @@
           <img src="{% if organization.logo %}{{ organization.logo.url }}{% else %}{% static 'images/default_profile_pic.jpg' %}{% endif %}" alt="{{ organization.name }} logo">
         </div>
         <div>
-          <p>TransparenSee Financial Statement</p>
+          <p>CvSU-Bacoor City Campus</p>
           <h1>{{ request.GET.statement_title|default:"Financial Statement" }}</h1>
           <p>{{ organization.name }} | {{ period.label }}</p>
         </div>

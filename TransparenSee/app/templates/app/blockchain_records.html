@@ -1,5 +1,6 @@
 {% extends base_template %}
 {% load static %}
+{% load humanize %}
 {% block con %}
 
 <div class="px-6 py-6 flex flex-col gap-6 bg-gray-50">
@@ -87,9 +88,9 @@
         <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
           <i data-lucide="trending-up" class="w-4 h-4 text-blue-700"></i>
         </div>
-        <span class="text-xs font-bold tracking-wide text-gray-400 uppercase">Total Income</span>
+        <span class="text-xs font-bold tracking-wide text-gray-400 uppercase">Total Funds</span>
       </div>
-      <p class="text-2xl font-extrabold text-gray-900">₱{{ total_income|floatformat:2 }}</p>
+      <p class="text-2xl font-extrabold text-gray-900">₱{{ total_income|floatformat:2|intcomma }}</p>
       <p class="text-xs text-gray-400 mt-1">across all records</p>
     </div>
 
@@ -100,7 +101,7 @@
         </div>
         <span class="text-xs font-bold tracking-wide text-gray-400 uppercase">Total Expense</span>
       </div>
-      <p class="text-2xl font-extrabold text-gray-900">₱{{ total_expense|floatformat:2 }}</p>
+      <p class="text-2xl font-extrabold text-gray-900">₱{{ total_expense|floatformat:2|intcomma }}</p>
       <p class="text-xs text-gray-400 mt-1">across all records</p>
     </div>
 
@@ -150,7 +151,7 @@
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">TX Hash</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Report Hash</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Status</th>
-            <th class="px-4 py-3 text-right text-xs font-bold tracking-widest text-green-500 uppercase">Income (₱)</th>
+            <th class="px-4 py-3 text-right text-xs font-bold tracking-widest text-green-500 uppercase">Funds (₱)</th>
             <th class="px-4 py-3 text-right text-xs font-bold tracking-widests text-red-400 uppercase">Expense (₱)</th>
             <th class="px-4 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Recorded</th>
             <th class="px-4 py-3 w-10"></th>
@@ -245,10 +246,10 @@
             </td>
 
             <td class="px-4 py-3 text-right font-bold text-green-700 text-xs whitespace-nowrap">
-              ₱{{ report.total_income|floatformat:2 }}
+              ₱{{ report.total_income|floatformat:2|intcomma }}
             </td>
             <td class="px-4 py-3 text-right font-bold text-red-500 text-xs whitespace-nowrap">
-              ₱{{ report.total_expense|floatformat:2 }}
+              ₱{{ report.total_expense|floatformat:2|intcomma }}
             </td>
 
             <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
@@ -440,7 +441,7 @@
       <!-- Totals -->
       <div class="grid grid-cols-3 gap-3">
         <div class="bg-green-50 rounded-xl p-3 text-center border border-green-100">
-          <p class="text-xs font-bold text-green-600 uppercase tracking-wide mb-1">Income</p>
+          <p class="text-xs font-bold text-green-600 uppercase tracking-wide mb-1">Fund</p>
           <p class="text-base font-extrabold text-green-700">₱{{ report.total_income|floatformat:2 }}</p>
         </div>
         <div class="bg-red-50 rounded-xl p-3 text-center border border-red-100">

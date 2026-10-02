@@ -1,28 +1,35 @@
 {% extends "app/superadmin/sidebar.html" %} {% load static %} {% block con %}
 
-<div class="px-6 py-6 flex flex-col gap-6 min-h-full bg-gray-50">
+<div class="px-6 py-6 flex flex-col gap-6  bg-gray-50">
 
   <div class="flex items-center justify-between">
     <div>
       <p class="text-xs font-bold tracking-widest text-gray-400 uppercase mb-0.5">Super Admin</p>
       <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">User Management</h1>
     </div>
-    <a href="{% url 'superadmin_create_campus_admin' %}"
-      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+    <div class="flex gap-2">
+      <a href="{% url 'superadmin_create_campus_admin' %}"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white text-blue-800 hover:bg-blue-100 shadow-sm shadow-blue-700/20 transition-all duration-200">
       <i data-lucide="plus" class="w-4 h-4"></i>
       Add Campus Admin
     </a>
+    <a href="{% url 'superadmin_create_head' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 text-white hover:bg-blue-800 shadow-sm shadow-blue-700/20 transition-all duration-200">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        Add Campus Head
+    </a>
+    </div>
   </div>
 
   <div class="flex bg-white border border-gray-200 rounded-xl p-1 gap-1 shadow-sm w-fit">
     <a href="?type=system"
       class="text-sm font-semibold py-2 px-5 rounded-lg transition-all duration-200
-        {% if request.GET.type != 'student' and request.GET.type != 'adviser'  %}
+        {% if request.GET.type != 'student' and request.GET.type != 'adviser' %}
           bg-blue-700 text-white shadow-md shadow-blue-700/20
         {% else %}
           text-gray-500 hover:bg-blue-50 hover:text-blue-700
         {% endif %}">
-      Organzation Heads
+      Organization Heads
     </a>
     <a href="?type=adviser"
       class="text-sm font-semibold py-2 px-5 rounded-lg transition-all duration-200
@@ -33,7 +40,7 @@
         {% endif %}">
       Adviser
     </a>
-     <a href="?type=student"
+    <a href="?type=student"
       class="text-sm font-semibold py-2 px-5 rounded-lg transition-all duration-200
         {% if request.GET.type == 'student' %}
           bg-blue-700 text-white shadow-md shadow-blue-700/20
@@ -46,6 +53,7 @@
 
   {% if request.GET.type == "student" %}
 
+  <!-- ===================== STUDENTS ===================== -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -54,7 +62,9 @@
         </div>
         <p class="text-sm font-bold text-gray-800">Students</p>
       </div>
-       <span class="text-xs text-gray-400 font-medium">{{ users|length }} record{{ users|length|pluralize }}</span>
+      <span class="text-xs text-gray-400 font-medium">
+        {{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}
+      </span>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -69,28 +79,67 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
-          {% if users %}
-            {% for user in users %}
-            <tr class="hover:bg-blue-50/40 transition-colors duration-150">
-              <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
-              <td class="px-5 py-3.5 font-semibold text-xs text-gray-800">{{ user.student.student_id }}</td>
-              <td class="px-5 py-3.5 font-semibold text-xs text-gray-800">{{ user.first_name }} {{ user.last_name }}</td>
-              <td class="px-5 py-3.5 font-semibold text-xs text-gray-800">{{ user.username }}</td>
-              <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.email }}</td>
-              <td class="px-5 py-3.5 text-gray-400 text-xs font-mono">{{ user.date_joined|date:"M d, Y" }}</td>
-            </tr>
-            {% endfor %}
-          {% else %}
-            <tr>
-              <td colspan="4" class="px-5 py-12 text-center text-sm text-gray-400 italic">No students yet</td>
-            </tr>
-          {% endif %}
+          {% for user in users %}
+          <tr class="hover:bg-blue-50/40 transition-colors duration-150">
+            <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td class="px-5 py-3.5 font-semibold text-xs text-gray-800">{{ user.student.student_id }}</td>
+            <td class="px-5 py-3.5 font-semibold text-xs text-gray-800">{{ user.first_name }} {{ user.last_name }}</td>
+            <td class="px-5 py-3.5 font-semibold text-xs text-gray-800">{{ user.username }}</td>
+            <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.email }}</td>
+            <td class="px-5 py-3.5 text-gray-400 text-xs font-mono">{{ user.date_joined|date:"M d, Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400 italic">No students yet</td>
+          </tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>
+
+    {% if is_paginated %}
+    <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+
+      <p class="text-xs text-gray-400">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} users
+      </p>
+
+      <div class="flex items-center gap-1.5">
+        {% if page_obj.has_previous %}
+        <a href="?type={{ request.GET.type|default:'system' }}&page={{ page_obj.previous_page_number }}"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+          ‹
+        </a>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-blue-700 text-white shadow-md shadow-blue-700/30">
+              {{ num }}
+            </span>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+            <a href="?type={{ request.GET.type|default:'system' }}&page={{ num }}"
+              class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+              {{ num }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?type={{ request.GET.type|default:'system' }}&page={{ page_obj.next_page_number }}"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+          ›
+        </a>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endif %}
   </div>
 
   {% elif request.GET.type == "adviser" %}
+
+  <!-- ===================== ADVISERS ===================== -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -99,7 +148,9 @@
         </div>
         <p class="text-sm font-bold text-gray-800">Advisers</p>
       </div>
-      <span class="text-xs text-gray-400 font-medium">{{ users|length }} record{{ users|length|pluralize }}</span>
+      <span class="text-xs text-gray-400 font-medium">
+        {{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}
+      </span>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -110,9 +161,8 @@
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Name</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Department</th>
-            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role </th>
+            <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Organization</th>
-            <th class="px-5 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
@@ -136,7 +186,6 @@
               </div>
             </td>
             <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.email }}</td>
-            
             <td class="px-5 py-3.5 text-gray-500 text-xs">{{ user.adviser.department }}</td>
             <td class="px-5 py-3.5">
               <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg">{{ user.get_role_display }}</span>
@@ -153,42 +202,60 @@
                 <span class="text-xs text-gray-600 font-medium">{{ user.adviser.organization.name }}</span>
               </div>
             </td>
-            <td class="px-5 py-3.5">
-              <div class="flex items-center justify-center">
-                <a class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
-                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                </a>
-              </div>
-            </td>
+           
           </tr>
           {% empty %}
           <tr>
-            <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400 italic">No system users found</td>
+            <td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400 italic">No advisers found</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 
-    <div class="px-5 py-4 border-t border-gray-100 flex justify-center gap-1.5">
-      {% for num in page_obj.paginator.page_range %}
-      {% if num >= 8 %}
-      <a href="?type={{ request.GET.type }}&page={{ num }}"
-        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-150
+    {% if is_paginated %}
+    <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+
+      <p class="text-xs text-gray-400">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} users
+      </p>
+
+      <div class="flex items-center gap-1.5">
+        {% if page_obj.has_previous %}
+        <a href="?type={{ request.GET.type|default:'system' }}&page={{ page_obj.previous_page_number }}"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+          ‹
+        </a>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
           {% if page_obj.number == num %}
-            bg-blue-700 text-white shadow-md shadow-blue-700/30
-          {% else %}
-            bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
-          {% endif %}">
-        {{ num }}
-      </a>
-      {% endif %}
-      {% endfor %}
+            <span class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-blue-700 text-white shadow-md shadow-blue-700/30">
+              {{ num }}
+            </span>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+            <a href="?type={{ request.GET.type|default:'system' }}&page={{ num }}"
+              class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+              {{ num }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?type={{ request.GET.type|default:'system' }}&page={{ page_obj.next_page_number }}"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+          ›
+        </a>
+        {% endif %}
+      </div>
+
     </div>
+    {% endif %}
   </div>
 
   {% else %}
 
+  <!-- ===================== SYSTEM USERS ===================== -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -197,7 +264,9 @@
         </div>
         <p class="text-sm font-bold text-gray-800">System Users</p>
       </div>
-      <span class="text-xs text-gray-400 font-medium">{{ users|length }} record{{ users|length|pluralize }}</span>
+      <span class="text-xs text-gray-400 font-medium">
+        {{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}
+      </span>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -209,17 +278,20 @@
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Email</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Role</th>
             <th class="px-5 py-3 text-left text-xs font-bold tracking-widest text-gray-400 uppercase">Department</th>
+            <th class="px-5 py-3 text-center text-xs font-bold tracking-widest text-gray-400 uppercase">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
           {% for user in users %}
           <tr class="hover:bg-blue-50/40 transition-colors duration-150">
             <td class="px-5 py-3.5 text-xs text-gray-400 font-mono">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-            <td class="px-5 py-3.5 text-gray-500 font-semibold text-xs">{% if user.role == 'campus_admin' %}
-            {{ user.campus_admin.employee_id }}
-            {% else %}
-            {{ user.heads.employee_id }}
-            {% endif %}</td>
+            <td class="px-5 py-3.5 text-gray-500 font-semibold text-xs">
+              {% if user.role == 'campus_admin' %}
+                {{ user.campus_admin.employee_id }}
+              {% else %}
+                {{ user.heads.employee_id }}
+              {% endif %}
+            </td>
             <td class="px-5 py-3.5">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl overflow-hidden border-2 border-gray-100 shrink-0">
@@ -239,12 +311,20 @@
             <td class="px-5 py-3.5">
               <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg">{{ user.get_role_display }}</span>
             </td>
-            <td class="px-5 py-3.5 text-xs text-gray-600 font-medium">{% if user.role == 'campus_admin' %}
-            {{ user.campus_admin.department }}
-            {% else %}
-            {{ user.heads.get_department_display }}
-            {% endif %}</td>
-            
+            <td class="px-5 py-3.5 text-xs text-gray-600 font-medium">
+              {% if user.role == 'campus_admin' %}
+                {{ user.campus_admin.department }}
+              {% else %}
+                {{ user.heads.get_department_display }}
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center justify-center">
+                <a href='{% url "superadmin_update_head" user.pk %}' class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+            </td>
           </tr>
           {% empty %}
           <tr>
@@ -255,21 +335,44 @@
       </table>
     </div>
 
-    <div class="px-5 py-4 border-t border-gray-100 flex justify-center gap-1.5">
-      {% for num in page_obj.paginator.page_range %}
-      {% if num >= 8 %}
-      <a href="?type={{ request.GET.type }}&page={{ num }}"
-        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-150
+    {% if is_paginated %}
+    <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+
+      <p class="text-xs text-gray-400">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} users
+      </p>
+
+      <div class="flex items-center gap-1.5">
+        {% if page_obj.has_previous %}
+        <a href="?type={{ request.GET.type|default:'system' }}&page={{ page_obj.previous_page_number }}"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+          ‹
+        </a>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
           {% if page_obj.number == num %}
-            bg-blue-700 text-white shadow-md shadow-blue-700/30
-          {% else %}
-            bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
-          {% endif %}">
-        {{ num }}
-      </a>
-      {% endif %}
-      {% endfor %}
+            <span class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-blue-700 text-white shadow-md shadow-blue-700/30">
+              {{ num }}
+            </span>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+            <a href="?type={{ request.GET.type|default:'system' }}&page={{ num }}"
+              class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+              {{ num }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?type={{ request.GET.type|default:'system' }}&page={{ page_obj.next_page_number }}"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all duration-150">
+          ›
+        </a>
+        {% endif %}
+      </div>
+
     </div>
+    {% endif %}
   </div>
 
   {% endif %}
